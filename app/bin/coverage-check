@@ -1,0 +1,66 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Fails (exit 1) when the line coverage found in a PHPUnit clover report is below a threshold.
+ *
+ * Usage: bin/coverage-check [clover.xml] [threshold-percent]
+ */
+
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'];
+$file = $arguments[1] ?? 'var/coverage/clover.xml';
+$thresholdArgument = $arguments[2] ?? '90';
+
+if (!is_numeric($thresholdArgument)) {
+    fwrite(STDERR, "Threshold must be numeric.\n");
+    exit(2);
+}
+$threshold = (float) $thresholdArgument;
+
+if (!is_file($file)) {
+    fwrite(STDERR, sprintf("Clover report not found: %s\n", $file));
+    exit(2);
+}
+
+$previous = libxml_use_internal_errors(true);
+$xml = simplexml_load_file($file);
+libxml_use_internal_errors($previous);
+
+if (false === $xml) {
+    fwrite(STDERR, sprintf("Invalid clover report: %s\n", $file));
+    exit(2);
+}
+
+$metrics = $xml->project->metrics ?? null;
+if (null === $metrics) {
+    fwrite(STDERR, "Clover report has no project metrics.\n");
+    exit(2);
+}
+
+$statements = (int) $metrics['statements'];
+$covered = (int) $metrics['coveredstatements'];
+
+if (0 === $statements) {
+    fwrite(STDERR, "WARNING: the report contains 0 statements; treating coverage as 100%.\n");
+    $percent = 100.0;
+} else {
+    $percent = $covered / $statements * 100;
+}
+
+fwrite(STDOUT, sprintf(
+    "Line coverage: %.2f%% (%d/%d statements), threshold %.2f%%\n",
+    $percent,
+    $covered,
+    $statements,
+    $threshold,
+));
+
+if ($percent < $threshold) {
+    fwrite(STDERR, "Coverage is below the threshold.\n");
+    exit(1);
+}
+
+exit(0);
