@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Entity;
 
 use App\Domain\Climate\HvacMode;
-use App\Infrastructure\Persistence\Enum\OverrideType;
+use App\Domain\Decision\OverrideType;
 use App\Infrastructure\Persistence\Repository\RoomOverrideRepository;
 use App\Infrastructure\Persistence\Support\Guard;
 use Doctrine\ORM\Mapping as ORM;
