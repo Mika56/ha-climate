@@ -7,12 +7,28 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Port of the engine's internal HTTP server (loopback only) and file holding the token shared with the web side.
+    env(ENGINE_PORT): '8100'
+    env(ENGINE_TOKEN_FILE): '%kernel.project_dir%/var/engine.token'
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # Extension points: implementing one of these interfaces is all it takes to plug a class into the engine.
+    _instanceof:
+        App\Domain\Decision\RoomRuleInterface:
+            tags: ['app.room_rule']
+        App\Application\Engine\Facts\RoomFactContributorInterface:
+            tags: ['app.room_fact_contributor']
+        App\Application\Engine\Command\CommandGuardInterface:
+            tags: ['app.command_guard']
+        App\Application\Engine\Timer\TimerHandlerInterface:
+            tags: ['app.timer_handler']
+        App\Infrastructure\Engine\Http\InternalRouteInterface:
+            tags: ['app.internal_route']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -32,3 +48,127 @@ services:
 
     App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface:
         alias: App\Infrastructure\HomeAssistant\AmpHomeAssistantGateway
+
+    # Rule chain: highest priority() first. A new rule is picked up with no change here.
+    App\Domain\Decision\TargetResolver:
+        arguments:
+            - !tagged_iterator { tag: app.room_rule, default_priority_method: priority }
+
+    App\Application\Engine\Facts\RoomFactsBuilder:
+        arguments:
+            - !tagged_iterator app.room_fact_contributor
+
+    App\Application\Engine\Command\CommandExecutor:
+        arguments:
+            $guards: !tagged_iterator app.command_guard
+
+    App\Application\Engine\Timer\TimerScheduler:
+        arguments:
+            $handlerServices: !tagged_iterator app.timer_handler
+
+    App\Infrastructure\Engine\Http\InternalRouter:
+        arguments:
+            $routes: !tagged_iterator app.internal_route
+
+    App\Application\Engine\Timer\TimerDriverInterface:
+        alias: App\Infrastructure\Engine\RevoltTimerDriver
+
+    App\Application\Engine\Lifecycle\ShutdownWaiterInterface:
+        alias: App\Infrastructure\Engine\ShutdownSignals
+
+    App\Application\Engine\Lifecycle\ControlServerInterface:
+        alias: App\Infrastructure\Engine\Http\InternalHttpServer
+
+    App\Infrastructure\Engine\Http\InternalHttpServer:
+        arguments:
+            $port: '%env(int:ENGINE_PORT)%'
+
+    App\Infrastructure\Engine\EngineTokenStore:
+        arguments:
+            $path: '%env(resolve:ENGINE_TOKEN_FILE)%'
+
+    App\Infrastructure\Engine\EngineClient:
+        arguments:
+            $baseUri: 'http://127.0.0.1:%env(int:ENGINE_PORT)%'
+
+when@test:
+    services:
+        # The scenario tests drive the real engine against a fake Home Assistant, a mock clock and a timer
+        # driver that only moves when told to.
+        _defaults:
+            autowire: true
+            autoconfigure: true
+
+        test.clock:
+            class: Symfony\Component\Clock\MockClock
+            arguments: ['2026-10-26 07:00:00 UTC']
+            public: true
+
+        Symfony\Component\Clock\ClockInterface:
+            alias: test.clock
+
+        Symfony\Component\Clock\MockClock:
+            alias: test.clock
+
+        App\Tests\Double\ManualTimerDriver:
+            public: true
+
+        App\Application\Engine\Timer\TimerDriverInterface:
+            alias: App\Tests\Double\ManualTimerDriver
+
+        App\Tests\Double\FakeHomeAssistantGateway:
+            public: true
+
+        App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface:
+            alias: App\Tests\Double\FakeHomeAssistantGateway
+
+        App\Tests\Double\ImmediateShutdown:
+            public: true
+
+        App\Application\Engine\Lifecycle\ShutdownWaiterInterface:
+            alias: App\Tests\Double\ImmediateShutdown
+
+        App\Tests\Double\RecordingControlServer:
+            public: true
+
+        App\Application\Engine\Lifecycle\ControlServerInterface:
+            alias: App\Tests\Double\RecordingControlServer
+
+        App\Tests\Double\ConfigurableCommandGuard:
+            public: true
+            tags: ['app.command_guard']
+
+        App\Application\Engine\Lifecycle\ConfigurationReloader:
+            public: true
+
+        # The real server, started by the HTTP tests on a free port (ENGINE_PORT=0 in .env.test).
+        App\Infrastructure\Engine\Http\InternalHttpServer:
+            public: true
+            arguments:
+                $port: '%env(int:ENGINE_PORT)%'
+
+        # Read by the wiring tests.
+        App\Domain\Decision\TargetResolver:
+            public: true
+            arguments:
+                - !tagged_iterator { tag: app.room_rule, default_priority_method: priority }
+
+        App\Application\Engine\Facts\RoomFactsBuilder:
+            public: true
+            arguments:
+                - !tagged_iterator app.room_fact_contributor
+
+        App\Application\Engine\Command\CommandExecutor:
+            public: true
+            arguments:
+                $guards: !tagged_iterator app.command_guard
+
+        App\Application\Engine\Timer\TimerScheduler:
+            public: true
+            arguments:
+                $handlerServices: !tagged_iterator app.timer_handler
+
+        App\Infrastructure\Engine\Http\InternalRouter:
+            public: true
+            arguments:
+                $routes: !tagged_iterator app.internal_route

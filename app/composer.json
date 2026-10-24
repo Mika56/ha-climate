@@ -9,8 +9,14 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-pcntl": "*",
         "amphp/amp": "^3",
+        "amphp/byte-stream": "^2",
+        "amphp/http": "^2",
         "amphp/http-server": "^3",
+        "amphp/pipeline": "^1",
+        "amphp/socket": "^2",
+        "amphp/sync": "^2",
         "amphp/websocket-client": "^2",
         "doctrine/doctrine-bundle": "^3.3",
         "doctrine/doctrine-migrations-bundle": "^4.0",
@@ -20,8 +26,11 @@
         "symfony/clock": "7.4.*",
         "symfony/console": "7.4.*",
         "symfony/dotenv": "7.4.*",
+        "symfony/event-dispatcher": "7.4.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.4.*",
+        "symfony/http-client": "7.4.*",
+        "symfony/monolog-bundle": "^4.1",
         "symfony/runtime": "7.4.*",
         "symfony/serializer": "7.4.*",
         "symfony/translation": "7.4.*",
@@ -81,7 +90,7 @@
         "coverage:check": "bin/coverage-check var/coverage/clover.xml 90",
         "lint": [
             "@php bin/console lint:container",
-            "@php bin/console lint:yaml config",
+            "@php bin/console lint:yaml config --parse-tags",
             "@composer validate --strict"
         ],
         "ci": [
@@ -103,6 +112,7 @@
         }
     },
     "require-dev": {
+        "amphp/http-client": "^5",
         "amphp/websocket-server": "^4",
         "dama/doctrine-test-bundle": "^8.7",
         "friendsofphp/php-cs-fixer": "^3.95",
