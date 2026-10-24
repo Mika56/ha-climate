@@ -144,6 +144,20 @@ final class CompressedStateDecoderTest extends TestCase
         self::assertSame('1', $new->state);
     }
 
+    public function testAContextInADiffOnlyReplacesWhatItCarries(): void
+    {
+        $previous = new EntityState('sensor.t', '1', [], new \DateTimeImmutable('@1700000000'), new \DateTimeImmutable('@1700000000'), new StateContext('c1', 'p1', 'u1'));
+        $cache = $this->cacheWith($previous);
+
+        $bareId = $this->decoder->decode(['c' => ['sensor.t' => ['+' => ['c' => 'c2']]]], $cache)->cache['sensor.t']->context;
+        $onlyUser = $this->decoder->decode(['c' => ['sensor.t' => ['+' => ['c' => ['user_id' => 'u2']]]]], $cache)->cache['sensor.t']->context;
+        $parentCleared = $this->decoder->decode(['c' => ['sensor.t' => ['+' => ['c' => ['id' => 'c3', 'parent_id' => null]]]]], $cache)->cache['sensor.t']->context;
+
+        self::assertEquals(new StateContext('c2', 'p1', 'u1'), $bareId);
+        self::assertEquals(new StateContext('c1', 'p1', 'u2'), $onlyUser);
+        self::assertEquals(new StateContext('c3', null, 'u1'), $parentCleared);
+    }
+
     public function testDiffWithOnlyRemovedAttributesAndMalformedKeys(): void
     {
         $cache = $this->cacheWith($this->state('sensor.t', '1', ['a' => 1, 'b' => 2]));

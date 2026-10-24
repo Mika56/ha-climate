@@ -17,8 +17,9 @@ use App\Application\Port\HomeAssistant\StateContext;
  *  - "c": changed entities, `{entity_id: {"+": {partial s/a/c/lc/lu}, "-": {"a": [removed attribute keys]}}}`
  *  - "r": removed entity ids
  *
- * "c" (context) is either the context id or an object `{"id", "parent_id", "user_id"}`; "lu" absent
- * means "same as lc". The decoder is pure: the caller keeps the cache of full states between events.
+ * "c" (context) is either the context id or an object `{"id", "parent_id", "user_id"}`; in a diff ("+") it
+ * only carries what changed (a bare id keeps the previous user and parent); "lu" absent means "same as lc".
+ * The decoder is pure: the caller keeps the cache of full states between events.
  */
 final class CompressedStateDecoder
 {
@@ -121,6 +122,28 @@ final class CompressedStateDecoder
     }
 
     /**
+     * Applies the context of a diff to the previous one. Home Assistant only sends what changed: a plain
+     * string is a new context id with the same parent and user, an object carries just the changed members
+     * (`id`, `parent_id`, `user_id`). Verified against a real instance (see the fixture of the decoder test).
+     *
+     * @throws InvalidPayloadException
+     */
+    private static function mergeContext(StateContext $previous, mixed $raw): StateContext
+    {
+        if (\is_string($raw)) {
+            return new StateContext($raw, $previous->parentId, $previous->userId);
+        }
+
+        $map = Payload::map($raw, 'context');
+
+        return new StateContext(
+            Payload::optionalString($map, 'id') ?? $previous->id,
+            \array_key_exists('parent_id', $map) ? Payload::optionalString($map, 'parent_id') : $previous->parentId,
+            \array_key_exists('user_id', $map) ? Payload::optionalString($map, 'user_id') : $previous->userId,
+        );
+    }
+
+    /**
      * @throws InvalidPayloadException
      */
     public static function fromEpoch(float $timestamp): \DateTimeImmutable
@@ -190,7 +213,7 @@ final class CompressedStateDecoder
             $attributes[$key] = $value;
         }
         if (\array_key_exists('c', $plus)) {
-            $context = self::parseContext($plus['c']);
+            $context = self::mergeContext($old->context, $plus['c']);
         }
         $newLastChanged = Payload::optionalFloat($plus, 'lc');
         $newLastUpdated = Payload::optionalFloat($plus, 'lu');
