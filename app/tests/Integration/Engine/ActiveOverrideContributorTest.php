@@ -50,6 +50,30 @@ final class ActiveOverrideContributorTest extends EngineTestCase
         self::assertSame(23.0, $facts->override->target?->toFloat());
     }
 
+    public function testAManualOverrideWithoutTargetMeansOff(): void
+    {
+        $room = $this->roomWithSeason(Season::Winter);
+        $now = $this->clock()->now();
+        $this->save(RoomOverride::manual($room, HvacMode::Heat, null, $now->modify('-10 minutes'), $now->modify('+2 hours'), 'device'));
+
+        $override = $this->contribute()->override;
+
+        self::assertSame(OverrideType::Manual, $override?->type);
+        self::assertTrue($override->isManualOff());
+    }
+
+    public function testABoostWithoutDeltaIsIgnored(): void
+    {
+        $room = $this->roomWithSeason(Season::Winter);
+        $now = $this->clock()->now();
+        $boost = RoomOverride::boost($room, HvacMode::Heat, 2.0, $now->modify('-10 minutes'), $now->modify('+1 hour'), false, 'user-1');
+        $this->save($boost);
+        $this->em()->getConnection()->executeStatement('UPDATE room_override SET delta = NULL');
+        $this->em()->clear();
+
+        self::assertNull($this->contribute()->override);
+    }
+
     public function testAnEndedOverrideIsIgnored(): void
     {
         $room = $this->roomWithSeason(Season::Winter);

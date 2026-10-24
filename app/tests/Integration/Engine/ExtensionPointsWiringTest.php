@@ -12,6 +12,7 @@ use App\Application\Engine\Timer\DailyMaintenanceHandler;
 use App\Application\Engine\Timer\RoomReevaluateHandler;
 use App\Application\Engine\Timer\TimerScheduler;
 use App\Domain\Decision\Rule\NoDeviceForModeRule;
+use App\Domain\Decision\Rule\OverrideRule;
 use App\Domain\Decision\Rule\ScheduleRule;
 use App\Domain\Decision\Rule\SeasonOffRule;
 use App\Domain\Decision\TargetResolver;
@@ -41,7 +42,7 @@ final class ExtensionPointsWiringTest extends KernelTestCase
         self::bootKernel();
 
         self::assertSame(
-            [SeasonOffRule::class, NoDeviceForModeRule::class, ScheduleRule::class],
+            [SeasonOffRule::class, NoDeviceForModeRule::class, OverrideRule::class, ScheduleRule::class],
             array_map(get_debug_type(...), self::iterable(TargetResolver::class, 'rules')),
         );
     }

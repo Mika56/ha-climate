@@ -19,6 +19,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * The boost or manual override of the room that is in force now (and matches the active season's mode).
+ * A manual override without target means "off".
  */
 final readonly class ActiveOverrideContributor implements RoomFactContributorInterface
 {
@@ -49,11 +50,15 @@ final readonly class ActiveOverrideContributor implements RoomFactContributorInt
         $delta = $override->getDelta();
         $target = $override->getAbsoluteTarget();
 
-        if (OverrideType::Boost === $override->getType() && null !== $delta) {
+        if (OverrideType::Boost === $override->getType()) {
+            if (null === $delta) {
+                throw new InvalidValueException('A boost requires a delta.');
+            }
+
             return ActiveOverride::boost(new TemperatureDelta($delta), $override->getEndsAt(), $override->isUntilNextSlot());
         }
         if (null === $target) {
-            throw new InvalidValueException('A manual override requires a target.');
+            return ActiveOverride::manualOff($override->getEndsAt(), $override->isUntilNextSlot());
         }
 
         return ActiveOverride::manual(new Temperature($target), $override->getEndsAt(), $override->isUntilNextSlot());

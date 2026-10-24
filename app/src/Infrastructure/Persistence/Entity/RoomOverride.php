@@ -96,12 +96,13 @@ final class RoomOverride
     }
 
     /**
-     * A manual override (a change made on the device itself) pins an absolute target.
+     * A manual override (a change made on the device itself) pins an absolute target, or switches the room
+     * off when the target is null.
      */
     public static function manual(
         Room $room,
         HvacMode $mode,
-        float $absoluteTarget,
+        ?float $absoluteTarget,
         \DateTimeImmutable $startedAt,
         \DateTimeImmutable $endsAt,
         string $actor,

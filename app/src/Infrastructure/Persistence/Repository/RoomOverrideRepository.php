@@ -33,6 +33,36 @@ final class RoomOverrideRepository extends ServiceEntityRepository
     }
 
     /**
+     * Makes $override the only override of its room: the previous ones, ended or not, are removed in the
+     * same transaction.
+     */
+    public function replaceForRoom(RoomOverride $override): void
+    {
+        $this->clearRoom($override->getRoom(), false);
+        $this->getEntityManager()->persist($override);
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * Removes every override of the room and returns them as they were.
+     *
+     * @return list<RoomOverride>
+     */
+    public function clearRoom(Room $room, bool $flush = true): array
+    {
+        /** @var list<RoomOverride> $existing */
+        $existing = $this->findBy(['room' => $room]);
+        foreach ($existing as $override) {
+            $this->getEntityManager()->remove($override);
+        }
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+
+        return $existing;
+    }
+
+    /**
      * The most recent override of the room still in force at $now.
      */
     public function findActiveForRoom(Room $room, \DateTimeImmutable $now): ?RoomOverride
