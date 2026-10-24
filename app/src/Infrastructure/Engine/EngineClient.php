@@ -9,8 +9,8 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * The web side's handle on the engine: tells it to reload the configuration and reads its status, through
- * the internal HTTP routes, authenticated with the shared token file.
+ * The web side's handle on the engine: tells it to reload the configuration, reads its status and boosts rooms,
+ * through the internal HTTP routes, authenticated with the shared token file.
  */
 final readonly class EngineClient
 {
@@ -50,11 +50,48 @@ final readonly class EngineClient
     }
 
     /**
+     * Boosts a room (see `POST /internal/rooms/{roomId}/boost`) and returns its new status. At least one of
+     * $durationMinutes and $untilNextSlot must be given.
+     *
+     * @param string $actor the Home Assistant user behind the request, for the audit trail
+     *
      * @return array<string, mixed>
      *
      * @throws EngineUnavailableException
+     * @throws EngineRejectedException
      */
-    private function request(string $method, string $path): array
+    public function boost(string $roomId, float $delta, ?int $durationMinutes, bool $untilNextSlot, string $actor): array
+    {
+        $body = ['delta' => $delta, 'untilNextSlot' => $untilNextSlot, 'actor' => $actor];
+        if (null !== $durationMinutes) {
+            $body['durationMinutes'] = $durationMinutes;
+        }
+
+        return $this->request('POST', \sprintf('/internal/rooms/%s/boost', rawurlencode($roomId)), ['json' => $body]);
+    }
+
+    /**
+     * Cancels the boost or manual override of a room and returns its new status.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     * @throws EngineRejectedException
+     */
+    public function cancelOverride(string $roomId, string $actor): array
+    {
+        return $this->request('DELETE', \sprintf('/internal/rooms/%s/override', rawurlencode($roomId)), ['query' => ['actor' => $actor]]);
+    }
+
+    /**
+     * @param array<string, mixed> $options extra HttpClient options (`json`, `query`)
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     * @throws EngineRejectedException
+     */
+    private function request(string $method, string $path, array $options = []): array
     {
         $token = $this->tokens->read();
         if (null === $token) {
@@ -63,10 +100,21 @@ final readonly class EngineClient
 
         try {
             $response = $this->httpClient->request($method, rtrim($this->baseUri, '/').$path, [
+                ...$options,
                 'headers' => [InternalRouter::TOKEN_HEADER => $token, 'Accept' => 'application/json'],
                 'timeout' => 10,
                 'max_duration' => 30,
             ]);
+
+            $status = $response->getStatusCode();
+            if (\in_array($status, [400, 404, 409], true)) {
+                /** @var array<string, mixed> $error */
+                $error = $response->toArray(false);
+                $code = $error['error'] ?? null;
+                $message = $error['message'] ?? null;
+
+                throw new EngineRejectedException($status, \is_string($code) ? $code : 'rejected', \is_string($message) ? $message : 'The engine refused the request.');
+            }
 
             /** @var array<string, mixed> $data */
             $data = $response->toArray();

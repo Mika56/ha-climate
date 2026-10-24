@@ -22,7 +22,8 @@ interface InternalRouteInterface
     public function method(): string;
 
     /**
-     * Exact path, starting with a slash.
+     * Path starting with a slash. A `{name}` segment matches any single non-empty segment; its value is in the
+     * request attribute {@see InternalRouter::PARAMETERS_ATTRIBUTE}.
      */
     public function path(): string;
 

@@ -9,8 +9,8 @@ use App\Infrastructure\Persistence\Enum\ActorType;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
 /**
- * For now a manual change is only recorded in the audit trail; boosts and overrides (phase 3) subscribe to
- * the same event to react to it.
+ * Records every manual change in the audit trail. It runs before (default priority 0) the subscriber that
+ * turns the change into a manual override (see ManualOverrideSubscriber, priority -10).
  */
 #[AsEventListener]
 final readonly class ManualChangeAuditSubscriber

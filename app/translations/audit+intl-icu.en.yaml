@@ -37,3 +37,19 @@ audit:
     connection:
         lost: 'Connection to Home Assistant lost.'
         restored: 'Connection to Home Assistant restored.'
+    override:
+        boost_started: >-
+            {mode, select,
+            cool {Boost: target lowered by {delta, number} °C until {until}}
+            other {Boost: target raised by {delta, number} °C until {until}}}
+        manual_started: >-
+            {mode, select,
+            off {Manual setting kept: switched off until {until}}
+            heat {Manual setting kept: heating at {target, number} °C until {until}}
+            cool {Manual setting kept: cooling at {target, number} °C until {until}}
+            other {Manual setting kept until {until}}}
+        cancelled: >-
+            {type, select,
+            boost {The boost was cancelled}
+            manual {The manual setting was cancelled}
+            other {The override was cancelled}}

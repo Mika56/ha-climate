@@ -13,6 +13,8 @@ use Amp\TimeoutCancellation;
 use App\Application\Engine\Evaluation\LiveStatusPublisher;
 use App\Domain\Climate\Season;
 use App\Infrastructure\Engine\EngineTokenStore;
+use App\Infrastructure\Engine\Http\BoostRoute;
+use App\Infrastructure\Engine\Http\CancelOverrideRoute;
 use App\Infrastructure\Engine\Http\InternalHttpServer;
 use App\Infrastructure\Engine\Http\InternalRouteInterface;
 use App\Infrastructure\Engine\Http\InternalRouter;
@@ -38,6 +40,8 @@ use Psr\Log\NullLogger;
 #[UsesNamespace('App\Domain')]
 #[UsesNamespace('App\Infrastructure\Persistence')]
 #[UsesClass(EngineTokenStore::class)]
+#[UsesClass(BoostRoute::class)]
+#[UsesClass(CancelOverrideRoute::class)]
 final class InternalHttpServerTest extends EngineTestCase
 {
     /** @var list<InternalHttpServer> */

@@ -37,3 +37,19 @@ audit:
     connection:
         lost: 'Connexion à Home Assistant perdue.'
         restored: 'Connexion à Home Assistant rétablie.'
+    override:
+        boost_started: >-
+            {mode, select,
+            cool {Boost : consigne abaissée de {delta, number} °C jusqu’à {until}}
+            other {Boost : consigne relevée de {delta, number} °C jusqu’à {until}}}
+        manual_started: >-
+            {mode, select,
+            off {Réglage manuel conservé : arrêt jusqu’à {until}}
+            heat {Réglage manuel conservé : chauffage à {target, number} °C jusqu’à {until}}
+            cool {Réglage manuel conservé : climatisation à {target, number} °C jusqu’à {until}}
+            other {Réglage manuel conservé jusqu’à {until}}}
+        cancelled: >-
+            {type, select,
+            boost {Le boost a été annulé}
+            manual {Le réglage manuel a été annulé}
+            other {La surcharge a été annulée}}

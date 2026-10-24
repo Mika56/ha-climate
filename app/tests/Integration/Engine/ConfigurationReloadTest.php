@@ -134,7 +134,8 @@ final class ConfigurationReloadTest extends EngineTestCase
         $manual = $this->auditEntries('audit.manual_change.detected');
         self::assertCount(1, $manual);
         self::assertSame('user-42', $manual[0]->getActorId());
-        self::assertGreaterThanOrEqual(1, \count($this->homeAssistant()->serviceCalls()), 'The device is brought back to the schedule.');
+        self::assertSame([], $this->homeAssistant()->serviceCalls(), 'The manual setting made during the outage is kept, not reverted.');
+        self::assertCount(1, $this->auditEntries('audit.override.manual_started'));
     }
 
     public function testAnEntityRemovedWhileDisconnectedIsForgottenOnReconnection(): void

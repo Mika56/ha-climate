@@ -144,6 +144,12 @@ final class AuditLoggerTest extends EngineTestCase
         yield 'reloaded' => ['audit.configuration.reloaded', ['rooms' => 2, 'entities' => 9]];
         yield 'connection lost' => ['audit.connection.lost', []];
         yield 'connection restored' => ['audit.connection.restored', []];
+        yield 'boost cooling' => ['audit.override.boost_started', ['mode' => 'cool', 'delta' => 1.5, 'until' => '2026-10-26T09:00:00+01:00']];
+        yield 'boost heating' => ['audit.override.boost_started', ['mode' => 'heat', 'delta' => 1.5, 'until' => '2026-10-26T09:00:00+01:00']];
+        yield 'manual off' => ['audit.override.manual_started', ['mode' => 'off', 'until' => '2026-10-26T10:00:00+01:00']];
+        yield 'manual heat' => ['audit.override.manual_started', ['mode' => 'heat', 'target' => 24.0, 'until' => '2026-10-26T10:00:00+01:00']];
+        yield 'manual cool' => ['audit.override.manual_started', ['mode' => 'cool', 'target' => 24.0, 'until' => '2026-10-26T10:00:00+01:00']];
+        yield 'override cancelled' => ['audit.override.cancelled', ['type' => 'boost']];
     }
 
     public function testTheTestedKeysAreExactlyThoseUsedInTheSources(): void
