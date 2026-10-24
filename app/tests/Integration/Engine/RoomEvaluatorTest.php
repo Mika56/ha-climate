@@ -16,7 +16,10 @@ use App\Domain\Climate\HvacMode;
 use App\Domain\Climate\Season;
 use App\Domain\Device\DeviceRole;
 use App\Domain\Room\RoomId;
+use App\Infrastructure\Persistence\Entity\Room;
+use App\Infrastructure\Persistence\Entity\RoomOverride;
 use App\Infrastructure\Persistence\Entity\Timer;
+use App\Infrastructure\Persistence\Repository\RoomOverrideRepository;
 use App\Infrastructure\Persistence\Repository\TimerRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
@@ -100,6 +103,52 @@ final class RoomEvaluatorTest extends EngineTestCase
         $this->timers()->advance(31 * 60); // 21:01 UTC
         self::assertCount(1, $this->homeAssistant()->serviceCalls());
         self::assertSame(17.0, $this->homeAssistant()->serviceCalls()[0]->serviceData['temperature']);
+    }
+
+    public function testARuleDeadlineEarlierThanTheNextSlotArmsTheBoundaryTimerAtThatInstant(): void
+    {
+        $this->setSeason(Season::Winter);
+        $room = $this->createRoom();
+        $this->seedDevice(mode: 'heat', target: 21.0);
+        $this->seedSensor();
+        $managed = $this->em()->find(Room::class, $room->getId());
+        self::assertNotNull($managed);
+        $now = $this->clock()->now();
+        // The override rule asks to be evaluated again when the boost ends, at 08:30 Paris (07:30 UTC): before the 22:30 slot.
+        $this->service(RoomOverrideRepository::class)->save(RoomOverride::boost($managed, HvacMode::Heat, 1.0, $now, $now->modify('+30 minutes'), false, 'alice'));
+        $key = 'room.boundary.'.$room->getId()->toRfc4122();
+
+        $this->startEngine();
+
+        $timer = $this->service(TimerRepository::class)->findOneByKey($key);
+        self::assertInstanceOf(Timer::class, $timer);
+        self::assertSame('2026-10-26 07:30:00', $timer->getDueAt()->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'));
+        self::assertSame('rule_deadline', $timer->getPayload()['cause']);
+
+        // The deadline passes: the timer is rearmed for the schedule boundary with the schedule as cause.
+        $this->timers()->advance(30 * 60);
+        $this->em()->clear();
+        $next = $this->service(TimerRepository::class)->findOneByKey($key);
+        self::assertSame('2026-10-26 21:30:00', $next?->getDueAt()->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'));
+        self::assertSame('schedule', $next->getPayload()['cause']);
+    }
+
+    public function testARuleDeadlineLaterThanTheNextSlotLeavesTheScheduleBoundary(): void
+    {
+        $this->setSeason(Season::Winter);
+        $room = $this->createRoom();
+        $this->seedDevice(mode: 'heat', target: 21.0);
+        $this->seedSensor();
+        $managed = $this->em()->find(Room::class, $room->getId());
+        self::assertNotNull($managed);
+        $now = $this->clock()->now();
+        $this->service(RoomOverrideRepository::class)->save(RoomOverride::boost($managed, HvacMode::Heat, 1.0, $now, $now->modify('+20 hours'), false, 'alice'));
+
+        $this->startEngine();
+
+        $timer = $this->service(TimerRepository::class)->findOneByKey('room.boundary.'.$room->getId()->toRfc4122());
+        self::assertSame('2026-10-26 21:30:00', $timer?->getDueAt()->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'));
+        self::assertSame('schedule', $timer->getPayload()['cause']);
     }
 
     public function testSeasonOffTurnsEveryDeviceOff(): void

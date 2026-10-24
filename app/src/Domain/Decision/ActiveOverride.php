@@ -9,8 +9,12 @@ use App\Domain\Climate\TemperatureDelta;
 use App\Domain\Exception\InvalidValueException;
 
 /**
- * A running boost (scheduled target plus a delta) or manual override (absolute target).
- * It ends at a given instant, at the next schedule slot, or both (whichever comes first).
+ * A running boost (scheduled target plus a delta) or manual override (absolute target, or "off" when the
+ * target is null). It ends at a given instant, at the next schedule slot, or both (whichever comes first).
+ *
+ * Overrides are created with a concrete `endsAt` (an "until next slot" override is resolved to the start of
+ * that slot when it is created, so that a restart cannot move it); `untilNextSlot` only remembers how it was
+ * asked for. The rule reads `endsAt` alone.
  */
 final readonly class ActiveOverride
 {
@@ -25,8 +29,8 @@ final readonly class ActiveOverride
             throw new InvalidValueException('A boost requires a delta and no absolute target.');
         }
 
-        if (OverrideType::Manual === $type && (null === $target || null !== $delta)) {
-            throw new InvalidValueException('A manual override requires an absolute target and no delta.');
+        if (OverrideType::Manual === $type && null !== $delta) {
+            throw new InvalidValueException('A manual override has no delta.');
         }
     }
 
@@ -38,5 +42,26 @@ final readonly class ActiveOverride
     public static function manual(Temperature $target, ?\DateTimeImmutable $endsAt = null, bool $untilNextSlot = false): self
     {
         return new self(OverrideType::Manual, null, $target, $endsAt, $untilNextSlot);
+    }
+
+    /**
+     * A manual override that switches the room off.
+     */
+    public static function manualOff(?\DateTimeImmutable $endsAt = null, bool $untilNextSlot = false): self
+    {
+        return new self(OverrideType::Manual, null, null, $endsAt, $untilNextSlot);
+    }
+
+    public function isManualOff(): bool
+    {
+        return OverrideType::Manual === $this->type && null === $this->target;
+    }
+
+    /**
+     * Whether the override is over at $now (it ends exactly at `endsAt`).
+     */
+    public function hasEndedAt(\DateTimeImmutable $now): bool
+    {
+        return null !== $this->endsAt && $this->endsAt <= $now;
     }
 }

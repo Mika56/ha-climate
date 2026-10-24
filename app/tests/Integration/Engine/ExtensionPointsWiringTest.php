@@ -21,6 +21,7 @@ use App\Application\Engine\Timer\TimerScheduler;
 use App\Domain\Decision\Rule\HouseEmptyRule;
 use App\Domain\Decision\Rule\NoDeviceForModeRule;
 use App\Domain\Decision\Rule\OpeningRule;
+use App\Domain\Decision\Rule\OverrideRule;
 use App\Domain\Decision\Rule\PreheatRule;
 use App\Domain\Decision\Rule\RoomVacancyRule;
 use App\Domain\Decision\Rule\ScheduleRule;
@@ -59,6 +60,7 @@ final class ExtensionPointsWiringTest extends KernelTestCase
                 VacationRule::class,
                 HouseEmptyRule::class,
                 OpeningRule::class,
+                OverrideRule::class,
                 RoomVacancyRule::class,
                 PreheatRule::class,
                 ScheduleRule::class,

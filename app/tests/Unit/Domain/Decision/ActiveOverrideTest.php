@@ -56,11 +56,25 @@ final class ActiveOverrideTest extends TestCase
         new ActiveOverride(OverrideType::Boost, new TemperatureDelta(1.0), new Temperature(20.0), null, false);
     }
 
-    public function testManualWithoutTargetIsRejected(): void
+    public function testManualWithoutTargetMeansOff(): void
     {
-        $this->expectException(InvalidValueException::class);
+        $off = ActiveOverride::manualOff(Fixtures::at('2026-10-26 09:00'));
 
-        new ActiveOverride(OverrideType::Manual, null, null, null, false);
+        self::assertSame(OverrideType::Manual, $off->type);
+        self::assertNull($off->target);
+        self::assertTrue($off->isManualOff());
+        self::assertFalse(ActiveOverride::manual(new Temperature(22.0))->isManualOff());
+        self::assertFalse(ActiveOverride::boost(new TemperatureDelta(1.0))->isManualOff());
+    }
+
+    public function testItHasEndedFromItsEndInstantOn(): void
+    {
+        $endsAt = Fixtures::at('2026-10-26 09:00');
+        $boost = ActiveOverride::boost(new TemperatureDelta(2.0), $endsAt);
+
+        self::assertFalse($boost->hasEndedAt(Fixtures::at('2026-10-26 08:59:59')));
+        self::assertTrue($boost->hasEndedAt($endsAt));
+        self::assertFalse(ActiveOverride::boost(new TemperatureDelta(2.0))->hasEndedAt($endsAt));
     }
 
     public function testManualWithDeltaIsRejected(): void

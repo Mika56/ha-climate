@@ -148,6 +148,12 @@ final class AuditLoggerTest extends EngineTestCase
         yield 'alert resolved' => ['audit.alert.resolved', ['key' => 'entity.sensor.living_temperature', 'type' => 'entity_unavailable']];
         yield 'notification sent' => ['audit.notification.sent', ['type' => 'window_open', 'target' => 'notify.mobile_app_phone']];
         yield 'notification failed' => ['audit.notification.failed', ['type' => 'window_open', 'target' => 'notify.mobile_app_phone', 'error' => 'boom']];
+        yield 'boost cooling' => ['audit.override.boost_started', ['mode' => 'cool', 'delta' => 1.5, 'until' => '2026-10-26T09:00:00+01:00']];
+        yield 'boost heating' => ['audit.override.boost_started', ['mode' => 'heat', 'delta' => 1.5, 'until' => '2026-10-26T09:00:00+01:00']];
+        yield 'manual off' => ['audit.override.manual_started', ['mode' => 'off', 'until' => '2026-10-26T10:00:00+01:00']];
+        yield 'manual heat' => ['audit.override.manual_started', ['mode' => 'heat', 'target' => 24.0, 'until' => '2026-10-26T10:00:00+01:00']];
+        yield 'manual cool' => ['audit.override.manual_started', ['mode' => 'cool', 'target' => 24.0, 'until' => '2026-10-26T10:00:00+01:00']];
+        yield 'override cancelled' => ['audit.override.cancelled', ['type' => 'boost']];
     }
 
     public function testTheTestedKeysAreExactlyThoseUsedInTheSources(): void

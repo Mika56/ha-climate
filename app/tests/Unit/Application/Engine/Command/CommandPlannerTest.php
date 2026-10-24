@@ -11,6 +11,8 @@ use App\Application\Port\HomeAssistant\StateContext;
 use App\Domain\Climate\HvacMode;
 use App\Domain\Decision\Decision;
 use App\Domain\Decision\Reason;
+use App\Domain\Device\AntiCyclingPolicy;
+use App\Domain\Device\Device;
 use App\Domain\Device\DeviceRole;
 use App\Tests\Unit\Domain\Support\Fixtures;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -55,6 +57,34 @@ final class CommandPlannerTest extends TestCase
         yield 'no target reported' => ['heat', [], true];
         yield 'device off' => ['off', ['temperature' => 21.0], true];
         yield 'other mode' => ['heat_cool', ['temperature' => 21.0], true];
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('hysteresisCases')]
+    public function testASetpointCloserThanTheHysteresisIsSkippedWhileTheModeIsUnchanged(string $state, array $attributes, float $hysteresis, bool $sends): void
+    {
+        $device = new Device(Fixtures::entity(), DeviceRole::Heating, new AntiCyclingPolicy(0, 0, $hysteresis));
+        $decision = Decision::heat(Fixtures::temperature(21.0), new Reason('reason.schedule'));
+
+        $command = (new CommandPlanner())->plan(Fixtures::room(), $device, $decision, self::state($state, $attributes));
+
+        self::assertSame($sends, null !== $command);
+    }
+
+    /**
+     * @return iterable<string, array{string, array<string, mixed>, float, bool}>
+     */
+    public static function hysteresisCases(): iterable
+    {
+        yield 'smaller than the hysteresis' => ['heat', ['temperature' => 21.4], 0.5, false];
+        yield 'exactly the hysteresis' => ['heat', ['temperature' => 21.5], 0.5, true];
+        yield 'below, going down' => ['heat', ['temperature' => 20.6], 0.5, false];
+        yield 'larger than the hysteresis' => ['heat', ['temperature' => 22.0], 0.5, true];
+        yield 'no hysteresis' => ['heat', ['temperature' => 21.1], 0.0, true];
+        yield 'mode change is never skipped' => ['cool', ['temperature' => 21.2], 0.5, true];
+        yield 'turning on is never skipped' => ['off', ['temperature' => 21.2], 2.0, true];
     }
 
     public function testAnOffDecisionTurnsARunningDeviceOff(): void
