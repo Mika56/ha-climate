@@ -1,0 +1,1135 @@
+openapi: 3.1.0
+info:
+  title: HA Climate API
+  version: 0.1.0
+  description: |
+    JSON API of the HA Climate add-on, consumed by its Vue front end through Home Assistant ingress.
+
+    - Base path: every path is relative to the ingress base URL (the front end calls `./api/...`).
+    - Identity: behind ingress the Supervisor adds `X-Remote-User-Id`, `X-Remote-User-Name` and
+      `X-Remote-User-Display-Name`. Without them (standalone dev) the user is anonymous.
+    - Times are RFC 3339 with offset, in the Home Assistant time zone. Temperatures are °C floats (0.1 precision).
+    - Decision reasons are i18n codes (`reason.*`) with params, translated by the front end.
+      Audit messages are rendered by the server in the request locale (`Accept-Language`).
+    - Live room updates come from `GET /api/live` (Server-Sent Events, served by the engine, proxied by nginx).
+security: []
+servers:
+  - url: .
+tags:
+  - name: system
+  - name: overview
+  - name: rooms
+  - name: presets
+  - name: schedules
+  - name: settings
+  - name: notifications
+  - name: discovery
+  - name: history
+  - name: backup
+
+paths:
+  /api/health:
+    get:
+      tags: [system]
+      operationId: getHealth
+      responses:
+        '200':
+          description: Web side is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: ok }
+
+  /api/context:
+    get:
+      tags: [system]
+      operationId: getContext
+      summary: Everything the front end needs at boot (user, languages, preferences, engine state).
+      responses:
+        '200':
+          description: Boot context.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Context' }
+
+  /api/me/preferences:
+    put:
+      tags: [system]
+      operationId: updateMyPreferences
+      summary: Stores the language and theme chosen by the current Home Assistant user (null = automatic).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserPreferences' }
+      responses:
+        '200':
+          description: Saved preferences.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserPreferences' }
+        '409':
+          description: No Home Assistant user on the request (standalone access); the front end keeps the choice locally.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/overview:
+    get:
+      tags: [overview]
+      operationId: getOverview
+      summary: Data of the overview page besides the live room cards.
+      responses:
+        '200':
+          description: Overview.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Overview' }
+
+  /api/status:
+    get:
+      tags: [overview]
+      operationId: listRoomStatuses
+      summary: Current status of every room (same payload as the `room` events of /api/live).
+      responses:
+        '200':
+          description: Room statuses, in room order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RoomStatus' }
+        '503': { $ref: '#/components/responses/EngineUnavailable' }
+
+  /api/live:
+    get:
+      tags: [overview]
+      operationId: streamRoomStatuses
+      summary: "Server-Sent Events: `event: room` with a RoomStatus JSON per change (full snapshot on connect), comment heartbeat every 20 s."
+      responses:
+        '200':
+          description: Event stream.
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  /api/season:
+    put:
+      tags: [overview]
+      operationId: updateSeason
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [season]
+              properties:
+                season: { $ref: '#/components/schemas/Season' }
+      responses:
+        '200':
+          description: Season stored; the engine has been told to reload.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [season]
+                properties:
+                  season: { $ref: '#/components/schemas/Season' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/rooms:
+    get:
+      tags: [rooms]
+      operationId: listRooms
+      responses:
+        '200':
+          description: Rooms in display order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Room' }
+    post:
+      tags: [rooms]
+      operationId: createRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoomInput' }
+      responses:
+        '201':
+          description: Created room.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/rooms/order:
+    put:
+      tags: [rooms]
+      operationId: reorderRooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [roomIds]
+              properties:
+                roomIds:
+                  type: array
+                  items: { $ref: '#/components/schemas/Id' }
+      responses:
+        '204': { description: Order saved. }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/rooms/{roomId}:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    get:
+      tags: [rooms]
+      operationId: getRoom
+      responses:
+        '200':
+          description: Room.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [rooms]
+      operationId: updateRoom
+      summary: Replaces the whole room aggregate (devices, preset temperatures, openings...).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoomInput' }
+      responses:
+        '200':
+          description: Updated room.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [rooms]
+      operationId: deleteRoom
+      responses:
+        '204': { description: Deleted. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/rooms/{roomId}/boost:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    post:
+      tags: [rooms]
+      operationId: startBoost
+      summary: Starts a boost (delta raises the target in heat, lowers it in cool). The actor is the ingress user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BoostInput' }
+      responses:
+        '200':
+          description: New room status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RoomStatus' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '503': { $ref: '#/components/responses/EngineUnavailable' }
+
+  /api/rooms/{roomId}/override:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    delete:
+      tags: [rooms]
+      operationId: cancelOverride
+      summary: Cancels the active boost or manual override of the room.
+      responses:
+        '200':
+          description: New room status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RoomStatus' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/EngineUnavailable' }
+
+  /api/presets:
+    get:
+      tags: [presets]
+      operationId: listPresets
+      responses:
+        '200':
+          description: Presets in display order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Preset' }
+    post:
+      tags: [presets]
+      operationId: createPreset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Preset' }
+      responses:
+        '201':
+          description: Created preset.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Preset' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/presets/{presetKey}:
+    parameters:
+      - name: presetKey
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/PresetKey' }
+    put:
+      tags: [presets]
+      operationId: updatePreset
+      summary: Updates label, color and position (the key is immutable).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Preset' }
+      responses:
+        '200':
+          description: Updated preset.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Preset' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [presets]
+      operationId: deletePreset
+      responses:
+        '204': { description: Deleted. }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: The preset is used by a schedule slot or is a system preset (vacancy/absent policy).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/schedules:
+    get:
+      tags: [schedules]
+      operationId: listSchedules
+      responses:
+        '200':
+          description: Schedules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Schedule' }
+    post:
+      tags: [schedules]
+      operationId: createSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleInput' }
+      responses:
+        '201':
+          description: Created schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/schedules/{scheduleId}:
+    parameters:
+      - name: scheduleId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Id' }
+    get:
+      tags: [schedules]
+      operationId: getSchedule
+      responses:
+        '200':
+          description: Schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [schedules]
+      operationId: updateSchedule
+      summary: Replaces name and all slots.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleInput' }
+      responses:
+        '200':
+          description: Updated schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [schedules]
+      operationId: deleteSchedule
+      summary: Deletes the schedule; rooms using it lose it (they will be switched off for that season).
+      responses:
+        '204': { description: Deleted. }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/schedules/{scheduleId}/duplicate:
+    parameters:
+      - name: scheduleId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Id' }
+    post:
+      tags: [schedules]
+      operationId: duplicateSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 64 }
+      responses:
+        '201':
+          description: The copy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/settings:
+    get:
+      tags: [settings]
+      operationId: getSettings
+      responses:
+        '200':
+          description: Global settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+    put:
+      tags: [settings]
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Settings' }
+      responses:
+        '200':
+          description: Saved settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/notifications:
+    get:
+      tags: [notifications]
+      operationId: getNotificationSettings
+      responses:
+        '200':
+          description: Targets (all discovered notify services, enabled or not) and per-type settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationSettings' }
+    put:
+      tags: [notifications]
+      operationId: updateNotificationSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationSettings' }
+      responses:
+        '200':
+          description: Saved settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationSettings' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/notifications/test:
+    post:
+      tags: [notifications]
+      operationId: sendTestNotification
+      responses:
+        '202': { description: Test notification sent to every enabled target. }
+        '409':
+          description: No enabled target.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '503': { $ref: '#/components/responses/EngineUnavailable' }
+
+  /api/discovery:
+    get:
+      tags: [discovery]
+      operationId: getDiscovery
+      summary: Home Assistant entities and services usable in the configuration, read live by the engine.
+      responses:
+        '200':
+          description: Discovered items.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Discovery' }
+        '503': { $ref: '#/components/responses/EngineUnavailable' }
+
+  /api/alerts:
+    get:
+      tags: [overview]
+      operationId: listActiveAlerts
+      responses:
+        '200':
+          description: Active alerts, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Alert' }
+
+  /api/audit:
+    get:
+      tags: [history]
+      operationId: searchAudit
+      parameters:
+        - { name: roomId, in: query, schema: { $ref: '#/components/schemas/Id' } }
+        - { name: actorType, in: query, schema: { $ref: '#/components/schemas/ActorType' } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        '200':
+          description: Page of entries, newest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AuditEntry' }
+                  total: { type: integer, minimum: 0 }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/audit/export:
+    get:
+      tags: [history]
+      operationId: exportAudit
+      summary: Same filters as /api/audit (without paging); CSV with rendered messages.
+      parameters:
+        - { name: roomId, in: query, schema: { $ref: '#/components/schemas/Id' } }
+        - { name: actorType, in: query, schema: { $ref: '#/components/schemas/ActorType' } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: CSV file (attachment).
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /api/backup:
+    get:
+      tags: [backup]
+      operationId: exportConfiguration
+      responses:
+        '200':
+          description: Whole configuration as a versioned JSON document (attachment).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Backup' }
+
+  /api/backup/restore:
+    post:
+      tags: [backup]
+      operationId: restoreConfiguration
+      summary: Replaces the whole configuration (rooms, devices, presets, schedules, settings, notifications) in one transaction; audited; engine reloaded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Backup' }
+      responses:
+        '200':
+          description: Restored.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rooms, schedules, presets]
+                properties:
+                  rooms: { type: integer }
+                  schedules: { type: integer }
+                  presets: { type: integer }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+components:
+  parameters:
+    RoomId:
+      name: roomId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+
+  responses:
+    NotFound:
+      description: Unknown resource.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: The request conflicts with the current state.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationFailed:
+      description: Invalid payload or parameters.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationError' }
+    EngineUnavailable:
+      description: The engine process does not answer (starting, restarting or down).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Id:
+      type: string
+      description: UUID (RFC 4122 string).
+      format: uuid
+    EntityId:
+      type: string
+      pattern: '^[a-z0-9_]+\.[a-z0-9_]+$'
+      examples: [climate.living_room]
+    PresetKey:
+      type: string
+      pattern: '^[a-z0-9_]{1,32}$'
+    Locale:
+      type: string
+      enum: [en, fr]
+    Season:
+      type: string
+      enum: [winter, summer, off]
+    HvacMode:
+      type: string
+      enum: [heat, cool, off]
+    ActorType:
+      type: string
+      enum: [user, system, device, automation]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Stable machine code (not_found, engine_unavailable, preset_in_use, no_active_mode, no_schedule, no_active_override, no_target...).
+        message: { type: string }
+    ValidationError:
+      type: object
+      required: [error, violations]
+      properties:
+        error: { type: string, const: validation_failed }
+        violations:
+          type: array
+          items:
+            type: object
+            required: [path, message]
+            properties:
+              path: { type: string, description: 'Property path, e.g. devices[0].minOnSeconds' }
+              message: { type: string, description: Translated in the request locale. }
+
+    Context:
+      type: object
+      required: [user, supportedLocales, haLanguage, haTimeZone, preferences, engine]
+      properties:
+        user:
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [id, name, displayName]
+              properties:
+                id: { type: string }
+                name: { type: string }
+                displayName: { type: string }
+        supportedLocales:
+          type: array
+          items: { $ref: '#/components/schemas/Locale' }
+        haLanguage: { type: ['string', 'null'], description: 'Server language of Home Assistant (get_config), e.g. fr.' }
+        haTimeZone: { type: ['string', 'null'], examples: [Europe/Paris] }
+        haVersion: { type: ['string', 'null'] }
+        preferences: { $ref: '#/components/schemas/UserPreferences' }
+        engine:
+          type: object
+          required: [running, connected]
+          properties:
+            running: { type: boolean }
+            connected: { type: boolean, description: Engine connected to Home Assistant. }
+
+    UserPreferences:
+      type: object
+      required: [locale, theme]
+      properties:
+        locale:
+          description: null = automatic (HA profile language, then HA server language, then browser, then en).
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/Locale'
+        theme:
+          type: string
+          enum: [auto, light, dark]
+
+    Overview:
+      type: object
+      required: [season, presence, weather, vacation, alerts]
+      properties:
+        season: { $ref: '#/components/schemas/Season' }
+        presence:
+          type: object
+          required: [persons, houseEmptySince, houseEmptyDelaySeconds]
+          properties:
+            persons:
+              type: array
+              items:
+                type: object
+                required: [entityId, name, state, tracked]
+                properties:
+                  entityId: { $ref: '#/components/schemas/EntityId' }
+                  name: { type: string }
+                  state: { type: string, description: 'HA state: home, not_home, a zone name, unavailable...' }
+                  tracked: { type: boolean }
+            houseEmptySince: { type: ['string', 'null'], format: date-time }
+            houseEmptyDelaySeconds: { type: integer }
+        weather:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/Weather'
+        vacation: { $ref: '#/components/schemas/Vacation' }
+        alerts:
+          type: array
+          items: { $ref: '#/components/schemas/Alert' }
+        recentDecisions:
+          type: array
+          description: Last 5 audit entries of category decision/override/opening.
+          items: { $ref: '#/components/schemas/AuditEntry' }
+
+    Weather:
+      type: object
+      required: [entityId, condition, temperature]
+      properties:
+        entityId: { $ref: '#/components/schemas/EntityId' }
+        condition: { type: string, description: 'HA weather state (sunny, partlycloudy, rainy...)' }
+        temperature: { type: ['number', 'null'] }
+        humidity: { type: ['number', 'null'] }
+        temperatureLow: { type: ['number', 'null'] }
+        temperatureHigh: { type: ['number', 'null'] }
+
+    Vacation:
+      type: object
+      required: [enabled, startAt, returnAt, offDuringVacation]
+      properties:
+        enabled: { type: boolean }
+        startAt: { type: ['string', 'null'], format: date-time }
+        returnAt: { type: ['string', 'null'], format: date-time }
+        offDuringVacation: { type: boolean, description: 'true = everything off, false = absent preset.' }
+
+    Reason:
+      type: object
+      required: [code, params]
+      properties:
+        code:
+          type: string
+          description: |
+            reason.schedule {preset, until}, reason.preheat {preset, at}, reason.season_off, reason.no_device,
+            reason.no_schedule, reason.no_rule, reason.vacation {returnAt}, reason.house_empty {since},
+            reason.opening_open {since}, reason.boost {delta, until}, reason.manual_override {until},
+            reason.room_vacant {preset, since}, reason.anti_cycling_min_off, reason.anti_cycling_min_on.
+        params:
+          type: object
+          additionalProperties:
+            type: ['string', 'number', 'boolean', 'null']
+
+    RoomStatus:
+      type: object
+      required: [roomId, name, currentTemperature, decision, override, devices, facts, alerts, updatedAt]
+      properties:
+        roomId: { $ref: '#/components/schemas/Id' }
+        name: { type: string }
+        currentTemperature: { type: ['number', 'null'] }
+        decision:
+          type: object
+          required: [mode, target, reason]
+          properties:
+            mode: { $ref: '#/components/schemas/HvacMode' }
+            target: { type: ['number', 'null'] }
+            reason: { $ref: '#/components/schemas/Reason' }
+        override:
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [type, delta, target, endsAt, untilNextSlot]
+              properties:
+                type: { type: string, enum: [boost, manual] }
+                delta: { type: ['number', 'null'] }
+                target: { type: ['number', 'null'], description: Manual target; null with type manual means off. }
+                endsAt: { type: ['string', 'null'], format: date-time }
+                untilNextSlot: { type: boolean }
+        devices:
+          type: array
+          items:
+            type: object
+            required: [entityId, role, state, targetTemperature, currentTemperature]
+            properties:
+              entityId: { $ref: '#/components/schemas/EntityId' }
+              role: { $ref: '#/components/schemas/DeviceRole' }
+              state: { type: ['string', 'null'], description: 'HVAC mode reported by HA, or unavailable/unknown.' }
+              targetTemperature: { type: ['number', 'null'] }
+              currentTemperature: { type: ['number', 'null'] }
+              running: { type: ['boolean', 'null'], description: 'From hvac_action (heating/cooling) when the device reports it.' }
+        facts:
+          type: object
+          description: Runtime facts behind the decision (for badges).
+          required: [openingOpenSince, roomVacantSince, houseEmptySince, heatingRatePerHour]
+          properties:
+            openingOpenSince: { type: ['string', 'null'], format: date-time }
+            roomVacantSince: { type: ['string', 'null'], format: date-time }
+            houseEmptySince: { type: ['string', 'null'], format: date-time }
+            heatingRatePerHour: { type: ['number', 'null'] }
+        alerts:
+          type: array
+          description: Active alerts concerning this room.
+          items: { $ref: '#/components/schemas/Alert' }
+        updatedAt: { type: string, format: date-time }
+
+    Alert:
+      type: object
+      required: [key, type, entityId, roomId, roomName, openedAt, notifiedAt]
+      properties:
+        key: { type: string, examples: [entity.sensor.bedroom_temperature] }
+        type: { type: string, enum: [entity_unavailable, device_unresponsive, opening_open] }
+        entityId: { type: ['string', 'null'] }
+        roomId: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Id' }] }
+        roomName: { type: ['string', 'null'] }
+        openedAt: { type: string, format: date-time }
+        notifiedAt: { type: ['string', 'null'], format: date-time }
+
+    DeviceRole:
+      type: string
+      enum: [heating, cooling, reversible]
+
+    Device:
+      type: object
+      required: [entityId, role, minOnSeconds, minOffSeconds, hysteresis]
+      properties:
+        entityId: { $ref: '#/components/schemas/EntityId' }
+        role: { $ref: '#/components/schemas/DeviceRole' }
+        minOnSeconds: { type: integer, minimum: 0, maximum: 7200 }
+        minOffSeconds: { type: integer, minimum: 0, maximum: 7200 }
+        hysteresis: { type: number, minimum: 0, maximum: 2 }
+
+    PresetTemperature:
+      type: object
+      required: [preset, heat, cool]
+      properties:
+        preset: { $ref: '#/components/schemas/PresetKey' }
+        heat: { type: ['number', 'null'], minimum: 5, maximum: 35 }
+        cool: { type: ['number', 'null'], minimum: 5, maximum: 35 }
+
+    RoomInput:
+      type: object
+      required: [name, temperatureSensor, devices, presetTemperatures]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        areaId: { type: ['string', 'null'] }
+        temperatureSensor: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/EntityId' }] }
+        presenceSensor: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/EntityId' }] }
+        openings:
+          type: array
+          items: { $ref: '#/components/schemas/EntityId' }
+          default: []
+        vacancyDelaySeconds: { type: integer, minimum: 0, maximum: 86400, default: 1200 }
+        windowCutDelaySeconds: { type: integer, minimum: 0, maximum: 3600, default: 120 }
+        windowNotifyDelaySeconds: { type: integer, minimum: 0, maximum: 86400, default: 1800 }
+        preheatEnabled: { type: boolean, default: true }
+        preheatMaxMinutes: { type: integer, minimum: 0, maximum: 720, default: 120 }
+        heatingScheduleId: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Id' }] }
+        coolingScheduleId: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Id' }] }
+        devices:
+          type: array
+          items: { $ref: '#/components/schemas/Device' }
+        presetTemperatures:
+          type: array
+          items: { $ref: '#/components/schemas/PresetTemperature' }
+
+    Room:
+      allOf:
+        - $ref: '#/components/schemas/RoomInput'
+        - type: object
+          required: [id, position, learnedRates]
+          properties:
+            id: { $ref: '#/components/schemas/Id' }
+            position: { type: integer }
+            learnedRates:
+              type: object
+              required: [heat, cool]
+              properties:
+                heat:
+                  oneOf:
+                    - type: 'null'
+                    - { $ref: '#/components/schemas/LearnedRate' }
+                cool:
+                  oneOf:
+                    - type: 'null'
+                    - { $ref: '#/components/schemas/LearnedRate' }
+
+    LearnedRate:
+      type: object
+      required: [degreesPerHour, samples]
+      properties:
+        degreesPerHour: { type: number }
+        samples: { type: integer }
+
+    BoostInput:
+      type: object
+      required: [delta]
+      description: At least one of durationMinutes and untilNextSlot; when both, the earlier end wins.
+      properties:
+        delta: { type: number, minimum: 0.5, maximum: 5, multipleOf: 0.5 }
+        durationMinutes: { type: integer, minimum: 1, maximum: 1440 }
+        untilNextSlot: { type: boolean }
+
+    Preset:
+      type: object
+      required: [key, label, color, position]
+      properties:
+        key: { $ref: '#/components/schemas/PresetKey' }
+        label: { type: string, minLength: 1, maxLength: 32 }
+        color: { type: string, pattern: '^#[0-9a-fA-F]{6}$' }
+        position: { type: integer, minimum: 0 }
+
+    SlotStart:
+      oneOf:
+        - type: object
+          required: [type, minuteOfDay]
+          properties:
+            type: { const: fixed }
+            minuteOfDay: { type: integer, minimum: 0, maximum: 1439 }
+        - type: object
+          required: [type, entityId, offsetMinutes, fallbackMinuteOfDay]
+          properties:
+            type: { const: anchored }
+            entityId: { $ref: '#/components/schemas/EntityId', description: An input_datetime with a time. }
+            offsetMinutes: { type: integer, minimum: -720, maximum: 720 }
+            fallbackMinuteOfDay: { type: integer, minimum: 0, maximum: 1439 }
+      discriminator: { propertyName: type }
+
+    ScheduleSlot:
+      type: object
+      required: [weekday, start, preset]
+      properties:
+        weekday: { type: integer, minimum: 1, maximum: 7, description: ISO 8601 (1 = Monday). }
+        start: { $ref: '#/components/schemas/SlotStart' }
+        preset: { $ref: '#/components/schemas/PresetKey' }
+
+    ScheduleInput:
+      type: object
+      required: [name, mode, slots]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        mode: { type: string, enum: [heat, cool] }
+        slots:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/ScheduleSlot' }
+
+    Schedule:
+      allOf:
+        - $ref: '#/components/schemas/ScheduleInput'
+        - type: object
+          required: [id, usedBy]
+          properties:
+            id: { $ref: '#/components/schemas/Id' }
+            usedBy:
+              type: array
+              items:
+                type: object
+                required: [roomId, roomName]
+                properties:
+                  roomId: { $ref: '#/components/schemas/Id' }
+                  roomName: { type: string }
+
+    Settings:
+      type: object
+      required: [season, trackedPersons, houseEmptyDelaySeconds, manualOverrideMinutes, vacation, weatherEntity, uiLocale, notificationLocale, auditRetentionDays]
+      properties:
+        season: { $ref: '#/components/schemas/Season' }
+        trackedPersons:
+          type: array
+          items: { $ref: '#/components/schemas/EntityId' }
+        houseEmptyDelaySeconds: { type: integer, minimum: 0, maximum: 86400 }
+        manualOverrideMinutes: { type: integer, minimum: 1, maximum: 1440 }
+        vacation: { $ref: '#/components/schemas/Vacation' }
+        weatherEntity: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/EntityId' }] }
+        uiLocale:
+          description: Default UI language for users without a personal choice; null = automatic.
+          oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Locale' }]
+        notificationLocale:
+          description: Language of notifications and audit export; null = Home Assistant server language.
+          oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Locale' }]
+        auditRetentionDays: { type: integer, minimum: 1, maximum: 3650 }
+        auditEntryCount: { type: integer, readOnly: true }
+
+    NotificationSettings:
+      type: object
+      required: [targets, types]
+      properties:
+        targets:
+          type: array
+          items:
+            type: object
+            required: [service, enabled]
+            properties:
+              service: { type: string, pattern: '^notify\.[a-z0-9_]+$' }
+              enabled: { type: boolean }
+              name: { type: ['string', 'null'], readOnly: true }
+              available: { type: boolean, readOnly: true, description: Still offered by Home Assistant. }
+        types:
+          type: array
+          items:
+            type: object
+            required: [type, enabled, delaySeconds, persistentNotification]
+            properties:
+              type: { type: string, enum: [window_open, setpoint_not_applicable, device_unresponsive, sensor_unavailable] }
+              enabled: { type: boolean }
+              delaySeconds: { type: ['integer', 'null'], minimum: 0, maximum: 86400, description: Only used by device_unresponsive. }
+              persistentNotification: { type: boolean, description: Only used by sensor_unavailable. }
+
+    DiscoveredEntity:
+      type: object
+      required: [entityId, name, areaId, state]
+      properties:
+        entityId: { $ref: '#/components/schemas/EntityId' }
+        name: { type: string }
+        areaId: { type: ['string', 'null'] }
+        state: { type: ['string', 'null'] }
+        unit: { type: ['string', 'null'] }
+        deviceClass: { type: ['string', 'null'] }
+
+    Discovery:
+      type: object
+      required: [areas, persons, climates, temperatureSensors, presenceSensors, openingSensors, timeEntities, weather, notifyServices]
+      properties:
+        areas:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id: { type: string }
+              name: { type: string }
+        persons: { type: array, items: { $ref: '#/components/schemas/DiscoveredEntity' } }
+        climates:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/DiscoveredEntity'
+              - type: object
+                properties:
+                  hvacModes: { type: array, items: { type: string } }
+        temperatureSensors: { type: array, items: { $ref: '#/components/schemas/DiscoveredEntity' } }
+        presenceSensors:
+          description: binary_sensor occupancy/presence/motion and input_boolean.
+          type: array
+          items: { $ref: '#/components/schemas/DiscoveredEntity' }
+        openingSensors:
+          description: binary_sensor window/door/opening/garage_door and input_boolean.
+          type: array
+          items: { $ref: '#/components/schemas/DiscoveredEntity' }
+        timeEntities:
+          description: input_datetime entities that have a time.
+          type: array
+          items: { $ref: '#/components/schemas/DiscoveredEntity' }
+        weather: { type: array, items: { $ref: '#/components/schemas/DiscoveredEntity' } }
+        notifyServices:
+          type: array
+          items:
+            type: object
+            required: [service, name]
+            properties:
+              service: { type: string, examples: [notify.mobile_app_pixel_8] }
+              name: { type: string }
+
+    AuditEntry:
+      type: object
+      required: [id, occurredAt, actorType, actorName, roomId, roomName, category, messageKey, params, message]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        occurredAt: { type: string, format: date-time }
+        actorType: { $ref: '#/components/schemas/ActorType' }
+        actorName: { type: ['string', 'null'] }
+        roomId: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Id' }] }
+        roomName: { type: ['string', 'null'] }
+        category: { type: string }
+        messageKey: { type: string }
+        params: { type: object, additionalProperties: true }
+        message: { type: string, description: Rendered in the request locale. }
+
+    Backup:
+      type: object
+      required: [format, version, exportedAt, settings, presets, schedules, rooms, notifications]
+      properties:
+        format: { const: ha-climate-backup }
+        version: { type: integer, const: 1 }
+        exportedAt: { type: string, format: date-time }
+        settings: { $ref: '#/components/schemas/Settings' }
+        presets: { type: array, items: { $ref: '#/components/schemas/Preset' } }
+        schedules:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/ScheduleInput'
+              - type: object
+                required: [ref]
+                properties:
+                  ref: { type: string, description: Local id referenced by rooms in this file. }
+        rooms:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/RoomInput'
+              - type: object
+                properties:
+                  heatingScheduleRef: { type: ['string', 'null'] }
+                  coolingScheduleRef: { type: ['string', 'null'] }
+        notifications: { $ref: '#/components/schemas/NotificationSettings' }

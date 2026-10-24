@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>HA Climate – Éditeur de planning</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.hc{--bg:#fafafa;--card:#ffffff;--text:#212121;--text2:#5f5f5f;--divider:#e0e0e0;--primary:#026aa7;--primary-tint:#e1f5fe;--on-primary:#ffffff;--heat:#c2410c;--heat-tint:#fff1e6;--cool:#0369a1;--cool-tint:#e0f2fe;--ok:#2e7d32;--ok-tint:#e8f5e9;--warn:#a15c00;--warn-tint:#fff4e0;--error:#c62828;--error-tint:#fdecea;--neutral-tint:#f0f0f0;--input:#f3f3f3;--shadow:0 1px 2px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.06);font-family:Roboto,"Noto Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+.hc.dark{--bg:#111111;--card:#1c1c1c;--text:#e1e1e1;--text2:#a0a0a0;--divider:#323232;--primary:#4fc3f7;--primary-tint:#0f2a38;--on-primary:#06202c;--heat:#ff9a50;--heat-tint:#3a2416;--cool:#6cc0f5;--cool-tint:#10283a;--ok:#81c784;--ok-tint:#1a2e1b;--warn:#ffb74d;--warn-tint:#33270f;--error:#ef9a9a;--error-tint:#3a1d1d;--neutral-tint:#2a2a2a;--input:#262626;--shadow:none}
+.hc a{color:var(--primary)}.hc a:hover{text-decoration:underline}
+.hc :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow)}
+.muted{color:var(--text2)}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;color:var(--text2)!important;text-decoration:none!important;border-bottom:2px solid transparent;font-size:14px;font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--text)!important}
+.tab.active{color:var(--primary)!important;border-bottom-color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--divider);background:transparent;color:var(--primary);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer;text-decoration:none!important}
+.btn:hover{background:var(--primary-tint)}
+.btn.filled{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.text{border-color:transparent}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;font-size:13px;font-weight:500;line-height:18px}
+.tone-heat{color:var(--heat);background:var(--heat-tint)}
+.tone-cool{color:var(--cool);background:var(--cool-tint)}
+.tone-info{color:var(--primary);background:var(--primary-tint)}
+.tone-neutral{color:var(--text2);background:var(--neutral-tint)}
+.select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--divider);background:var(--card);color:var(--text);font:14px Roboto,system-ui,sans-serif}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>span{font-size:13px;color:var(--text2)}
+.input{min-height:44px;padding:0 12px;border:none;border-bottom:1px solid var(--text2);border-radius:6px 6px 0 0;background:var(--input);color:var(--text);font:15px Roboto,system-ui,sans-serif;width:100%;box-sizing:border-box}
+.unit{display:flex;align-items:center;gap:8px}.unit>span{font-size:14px;color:var(--text2);white-space:nowrap}
+.seg-slot{position:absolute;top:0;bottom:0;border:none;border-left:2px solid var(--card);padding:0 8px;color:#ffffff;font:500 12px Roboto,system-ui,sans-serif;text-align:left;cursor:pointer;overflow:hidden;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.seg-slot:first-child{border-left:none}
+.seg-slot.sel{box-shadow:inset 0 0 0 3px var(--text)}
+.radio{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer}
+.radio input{width:18px;height:18px;accent-color:var(--primary)}
+</style>
+</helmet>
+<div class="{{themeClass}}">
+<header style="background: var(--card); border-bottom: 1px solid var(--divider)">
+<div style="max-width: 1240px; margin: 0 auto; padding: 12px 20px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span aria-hidden="true" style="display: inline-flex; width: 36px; height: 36px; border-radius: 10px; align-items: center; justify-content: center; background: var(--primary-tint); color: var(--primary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg></span>
+<h1 style="margin: 0; font-size: 20px; font-weight: 500; flex: 1">HA Climate</h1>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Langue
+<select class="select"><option>Auto · Français</option><option>Français</option><option>English</option></select>
+</label>
+</div>
+<nav aria-label="Navigation principale" style="max-width: 1240px; margin: 0 auto; padding: 0 8px; display: flex; overflow-x: auto">
+<a class="tab" href="Main.dc.html">Vue d'ensemble</a>
+<a class="tab" href="Rooms.dc.html">Pièces</a>
+<a class="tab active" href="Schedule.dc.html" aria-current="page">Plannings</a>
+<a class="tab" href="Settings.dc.html">Réglages</a>
+<a class="tab" href="Notifications.dc.html">Notifications</a>
+<a class="tab" href="History.dc.html">Historique</a>
+</nav>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; padding: 24px 20px 48px; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px">
+<label class="field" style="flex: 1 1 280px; max-width: 360px"><span>Planning</span><select class="input"><option>Semaine standard</option><option>Télétravail</option><option>Été · pièces de vie</option><option>Été · chambres</option></select></label>
+<span class="chip tone-heat" style="margin-bottom: 10px">Chauffage</span>
+<div style="flex: 1"></div>
+<button type="button" class="btn">Dupliquer</button>
+<button type="button" class="btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nouveau planning</button>
+</div>
+<p class="muted" style="margin: 0; font-size: 14px">Utilisé par : Salon, Cuisine, Chambre enfant, Bureau. Chaque pièce applique ses propres températures pour chaque preset.</p>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500; flex: 1">Semaine</h2>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px">
+<sc-for list="{{legend}}" as="l" hint-placeholder-count="4">
+<li style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 3px; background: {{l.color}}" aria-hidden="true"></span>{{l.name}}</li>
+</sc-for>
+<li style="display: flex; align-items: center; gap: 6px" class="muted"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Début ancré sur une entité</li>
+</ul>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 720px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px">
+<span></span>
+<div style="position: relative; height: 16px" aria-hidden="true">
+<sc-for list="{{hours}}" as="h" hint-placeholder-count="9">
+<span class="muted" style="position: absolute; left: {{h.left}}; transform: translateX(-50%); font-size: 11px">{{h.label}}</span>
+</sc-for>
+</div>
+</div>
+<sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+<div style="display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center">
+<span style="font-size: 14px; font-weight: 500">{{d.label}}</span>
+<div style="position: relative; height: 44px; border-radius: 8px; overflow: hidden; background: var(--neutral-tint)">
+<sc-for list="{{d.slots}}" as="sl" hint-placeholder-count="5">
+<button type="button" class="{{sl.cls}}" style="left: {{sl.left}}; width: {{sl.width}}; background: {{sl.color}}" aria-label="{{sl.aria}}" aria-pressed="{{sl.pressed}}" onClick="{{sl.pick}}">
+<sc-if value="{{sl.anchored}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></sc-if>
+<sc-if value="{{sl.showLabel}}" hint-placeholder-val="{{true}}"><span>{{sl.name}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" class="btn text">Copier un jour vers…</button>
+<button type="button" class="btn text">Ajouter un créneau</button>
+</div>
+</section>
+
+<section class="card" aria-labelledby="slot-title" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<h2 id="slot-title" style="margin: 0; font-size: 16px; font-weight: 500; flex: 1">Créneau sélectionné · {{sel.day}} {{sel.start}} → {{sel.end}}</h2>
+<button type="button" class="btn text">Diviser</button>
+<button type="button" class="btn text" style="color: var(--error)">Supprimer</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px">
+<label class="field"><span>Preset</span><select class="input"><option>{{sel.name}}</option><option>Confort</option><option>Éco</option><option>Nuit</option><option>Absent</option></select></label>
+<div class="field" role="radiogroup" aria-label="Début du créneau">
+<span>Début du créneau</span>
+<label class="radio"><input type="radio" name="start" checked="{{sel.fixed}}" onChange="{{setFixed}}">Heure fixe</label>
+<label class="radio"><input type="radio" name="start" checked="{{sel.anchored}}" onChange="{{setAnchored}}">Suit une entité Home Assistant</label>
+</div>
+<sc-if value="{{sel.fixed}}" hint-placeholder-val="{{true}}">
+<label class="field"><span>Heure</span><input class="input" type="time" value="{{sel.start}}"></label>
+</sc-if>
+<sc-if value="{{sel.anchored}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<label class="field"><span>Entité</span><select class="input"><option>input_datetime.heure_coucher (22:30)</option><option>input_datetime.reveil</option></select></label>
+<label class="field"><span>Décalage</span><div class="unit"><input class="input" type="number" value="-15"><span>min</span></div></label>
+</div>
+</sc-if>
+</div>
+<p class="muted" style="margin: 0; font-size: 13px">La fin d'un créneau est toujours le début du suivant. Un créneau ancré suit l'entité : si l'heure du coucher passe à 23:15, le passage en Nuit se décale tout seul, et le préchauffage du lendemain aussi.</p>
+</section>
+
+<div style="display: flex; justify-content: flex-end; gap: 8px">
+<button type="button" class="btn text">Annuler</button>
+<button type="button" class="btn filled">Enregistrer</button>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1280,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { day: 0, idx: 4, anchoredOverride: null };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const colors = { 'Confort': '#c25400', 'Éco': '#1b7a34', 'Nuit': '#4a55a2', 'Absent': '#6b6b6b' };
+    const toMin = (t) => { const p = t.split(':'); return Number(p[0]) * 60 + Number(p[1]); };
+    const weekday = [['00:00', 'Nuit'], ['06:30', 'Confort'], ['08:30', 'Éco'], ['17:30', 'Confort'], ['22:30', 'Nuit', true]];
+    const wednesday = [['00:00', 'Nuit'], ['06:30', 'Confort'], ['08:30', 'Éco'], ['12:00', 'Confort'], ['22:30', 'Nuit', true]];
+    const friday = [['00:00', 'Nuit'], ['06:30', 'Confort'], ['08:30', 'Éco'], ['17:30', 'Confort'], ['23:30', 'Nuit']];
+    const weekend = [['00:00', 'Nuit'], ['08:30', 'Confort'], ['14:00', 'Absent'], ['17:00', 'Confort'], ['23:30', 'Nuit']];
+    const defs = [
+      ['Lun', 'Lundi', weekday], ['Mar', 'Mardi', weekday], ['Mer', 'Mercredi', wednesday],
+      ['Jeu', 'Jeudi', weekday], ['Ven', 'Vendredi', friday], ['Sam', 'Samedi', weekend], ['Dim', 'Dimanche', weekend]
+    ];
+    let sel = null;
+    const days = defs.map((d, di) => {
+      const slots = d[2].map((sl, i) => {
+        const start = toMin(sl[0]);
+        const endT = i + 1 < d[2].length ? d[2][i + 1][0] : '24:00';
+        const end = toMin(endT);
+        const selected = di === s.day && i === s.idx;
+        const anchored = !!sl[2];
+        if (selected) {
+          const isAnchored = s.anchoredOverride === null ? anchored : s.anchoredOverride;
+          sel = { day: d[1], start: sl[0], end: endT, name: sl[1], anchored: isAnchored, fixed: !isAnchored };
+        }
+        const width = (end - start) / 1440 * 100;
+        return {
+          name: sl[1],
+          left: (start / 1440 * 100).toFixed(3) + '%',
+          width: width.toFixed(3) + '%',
+          color: colors[sl[1]],
+          showLabel: width > 9,
+          anchored,
+          cls: selected ? 'seg-slot sel' : 'seg-slot',
+          pressed: selected ? 'true' : 'false',
+          aria: d[1] + ', ' + sl[0] + ' à ' + endT + ', ' + sl[1] + (anchored ? ', début ancré sur une entité' : ''),
+          pick: () => this.setState({ day: di, idx: i, anchoredOverride: null })
+        };
+      });
+      return { label: d[0], slots };
+    });
+    const hours = [0, 3, 6, 9, 12, 15, 18, 21, 24].map((h) => ({
+      label: (h < 10 ? '0' : '') + h + ':00',
+      left: (h / 24 * 100) + '%'
+    }));
+    const legend = Object.keys(colors).map((k) => ({ name: k, color: colors[k] }));
+    return {
+      themeClass: this.props.theme === 'dark' ? 'hc dark' : 'hc',
+      days,
+      hours,
+      legend,
+      sel,
+      setFixed: () => this.setState({ anchoredOverride: false }),
+      setAnchored: () => this.setState({ anchoredOverride: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

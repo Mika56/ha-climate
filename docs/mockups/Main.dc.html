@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>HA Climate – Vue d'ensemble</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.hc{--bg:#fafafa;--card:#ffffff;--text:#212121;--text2:#5f5f5f;--divider:#e0e0e0;--primary:#026aa7;--primary-tint:#e1f5fe;--on-primary:#ffffff;--heat:#c2410c;--heat-tint:#fff1e6;--cool:#0369a1;--cool-tint:#e0f2fe;--ok:#2e7d32;--ok-tint:#e8f5e9;--warn:#a15c00;--warn-tint:#fff4e0;--error:#c62828;--error-tint:#fdecea;--neutral-tint:#f0f0f0;--input:#f3f3f3;--shadow:0 1px 2px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.06);font-family:Roboto,"Noto Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+.hc.dark{--bg:#111111;--card:#1c1c1c;--text:#e1e1e1;--text2:#a0a0a0;--divider:#323232;--primary:#4fc3f7;--primary-tint:#0f2a38;--on-primary:#06202c;--heat:#ff9a50;--heat-tint:#3a2416;--cool:#6cc0f5;--cool-tint:#10283a;--ok:#81c784;--ok-tint:#1a2e1b;--warn:#ffb74d;--warn-tint:#33270f;--error:#ef9a9a;--error-tint:#3a1d1d;--neutral-tint:#2a2a2a;--input:#262626;--shadow:none}
+.hc a{color:var(--primary)}.hc a:hover{text-decoration:underline}
+.hc :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow)}
+.muted{color:var(--text2)}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;color:var(--text2)!important;text-decoration:none!important;border-bottom:2px solid transparent;font-size:14px;font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--text)!important}
+.tab.active{color:var(--primary)!important;border-bottom-color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--divider);background:transparent;color:var(--primary);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer;text-decoration:none!important}
+.btn:hover{background:var(--primary-tint)}
+.btn.filled{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.text{border-color:transparent}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:none;background:transparent;color:var(--text2)!important;cursor:pointer}
+.icon-btn:hover{background:var(--neutral-tint)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;font-size:13px;font-weight:500;line-height:18px}
+.tone-heat{color:var(--heat);background:var(--heat-tint)}
+.tone-cool{color:var(--cool);background:var(--cool-tint)}
+.tone-ok{color:var(--ok);background:var(--ok-tint)}
+.tone-warn{color:var(--warn);background:var(--warn-tint)}
+.tone-error{color:var(--error);background:var(--error-tint)}
+.tone-info{color:var(--primary);background:var(--primary-tint)}
+.tone-neutral{color:var(--text2);background:var(--neutral-tint)}
+.seg{display:inline-flex;border:1px solid var(--divider);border-radius:22px;overflow:hidden}
+.seg-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border:none;border-left:1px solid var(--divider);background:transparent;color:var(--text2);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer}
+.seg-btn:first-child{border-left:none}
+.seg-btn.on{background:var(--primary-tint);color:var(--primary)}
+.pill{min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--divider);background:transparent;color:var(--text);font:500 13px Roboto,system-ui,sans-serif;cursor:pointer}
+.pill.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--divider);background:var(--card);color:var(--text);font:14px Roboto,system-ui,sans-serif}
+</style>
+</helmet>
+<div class="{{themeClass}}">
+<header style="background: var(--card); border-bottom: 1px solid var(--divider)">
+<div style="max-width: 1240px; margin: 0 auto; padding: 12px 20px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span aria-hidden="true" style="display: inline-flex; width: 36px; height: 36px; border-radius: 10px; align-items: center; justify-content: center; background: var(--primary-tint); color: var(--primary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg></span>
+<h1 style="margin: 0; font-size: 20px; font-weight: 500; flex: 1">HA Climate</h1>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Langue
+<select class="select"><option>Auto · Français</option><option>Français</option><option>English</option></select>
+</label>
+</div>
+<nav aria-label="Navigation principale" style="max-width: 1240px; margin: 0 auto; padding: 0 8px; display: flex; overflow-x: auto">
+<a class="tab active" href="Main.dc.html" aria-current="page">Vue d'ensemble</a>
+<a class="tab" href="Rooms.dc.html">Pièces</a>
+<a class="tab" href="Schedule.dc.html">Plannings</a>
+<a class="tab" href="Settings.dc.html">Réglages</a>
+<a class="tab" href="Notifications.dc.html">Notifications</a>
+<a class="tab" href="History.dc.html">Historique</a>
+</nav>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; padding: 24px 20px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px">
+<section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; grid-column: span 1">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Saison</h2>
+<div class="seg" role="group" aria-label="Saison">
+<sc-for list="{{seasons}}" as="s" hint-placeholder-count="3">
+<button type="button" class="{{s.cls}}" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}">
+<sc-if value="{{s.isWinter}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></sc-if>
+<sc-if value="{{s.isSummer}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"></path></svg></sc-if>
+<sc-if value="{{s.isOff}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"></path></svg></sc-if>
+{{s.label}}
+</button>
+</sc-for>
+</div>
+<p class="muted" style="margin: 0; font-size: 13px">{{seasonHelp}}</p>
+</section>
+
+<section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span class="chip tone-ok" style="padding: 8px; border-radius: 50%" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg></span>
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Présence</h2>
+</div>
+<p style="margin: 0; font-size: 22px; font-weight: 500">2 personnes à la maison</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span class="chip tone-ok">Alex · à la maison</span>
+<span class="chip tone-ok">Sam · à la maison</span>
+<span class="chip tone-neutral">Charlie · absent</span>
+</div>
+<p class="muted" style="margin: 0; font-size: 13px">Tout est coupé 15 min après le départ de la dernière personne.</p>
+</section>
+
+<section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span class="chip tone-info" style="padding: 8px; border-radius: 50%" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.95 12.65a4 4 0 0 0-5.93-4.13"></path><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"></path></svg></span>
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Météo</h2>
+</div>
+<p style="margin: 0; font-size: 22px; font-weight: 500">12,5 °C <span class="muted" style="font-size: 15px; font-weight: 400">Partiellement nuageux</span></p>
+<p class="muted" style="margin: 0; font-size: 13px">Min 8 ° · Max 14 ° · Humidité 78 % · weather.maison</p>
+</section>
+
+<section class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span class="chip tone-neutral" style="padding: 8px; border-radius: 50%" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg></span>
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Vacances</h2>
+</div>
+<p style="margin: 0; font-size: 22px; font-weight: 500">Désactivé</p>
+<div><a class="btn" href="Settings.dc.html">Planifier un départ</a></div>
+</section>
+</div>
+
+<section class="card" aria-labelledby="alerts-title" style="padding: 8px 0">
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 16px">
+<h2 id="alerts-title" style="margin: 0; font-size: 16px; font-weight: 500; flex: 1">Alertes</h2>
+<span class="chip tone-error">2 actives</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 12px 16px; border-top: 1px solid var(--divider)">
+<span class="chip tone-error" style="padding: 8px; border-radius: 50%" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4M12 17h.01"></path></svg></span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<p style="margin: 0; font-weight: 500">Capteur indisponible · Chambre parentale</p>
+<p class="muted" style="margin: 0; font-size: 14px">sensor.chambre_parentale_temperature ne répond plus depuis 14:02. Le pilotage continue sur la dernière consigne ; une notification persistante a été créée dans Home Assistant.</p>
+</div>
+<a class="btn text" href="Rooms.dc.html">Voir la pièce</a>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 12px 16px; border-top: 1px solid var(--divider)">
+<span class="chip tone-warn" style="padding: 8px; border-radius: 50%" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18v16H3zM12 4v16M3 12h18"></path></svg></span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<p style="margin: 0; font-weight: 500">Fenêtre toujours ouverte · Salle de bain</p>
+<p class="muted" style="margin: 0; font-size: 14px">Ouverte depuis 32 min. {{windowAlert}}</p>
+</div>
+<a class="btn text" href="Rooms.dc.html">Voir la pièce</a>
+</div>
+</section>
+
+<section aria-labelledby="rooms-title" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap">
+<h2 id="rooms-title" style="margin: 0; font-size: 20px; font-weight: 500; flex: 1">Pièces</h2>
+<span class="muted" style="font-size: 14px">{{roomsSummary}}</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px">
+<sc-for list="{{rooms}}" as="room" hint-placeholder-count="6">
+<article class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span class="{{room.iconCls}}" style="display: inline-flex; width: 40px; height: 40px; border-radius: 50%; align-items: center; justify-content: center; flex: none" aria-hidden="true">
+<sc-if value="{{room.isHeat}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></sc-if>
+<sc-if value="{{room.isCool}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"></path></svg></sc-if>
+<sc-if value="{{room.isOff}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"></path></svg></sc-if>
+</span>
+<div style="flex: 1; min-width: 0">
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">{{room.name}}</h3>
+<p class="muted" style="margin: 0; font-size: 13px">{{room.activity}}</p>
+</div>
+<a class="icon-btn" href="Rooms.dc.html" aria-label="{{room.configLabel}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></a>
+</div>
+<div style="display: flex; gap: 24px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span class="muted" style="font-size: 12px">Actuelle</span>
+<span style="font-size: 30px; font-weight: 400; line-height: 36px">{{room.current}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span class="muted" style="font-size: 12px">Consigne · {{room.preset}}</span>
+<span class="{{room.targetCls}}" style="font-size: 20px; font-weight: 500; line-height: 28px; background: transparent">{{room.target}}</span>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px">
+<sc-for list="{{room.badges}}" as="b" hint-placeholder-count="1">
+<span class="{{b.cls}}">{{b.label}}</span>
+</sc-for>
+</div>
+<p class="muted" style="margin: 0; font-size: 13px; flex: 1">{{room.reason}}</p>
+<div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap">
+<sc-if value="{{room.hasBoost}}" hint-placeholder-val="{{false}}">
+<button type="button" class="btn text" onClick="{{room.cancelBoost}}">Annuler le boost</button>
+</sc-if>
+<sc-if value="{{room.canBoost}}" hint-placeholder-val="{{true}}">
+<button type="button" class="btn" onClick="{{room.openBoost}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Boost</button>
+</sc-if>
+</div>
+<sc-if value="{{room.boostOpen}}" hint-placeholder-val="{{false}}">
+<div style="border-top: 1px solid var(--divider); padding-top: 12px; display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-size: 14px; font-weight: 500">{{room.panel.title}}</p>
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" class="icon-btn" style="border: 1px solid var(--divider)" aria-label="Réduire l'écart" onClick="{{room.panel.dec}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+<span style="font-size: 24px; font-weight: 500; min-width: 96px; text-align: center">{{room.panel.deltaLabel}}</span>
+<button type="button" class="icon-btn" style="border: 1px solid var(--divider)" aria-label="Augmenter l'écart" onClick="{{room.panel.inc}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<p class="muted" style="margin: 0; font-size: 13px">Durée</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px" role="group" aria-label="Durée du boost">
+<sc-for list="{{room.panel.durations}}" as="d" hint-placeholder-count="4">
+<button type="button" class="{{d.cls}}" aria-pressed="{{d.pressed}}" onClick="{{d.pick}}">{{d.label}}</button>
+</sc-for>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 8px">
+<button type="button" class="btn text" onClick="{{room.panel.close}}">Annuler</button>
+<button type="button" class="btn filled" onClick="{{room.panel.confirm}}">Lancer le boost</button>
+</div>
+</div>
+</sc-if>
+</article>
+</sc-for>
+</div>
+</section>
+
+<section class="card" aria-labelledby="log-title" style="padding: 8px 0">
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 16px">
+<h2 id="log-title" style="margin: 0; font-size: 16px; font-weight: 500; flex: 1">Dernières décisions</h2>
+<a href="History.dc.html" style="font-size: 14px">Tout l'historique</a>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0">
+<li style="display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--divider); font-size: 14px"><span class="muted" style="width: 44px; flex: none">17:45</span><span><strong style="font-weight: 500">Chambre enfant</strong> · Boost +1,5 °C demandé par Alex depuis l'interface, jusqu'à 18:45</span></li>
+<li style="display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--divider); font-size: 14px"><span class="muted" style="width: 44px; flex: none">17:40</span><span><strong style="font-weight: 500">Cuisine</strong> · Inoccupée depuis 20 min : passage en Éco (19,0 °C)</span></li>
+<li style="display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--divider); font-size: 14px"><span class="muted" style="width: 44px; flex: none">17:15</span><span><strong style="font-weight: 500">Salle de bain</strong> · Fenêtre ouverte depuis 2 min : chauffage coupé</span></li>
+<li style="display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--divider); font-size: 14px"><span class="muted" style="width: 44px; flex: none">16:30</span><span><strong style="font-weight: 500">Bureau</strong> · Consigne changée sur l'appareil (22,0 °C) : traitée comme surcharge manuelle jusqu'à 18:30</span></li>
+</ul>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;dark&quot;},&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:1400}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      season: 'winter',
+      boostRoom: null,
+      delta: 1.5,
+      duration: '1 h',
+      boosts: { enfant: { delta: 1.5, until: '18:45' } }
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const num = (n) => n.toFixed(1).replace('.', ',');
+    const fmt = (n) => num(n) + ' °C';
+    const mode = s.season === 'winter' ? 'heat' : s.season === 'summer' ? 'cool' : 'off';
+    const sign = mode === 'cool' ? '−' : '+';
+    const until = { '30 min': '18:15', '1 h': '18:45', '2 h': '19:45', 'Prochain créneau': 'prochain créneau' };
+    const durations = ['30 min', '1 h', '2 h', 'Prochain créneau'];
+
+    const base = [
+      { id: 'salon', name: 'Salon', kind: 'schedule', cur: { heat: 20.4, cool: 25.1 },
+        heat: { t: 21, preset: 'Confort', run: true }, cool: { t: 24, preset: 'Confort', run: true },
+        reason: { heat: 'Planning « Semaine » : Confort jusqu’à 22:30, puis Nuit.', cool: 'Planning « Été » : Confort jusqu’à 23:00.' } },
+      { id: 'cuisine', name: 'Cuisine', kind: 'unoccupied', cur: { heat: 19.8, cool: 26.4 },
+        heat: { t: 19, preset: 'Éco', run: false }, cool: { t: 27, preset: 'Éco', run: false },
+        reason: { heat: 'Pièce inoccupée depuis 25 min : Éco jusqu’au retour d’une présence.', cool: 'Pièce inoccupée depuis 25 min : Éco jusqu’au retour d’une présence.' } },
+      { id: 'parents', name: 'Chambre parentale', kind: 'unavailable', cur: { heat: 0, cool: 0 },
+        heat: { t: 17, preset: 'Nuit', run: false }, cool: { t: 25, preset: 'Nuit', run: false },
+        reason: { heat: 'Capteur de température indisponible : dernière consigne conservée.', cool: 'Capteur de température indisponible : dernière consigne conservée.' } },
+      { id: 'enfant', name: 'Chambre enfant', kind: 'schedule', cur: { heat: 19.6, cool: 24.8 },
+        heat: { t: 20, preset: 'Confort', run: true }, cool: { t: 24, preset: 'Confort', run: true },
+        reason: { heat: 'Planning « Semaine » : Confort jusqu’à 20:30.', cool: 'Planning « Été » : Confort jusqu’à 21:00.' } },
+      { id: 'bureau', name: 'Bureau', kind: 'manual', cur: { heat: 21.2, cool: 24.2 },
+        heat: { t: 22, preset: 'Manuel', run: true }, cool: { t: 23, preset: 'Manuel', run: true },
+        reason: { heat: 'Consigne modifiée sur l’appareil : reprise du planning à 18:30.', cool: 'Consigne modifiée sur l’appareil : reprise du planning à 18:30.' } },
+      { id: 'sdb', name: 'Salle de bain', kind: 'window', cur: { heat: 18.1, cool: 25.9 },
+        heat: { t: 22, preset: 'Confort', run: false }, cool: { t: 25, preset: 'Confort', run: false },
+        reason: { heat: 'Fenêtre ouverte : chauffage coupé, relance automatique à la fermeture.', cool: 'Fenêtre ouverte : climatisation coupée, relance automatique à la fermeture.' } }
+    ];
+
+    let running = 0;
+    const rooms = base.map((r) => {
+      const boost = s.boosts[r.id];
+      const boostOpen = s.boostRoom === r.id && mode !== 'off';
+      const badges = [];
+      let target = null;
+      let preset = 'Coupé';
+      let reason = 'Saison « Coupé » : aucun appareil n’est piloté.';
+      let activity = 'Arrêté';
+      let isRunning = false;
+      if (mode !== 'off') {
+        const m = r[mode];
+        target = m.t;
+        preset = m.preset;
+        reason = r.reason[mode];
+        isRunning = m.run;
+        if (r.kind === 'window') { target = null; preset = 'Coupé'; badges.push({ label: 'Fenêtre ouverte · 32 min', cls: 'chip tone-warn' }); }
+        if (r.kind === 'unavailable') badges.push({ label: 'Capteur indisponible', cls: 'chip tone-error' });
+        if (r.kind === 'manual') badges.push({ label: 'Surcharge manuelle · 18:30', cls: 'chip tone-info' });
+        if (r.kind === 'unoccupied') badges.push({ label: 'Inoccupée · 25 min', cls: 'chip tone-neutral' });
+        if (boost && target !== null) {
+          target = target + (mode === 'cool' ? -boost.delta : boost.delta);
+          badges.push({ label: 'Boost ' + sign + num(boost.delta) + ' °C · ' + boost.until, cls: 'chip tone-warn' });
+          reason = 'Boost demandé depuis l’interface, fin : ' + boost.until + '.';
+          isRunning = true;
+        }
+        activity = isRunning ? (mode === 'heat' ? 'Chauffe en cours' : 'Refroidissement en cours') : 'Au repos';
+        if (isRunning) running += 1;
+      }
+      const tone = mode === 'heat' ? 'tone-heat' : mode === 'cool' ? 'tone-cool' : 'tone-neutral';
+      return {
+        name: r.name,
+        configLabel: 'Configurer ' + r.name,
+        activity,
+        isHeat: mode === 'heat',
+        isCool: mode === 'cool',
+        isOff: mode === 'off',
+        iconCls: isRunning ? tone : 'tone-neutral',
+        current: r.kind === 'unavailable' ? '— °C' : fmt(r.cur[mode === 'cool' ? 'cool' : 'heat']),
+        target: target === null ? 'Coupé' : fmt(target),
+        targetCls: target === null ? 'muted' : (mode === 'heat' ? 'tone-heat' : 'tone-cool'),
+        preset,
+        badges,
+        reason,
+        hasBoost: !!boost && mode !== 'off',
+        canBoost: mode !== 'off' && !boost && !boostOpen && r.kind !== 'window',
+        boostOpen,
+        openBoost: () => this.setState({ boostRoom: r.id, delta: 1.5, duration: '1 h' }),
+        cancelBoost: () => {
+          const next = Object.assign({}, s.boosts);
+          delete next[r.id];
+          this.setState({ boosts: next });
+        },
+        panel: {
+          title: mode === 'cool' ? 'Baisser la consigne de' : 'Monter la consigne de',
+          deltaLabel: sign + num(s.delta) + ' °C',
+          dec: () => this.setState({ delta: Math.max(0.5, s.delta - 0.5) }),
+          inc: () => this.setState({ delta: Math.min(5, s.delta + 0.5) }),
+          durations: durations.map((d) => ({
+            label: d,
+            cls: d === s.duration ? 'pill on' : 'pill',
+            pressed: d === s.duration ? 'true' : 'false',
+            pick: () => this.setState({ duration: d })
+          })),
+          close: () => this.setState({ boostRoom: null }),
+          confirm: () => {
+            const next = Object.assign({}, s.boosts);
+            next[r.id] = { delta: s.delta, until: until[s.duration] };
+            this.setState({ boosts: next, boostRoom: null });
+          }
+        }
+      };
+    });
+
+    const seasonDefs = [
+      { id: 'winter', label: 'Hiver' },
+      { id: 'summer', label: 'Été' },
+      { id: 'off', label: 'Coupé' }
+    ];
+    const seasons = seasonDefs.map((d) => ({
+      label: d.label,
+      isWinter: d.id === 'winter',
+      isSummer: d.id === 'summer',
+      isOff: d.id === 'off',
+      cls: d.id === s.season ? 'seg-btn on' : 'seg-btn',
+      pressed: d.id === s.season ? 'true' : 'false',
+      pick: () => this.setState({ season: d.id, boostRoom: null })
+    }));
+    const help = {
+      winter: 'Seuls les appareils de chauffage sont pilotés.',
+      summer: 'Seuls les appareils de climatisation sont pilotés.',
+      off: 'Tout est coupé : aucune commande n’est envoyée.'
+    };
+    const verb = mode === 'heat' ? 'en chauffe' : 'en refroidissement';
+
+    return {
+      themeClass: this.props.theme === 'dark' ? 'hc dark' : 'hc',
+      seasons,
+      seasonHelp: help[s.season],
+      rooms,
+      roomsSummary: mode === 'off' ? '6 pièces · tout est coupé' : running + ' sur 6 ' + verb,
+      windowAlert: mode === 'cool'
+        ? 'La consigne de 25,0 °C ne peut pas être appliquée tant qu’elle reste ouverte.'
+        : 'La consigne de 22,0 °C ne peut pas être appliquée tant qu’elle reste ouverte.'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>HA Climate – Notifications</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.hc{--bg:#fafafa;--card:#ffffff;--text:#212121;--text2:#5f5f5f;--divider:#e0e0e0;--primary:#026aa7;--primary-tint:#e1f5fe;--on-primary:#ffffff;--heat:#c2410c;--heat-tint:#fff1e6;--cool:#0369a1;--cool-tint:#e0f2fe;--ok:#2e7d32;--ok-tint:#e8f5e9;--warn:#a15c00;--warn-tint:#fff4e0;--error:#c62828;--error-tint:#fdecea;--neutral-tint:#f0f0f0;--input:#f3f3f3;--shadow:0 1px 2px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.06);font-family:Roboto,"Noto Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+.hc.dark{--bg:#111111;--card:#1c1c1c;--text:#e1e1e1;--text2:#a0a0a0;--divider:#323232;--primary:#4fc3f7;--primary-tint:#0f2a38;--on-primary:#06202c;--heat:#ff9a50;--heat-tint:#3a2416;--cool:#6cc0f5;--cool-tint:#10283a;--ok:#81c784;--ok-tint:#1a2e1b;--warn:#ffb74d;--warn-tint:#33270f;--error:#ef9a9a;--error-tint:#3a1d1d;--neutral-tint:#2a2a2a;--input:#262626;--shadow:none}
+.hc a{color:var(--primary)}.hc a:hover{text-decoration:underline}
+.hc :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow)}
+.muted{color:var(--text2)}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;color:var(--text2)!important;text-decoration:none!important;border-bottom:2px solid transparent;font-size:14px;font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--text)!important}
+.tab.active{color:var(--primary)!important;border-bottom-color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--divider);background:transparent;color:var(--primary);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer;text-decoration:none!important}
+.btn:hover{background:var(--primary-tint)}
+.btn.filled{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.text{border-color:transparent}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;font-size:13px;font-weight:500;line-height:18px}
+.tone-ok{color:var(--ok);background:var(--ok-tint)}
+.tone-warn{color:var(--warn);background:var(--warn-tint)}
+.tone-error{color:var(--error);background:var(--error-tint)}
+.tone-info{color:var(--primary);background:var(--primary-tint)}
+.tone-neutral{color:var(--text2);background:var(--neutral-tint)}
+.select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--divider);background:var(--card);color:var(--text);font:14px Roboto,system-ui,sans-serif}
+.input{min-height:40px;padding:0 12px;border:none;border-bottom:1px solid var(--text2);border-radius:6px 6px 0 0;background:var(--input);color:var(--text);font:15px Roboto,system-ui,sans-serif;width:80px;box-sizing:border-box}
+.unit{display:flex;align-items:center;gap:8px}.unit>span{font-size:14px;color:var(--text2);white-space:nowrap}
+.switch{appearance:none;-webkit-appearance:none;position:relative;width:36px;height:14px;border-radius:7px;background:#9e9e9e;cursor:pointer;flex:none;margin:15px 4px}
+.switch::before{content:"";position:absolute;top:-3px;left:-2px;width:20px;height:20px;border-radius:50%;background:#fafafa;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:left .15s}
+.switch:checked{background:color-mix(in srgb,var(--primary) 45%,transparent)}
+.switch:checked::before{left:18px;background:var(--primary)}
+.check{display:flex;align-items:center;gap:12px;min-height:48px;font-size:15px;cursor:pointer;border-top:1px solid var(--divider)}
+.check input{width:18px;height:18px;accent-color:var(--primary)}
+</style>
+</helmet>
+<div class="{{themeClass}}">
+<header style="background: var(--card); border-bottom: 1px solid var(--divider)">
+<div style="max-width: 1240px; margin: 0 auto; padding: 12px 20px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span aria-hidden="true" style="display: inline-flex; width: 36px; height: 36px; border-radius: 10px; align-items: center; justify-content: center; background: var(--primary-tint); color: var(--primary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg></span>
+<h1 style="margin: 0; font-size: 20px; font-weight: 500; flex: 1">HA Climate</h1>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Langue
+<select class="select"><option>Auto · Français</option><option>Français</option><option>English</option></select>
+</label>
+</div>
+<nav aria-label="Navigation principale" style="max-width: 1240px; margin: 0 auto; padding: 0 8px; display: flex; overflow-x: auto">
+<a class="tab" href="Main.dc.html">Vue d'ensemble</a>
+<a class="tab" href="Rooms.dc.html">Pièces</a>
+<a class="tab" href="Schedule.dc.html">Plannings</a>
+<a class="tab" href="Settings.dc.html">Réglages</a>
+<a class="tab active" href="Notifications.dc.html" aria-current="page">Notifications</a>
+<a class="tab" href="History.dc.html">Historique</a>
+</nav>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; padding: 24px 20px 48px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+<section class="card" style="flex: 1 1 320px; padding: 16px 20px 12px; display: flex; flex-direction: column">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Destinations</h2>
+<p class="muted" style="margin: 4px 0 12px; font-size: 13px">Services notify découverts dans Home Assistant.</p>
+<sc-for list="{{targets}}" as="t" hint-placeholder-count="4">
+<label class="check"><input type="checkbox" checked="{{t.on}}" onChange="{{t.toggle}}"><span style="flex: 1; min-width: 0; overflow-wrap: anywhere">{{t.id}}</span><span class="muted" style="font-size: 13px">{{t.hint}}</span></label>
+</sc-for>
+<div style="padding-top: 12px; border-top: 1px solid var(--divider)">
+<button type="button" class="btn">Envoyer une notification de test</button>
+</div>
+</section>
+
+<section class="card" style="flex: 999 1 560px; min-width: 0; padding: 16px 20px 8px; display: flex; flex-direction: column">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Types de notification</h2>
+<p class="muted" style="margin: 4px 0 12px; font-size: 13px">Chaque type s'active séparément. Une même alerte n'est envoyée qu'une fois, même après un redémarrage.</p>
+<sc-for list="{{types}}" as="n" hint-placeholder-count="4">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 14px 0; border-top: 1px solid var(--divider)">
+<span class="{{n.tone}}" style="display: inline-flex; width: 36px; height: 36px; border-radius: 50%; align-items: center; justify-content: center; flex: none" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg></span>
+<div style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 15px; font-weight: 500">{{n.title}}</span>
+<span class="muted" style="font-size: 13px">{{n.desc}}</span>
+<p style="margin: 6px 0 0; font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--neutral-tint)">« {{n.example}} »</p>
+<sc-if value="{{n.hasDelay}}" hint-placeholder-val="{{false}}">
+<label style="display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 13px" class="muted">{{n.delayLabel}}<span class="unit"><input class="input" type="number" value="{{n.delay}}"><span>min</span></span></label>
+</sc-if>
+<sc-if value="{{n.hasPersistent}}" hint-placeholder-val="{{false}}">
+<label style="display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 14px; cursor: pointer"><input type="checkbox" checked="{{n.persistent}}" onChange="{{n.togglePersistent}}" style="width: 18px; height: 18px; accent-color: var(--primary)">Créer aussi une notification persistante dans Home Assistant (retirée quand le capteur revient)</label>
+</sc-if>
+</div>
+<input class="switch" type="checkbox" checked="{{n.on}}" onChange="{{n.toggle}}" aria-label="{{n.switchLabel}}">
+</div>
+</sc-for>
+</section>
+
+<div style="flex: 1 1 100%; display: flex; justify-content: flex-end; gap: 8px">
+<button type="button" class="btn text">Annuler</button>
+<button type="button" class="btn filled">Enregistrer</button>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1280,"height":1040}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      targets: { pixel: true, ipad: false, telegram: true },
+      types: { window: true, setpoint: true, device: true, sensor: true },
+      persistent: true
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const targetDefs = [
+      { key: 'pixel', id: 'notify.mobile_app_pixel_8', hint: 'App mobile' },
+      { key: 'ipad', id: 'notify.mobile_app_ipad', hint: 'App mobile' },
+      { key: 'telegram', id: 'notify.telegram_maison', hint: 'Telegram' }
+    ];
+    const targets = targetDefs.map((t) => ({
+      id: t.id,
+      hint: t.hint,
+      on: !!s.targets[t.key],
+      toggle: () => this.setState({ targets: Object.assign({}, s.targets, { [t.key]: !s.targets[t.key] }) })
+    }));
+    const typeDefs = [
+      { key: 'window', title: 'Fenêtre restée ouverte', tone: 'tone-warn',
+        desc: 'Envoyée quand un ouvrant reste ouvert au-delà du second délai de la pièce.',
+        example: 'Salle de bain : la fenêtre est ouverte depuis 30 min.' },
+      { key: 'setpoint', title: 'Consigne non applicable', tone: 'tone-warn',
+        desc: 'La consigne demandée ne peut pas être appliquée (fenêtre ouverte, saison coupée…).',
+        example: 'Salle de bain : la consigne de 22,0 °C ne peut pas être appliquée, la fenêtre est ouverte.' },
+      { key: 'device', title: 'Appareil qui ne répond plus', tone: 'tone-error',
+        desc: 'Une commande a été envoyée mais l’état de l’appareil n’a pas changé.',
+        example: 'Salon : climate.salon_radiateur n’a pas appliqué 21,0 °C après 5 min.',
+        hasDelay: true, delayLabel: 'Délai avant alerte', delay: '5' },
+      { key: 'sensor', title: 'Capteur indisponible', tone: 'tone-error',
+        desc: 'Un capteur utilisé par une pièce passe en indisponible ou inconnu.',
+        example: 'Chambre parentale : sensor.chambre_parentale_temperature est indisponible depuis 14:02.',
+        hasPersistent: true }
+    ];
+    const types = typeDefs.map((n) => ({
+      title: n.title,
+      desc: n.desc,
+      example: n.example,
+      tone: n.tone,
+      hasDelay: !!n.hasDelay,
+      delayLabel: n.delayLabel || '',
+      delay: n.delay || '',
+      hasPersistent: !!n.hasPersistent,
+      persistent: s.persistent,
+      togglePersistent: () => this.setState({ persistent: !s.persistent }),
+      on: !!s.types[n.key],
+      switchLabel: 'Activer : ' + n.title,
+      toggle: () => this.setState({ types: Object.assign({}, s.types, { [n.key]: !s.types[n.key] }) })
+    }));
+    return {
+      themeClass: this.props.theme === 'dark' ? 'hc dark' : 'hc',
+      targets,
+      types
+    };
+  }
+}
+</script>
+</body>
+</html>

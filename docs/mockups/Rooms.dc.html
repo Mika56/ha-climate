@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>HA Climate – Configuration d'une pièce</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.hc{--bg:#fafafa;--card:#ffffff;--text:#212121;--text2:#5f5f5f;--divider:#e0e0e0;--primary:#026aa7;--primary-tint:#e1f5fe;--on-primary:#ffffff;--heat:#c2410c;--heat-tint:#fff1e6;--cool:#0369a1;--cool-tint:#e0f2fe;--ok:#2e7d32;--ok-tint:#e8f5e9;--warn:#a15c00;--warn-tint:#fff4e0;--error:#c62828;--error-tint:#fdecea;--neutral-tint:#f0f0f0;--input:#f3f3f3;--shadow:0 1px 2px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.06);font-family:Roboto,"Noto Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+.hc.dark{--bg:#111111;--card:#1c1c1c;--text:#e1e1e1;--text2:#a0a0a0;--divider:#323232;--primary:#4fc3f7;--primary-tint:#0f2a38;--on-primary:#06202c;--heat:#ff9a50;--heat-tint:#3a2416;--cool:#6cc0f5;--cool-tint:#10283a;--ok:#81c784;--ok-tint:#1a2e1b;--warn:#ffb74d;--warn-tint:#33270f;--error:#ef9a9a;--error-tint:#3a1d1d;--neutral-tint:#2a2a2a;--input:#262626;--shadow:none}
+.hc a{color:var(--primary)}.hc a:hover{text-decoration:underline}
+.hc :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow)}
+.muted{color:var(--text2)}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;color:var(--text2)!important;text-decoration:none!important;border-bottom:2px solid transparent;font-size:14px;font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--text)!important}
+.tab.active{color:var(--primary)!important;border-bottom-color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--divider);background:transparent;color:var(--primary);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer;text-decoration:none!important}
+.btn:hover{background:var(--primary-tint)}
+.btn.filled{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.text{border-color:transparent}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:none;background:transparent;color:var(--text2)!important;cursor:pointer}
+.icon-btn:hover{background:var(--neutral-tint)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;font-size:13px;font-weight:500;line-height:18px}
+.tone-heat{color:var(--heat);background:var(--heat-tint)}
+.tone-cool{color:var(--cool);background:var(--cool-tint)}
+.tone-ok{color:var(--ok);background:var(--ok-tint)}
+.tone-warn{color:var(--warn);background:var(--warn-tint)}
+.tone-error{color:var(--error);background:var(--error-tint)}
+.tone-info{color:var(--primary);background:var(--primary-tint)}
+.tone-neutral{color:var(--text2);background:var(--neutral-tint)}
+.select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--divider);background:var(--card);color:var(--text);font:14px Roboto,system-ui,sans-serif}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>span{font-size:13px;color:var(--text2)}
+.input{min-height:44px;padding:0 12px;border:none;border-bottom:1px solid var(--text2);border-radius:6px 6px 0 0;background:var(--input);color:var(--text);font:15px Roboto,system-ui,sans-serif;width:100%;box-sizing:border-box}
+.unit{display:flex;align-items:center;gap:8px}.unit>span{font-size:14px;color:var(--text2);white-space:nowrap}
+.switch{appearance:none;-webkit-appearance:none;position:relative;width:36px;height:14px;border-radius:7px;background:#9e9e9e;cursor:pointer;flex:none;margin:15px 4px}
+.switch::before{content:"";position:absolute;top:-3px;left:-2px;width:20px;height:20px;border-radius:50%;background:#fafafa;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:left .15s}
+.switch:checked{background:var(--primary-tint);background:color-mix(in srgb,var(--primary) 45%,transparent)}
+.switch:checked::before{left:18px;background:var(--primary)}
+.room-item{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:none;background:transparent;color:var(--text);font:15px Roboto,system-ui,sans-serif;text-align:left;cursor:pointer}
+.room-item:hover{background:var(--neutral-tint)}
+.room-item.on{background:var(--primary-tint);color:var(--primary);font-weight:500}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;color:var(--text2);font-size:12px;padding:8px 12px;border-bottom:1px solid var(--divider);white-space:nowrap}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--divider);vertical-align:middle}
+.tbl .input{min-height:38px;width:88px}
+</style>
+</helmet>
+<div class="{{themeClass}}">
+<header style="background: var(--card); border-bottom: 1px solid var(--divider)">
+<div style="max-width: 1240px; margin: 0 auto; padding: 12px 20px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span aria-hidden="true" style="display: inline-flex; width: 36px; height: 36px; border-radius: 10px; align-items: center; justify-content: center; background: var(--primary-tint); color: var(--primary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg></span>
+<h1 style="margin: 0; font-size: 20px; font-weight: 500; flex: 1">HA Climate</h1>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Langue
+<select class="select"><option>Auto · Français</option><option>Français</option><option>English</option></select>
+</label>
+</div>
+<nav aria-label="Navigation principale" style="max-width: 1240px; margin: 0 auto; padding: 0 8px; display: flex; overflow-x: auto">
+<a class="tab" href="Main.dc.html">Vue d'ensemble</a>
+<a class="tab active" href="Rooms.dc.html" aria-current="page">Pièces</a>
+<a class="tab" href="Schedule.dc.html">Plannings</a>
+<a class="tab" href="Settings.dc.html">Réglages</a>
+<a class="tab" href="Notifications.dc.html">Notifications</a>
+<a class="tab" href="History.dc.html">Historique</a>
+</nav>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; padding: 24px 20px 48px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+<aside class="card" aria-label="Liste des pièces" style="flex: 1 1 240px; padding: 8px 0; overflow: hidden">
+<div style="display: flex; align-items: center; padding: 4px 8px 4px 16px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500; flex: 1">Pièces</h2>
+<button type="button" class="icon-btn" aria-label="Ajouter une pièce"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<sc-for list="{{rooms}}" as="r" hint-placeholder-count="6">
+<button type="button" class="{{r.cls}}" aria-current="{{r.current}}" onClick="{{r.pick}}">
+<span style="flex: 1">{{r.name}}</span>
+<sc-if value="{{r.alert}}" hint-placeholder-val="{{false}}"><span class="chip tone-error" style="padding: 2px 8px; font-size: 12px">1 alerte</span></sc-if>
+</button>
+</sc-for>
+</aside>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-size: 24px; font-weight: 400; flex: 1">{{roomName}}</h2>
+<button type="button" class="btn text" style="color: var(--error)">Supprimer la pièce</button>
+</div>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px">
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">Général</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<label class="field"><span>Nom</span><input class="input" type="text" value="{{roomName}}"></label>
+<label class="field"><span>Zone Home Assistant</span><select class="input"><option>{{roomName}}</option><option>Rez-de-chaussée</option></select></label>
+</div>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">Capteurs</h3>
+<p class="muted" style="margin: 4px 0 0; font-size: 13px">Entités découvertes dans Home Assistant, filtrées sur la zone de la pièce.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<label class="field"><span>Température</span><select class="input"><option>sensor.salon_temperature (20,4 °C)</option></select></label>
+<label class="field"><span>Présence dans la pièce (facultatif)</span><select class="input"><option>binary_sensor.salon_occupancy</option><option>Aucune</option></select></label>
+</div>
+<div class="field">
+<span>Fenêtres et portes</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span class="chip tone-neutral" style="padding: 4px 4px 4px 12px">binary_sensor.salon_fenetre <button type="button" class="icon-btn" style="width: 28px; height: 28px" aria-label="Retirer binary_sensor.salon_fenetre"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+<span class="chip tone-neutral" style="padding: 4px 4px 4px 12px">binary_sensor.salon_baie_vitree <button type="button" class="icon-btn" style="width: 28px; height: 28px" aria-label="Retirer binary_sensor.salon_baie_vitree"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button></span>
+<button type="button" class="btn text"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ajouter un ouvrant</button>
+</div>
+</div>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1; min-width: 220px">
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">Appareils</h3>
+<p class="muted" style="margin: 4px 0 0; font-size: 13px">Anti-cyclage : une commande qui ne respecte pas les durées minimales est différée et notée dans l'historique.</p>
+</div>
+<button type="button" class="btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ajouter un appareil</button>
+</div>
+<div style="overflow-x: auto">
+<table class="tbl">
+<thead><tr><th scope="col">Entité climate</th><th scope="col">Rôle</th><th scope="col">Marche min.</th><th scope="col">Arrêt min.</th><th scope="col">Hystérésis</th><th scope="col"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Actions</span></th></tr></thead>
+<tbody>
+<tr>
+<td><div style="font-weight: 500">climate.salon_radiateur</div><div class="muted" style="font-size: 12px">Radiateur connecté · 20,5 °C</div></td>
+<td><span class="chip tone-heat">Chauffage</span></td>
+<td><div class="unit"><input class="input" type="number" value="10" aria-label="Marche minimale du radiateur"><span>min</span></div></td>
+<td><div class="unit"><input class="input" type="number" value="5" aria-label="Arrêt minimal du radiateur"><span>min</span></div></td>
+<td><div class="unit"><input class="input" type="number" value="0.3" aria-label="Hystérésis du radiateur"><span>°C</span></div></td>
+<td><button type="button" class="icon-btn" aria-label="Retirer climate.salon_radiateur"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button></td>
+</tr>
+<tr>
+<td><div style="font-weight: 500">climate.salon_clim</div><div class="muted" style="font-size: 12px">Pompe à chaleur air-air · au repos</div></td>
+<td><span class="chip tone-cool">Réversible</span></td>
+<td><div class="unit"><input class="input" type="number" value="15" aria-label="Marche minimale de la clim"><span>min</span></div></td>
+<td><div class="unit"><input class="input" type="number" value="10" aria-label="Arrêt minimal de la clim"><span>min</span></div></td>
+<td><div class="unit"><input class="input" type="number" value="0.5" aria-label="Hystérésis de la clim"><span>°C</span></div></td>
+<td><button type="button" class="icon-btn" aria-label="Retirer climate.salon_clim"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">Températures par preset</h3>
+<p class="muted" style="margin: 4px 0 0; font-size: 13px">Les plannings choisissent un preset ; chaque pièce décide de la température correspondante, en hiver comme en été.</p>
+</div>
+<div style="overflow-x: auto">
+<table class="tbl">
+<thead><tr><th scope="col">Preset</th><th scope="col">Chauffage (hiver)</th><th scope="col">Climatisation (été)</th></tr></thead>
+<tbody>
+<sc-for list="{{presets}}" as="p" hint-placeholder-count="4">
+<tr>
+<td><span style="display: inline-flex; align-items: center; gap: 10px"><span style="width: 12px; height: 12px; border-radius: 3px; background: {{p.color}}" aria-hidden="true"></span>{{p.name}}</span></td>
+<td><div class="unit"><input class="input" type="number" step="0.5" value="{{p.heat}}" aria-label="{{p.heatLabel}}"><span>°C</span></div></td>
+<td><div class="unit"><input class="input" type="number" step="0.5" value="{{p.cool}}" aria-label="{{p.coolLabel}}"><span>°C</span></div></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px">
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">Plannings</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<label class="field"><span>Planning de chauffage</span><select class="input"><option>Semaine standard</option><option>Télétravail</option></select></label>
+<label class="field"><span>Planning de climatisation</span><select class="input"><option>Été · pièces de vie</option><option>Été · chambres</option></select></label>
+</div>
+<div><a class="btn text" href="Schedule.dc.html">Modifier les plannings</a></div>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px">
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">Délais et réactions</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<label class="field"><span>Pièce inoccupée → Éco après</span><div class="unit"><input class="input" type="number" value="20"><span>min</span></div></label>
+<label class="field"><span>Fenêtre ouverte → coupure après</span><div class="unit"><input class="input" type="number" value="2"><span>min</span></div></label>
+<label class="field"><span>Fenêtre toujours ouverte → notification après</span><div class="unit"><input class="input" type="number" value="30"><span>min</span></div></label>
+</div>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="flex: 1">
+<h3 style="margin: 0; font-size: 16px; font-weight: 500">Préchauffage et pré-refroidissement</h3>
+<p class="muted" style="margin: 4px 0 0; font-size: 13px">Démarre en avance pour atteindre la consigne à l'heure du créneau, d'après la vitesse apprise de la pièce.</p>
+</div>
+<input class="switch" type="checkbox" checked="{{preheat}}" onChange="{{togglePreheat}}" aria-label="Activer le préchauffage">
+</div>
+<sc-if value="{{preheat}}" hint-placeholder-val="{{true}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end">
+<label class="field"><span>Avance maximale</span><div class="unit"><input class="input" type="number" value="120"><span>min</span></div></label>
+<div class="field"><span>Vitesse apprise (chauffage)</span><p style="margin: 0; min-height: 44px; display: flex; align-items: center; font-size: 15px">1,2 °C / h · 34 mesures</p></div>
+<div class="field"><span>Vitesse apprise (climatisation)</span><p style="margin: 0; min-height: 44px; display: flex; align-items: center; font-size: 15px">0,9 °C / h · 12 mesures</p></div>
+</div>
+</sc-if>
+</section>
+
+<div style="position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 0; background: var(--bg)">
+<button type="button" class="btn text">Annuler</button>
+<button type="button" class="btn filled">Enregistrer</button>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1280,"height":1640}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { selected: 'Salon', preheat: true };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const names = ['Salon', 'Cuisine', 'Chambre parentale', 'Chambre enfant', 'Bureau', 'Salle de bain'];
+    const rooms = names.map((n) => ({
+      name: n,
+      cls: n === s.selected ? 'room-item on' : 'room-item',
+      current: n === s.selected ? 'true' : 'false',
+      alert: n === 'Chambre parentale',
+      pick: () => this.setState({ selected: n })
+    }));
+    const presetDefs = [
+      { name: 'Confort', heat: '21', cool: '24', color: '#e8710a' },
+      { name: 'Éco', heat: '19', cool: '27', color: '#1e8e3e' },
+      { name: 'Nuit', heat: '17', cool: '25', color: '#5c6bc0' },
+      { name: 'Absent', heat: '16', cool: '29', color: '#9e9e9e' }
+    ];
+    const presets = presetDefs.map((p) => Object.assign({}, p, {
+      heatLabel: p.name + ' en chauffage',
+      coolLabel: p.name + ' en climatisation'
+    }));
+    return {
+      themeClass: this.props.theme === 'dark' ? 'hc dark' : 'hc',
+      rooms,
+      roomName: s.selected,
+      presets,
+      preheat: s.preheat,
+      togglePreheat: () => this.setState({ preheat: !s.preheat })
+    };
+  }
+}
+</script>
+</body>
+</html>

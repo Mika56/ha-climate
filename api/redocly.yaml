@@ -1,0 +1,11 @@
+# Lint config for the HA Climate API contract.
+# The API is only reachable through Home Assistant ingress (the Supervisor authenticates users),
+# so operations declare no security scheme; operationId + descriptions document each operation.
+extends:
+  - recommended
+rules:
+  security-defined: off
+  operation-summary: off
+  operation-4xx-response: off
+  info-license: off
+  tag-description: off

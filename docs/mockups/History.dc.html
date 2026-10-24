@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>HA Climate – Historique</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.hc{--bg:#fafafa;--card:#ffffff;--text:#212121;--text2:#5f5f5f;--divider:#e0e0e0;--primary:#026aa7;--primary-tint:#e1f5fe;--on-primary:#ffffff;--heat:#c2410c;--heat-tint:#fff1e6;--cool:#0369a1;--cool-tint:#e0f2fe;--ok:#2e7d32;--ok-tint:#e8f5e9;--warn:#a15c00;--warn-tint:#fff4e0;--error:#c62828;--error-tint:#fdecea;--neutral-tint:#f0f0f0;--input:#f3f3f3;--shadow:0 1px 2px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.06);font-family:Roboto,"Noto Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+.hc.dark{--bg:#111111;--card:#1c1c1c;--text:#e1e1e1;--text2:#a0a0a0;--divider:#323232;--primary:#4fc3f7;--primary-tint:#0f2a38;--on-primary:#06202c;--heat:#ff9a50;--heat-tint:#3a2416;--cool:#6cc0f5;--cool-tint:#10283a;--ok:#81c784;--ok-tint:#1a2e1b;--warn:#ffb74d;--warn-tint:#33270f;--error:#ef9a9a;--error-tint:#3a1d1d;--neutral-tint:#2a2a2a;--input:#262626;--shadow:none}
+.hc a{color:var(--primary)}.hc a:hover{text-decoration:underline}
+.hc :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow)}
+.muted{color:var(--text2)}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;color:var(--text2)!important;text-decoration:none!important;border-bottom:2px solid transparent;font-size:14px;font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--text)!important}
+.tab.active{color:var(--primary)!important;border-bottom-color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--divider);background:transparent;color:var(--primary);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer;text-decoration:none!important}
+.btn:hover{background:var(--primary-tint)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;font-size:12px;font-weight:500;line-height:16px;white-space:nowrap}
+.tone-heat{color:var(--heat);background:var(--heat-tint)}
+.tone-ok{color:var(--ok);background:var(--ok-tint)}
+.tone-warn{color:var(--warn);background:var(--warn-tint)}
+.tone-error{color:var(--error);background:var(--error-tint)}
+.tone-info{color:var(--primary);background:var(--primary-tint)}
+.tone-neutral{color:var(--text2);background:var(--neutral-tint)}
+.select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--divider);background:var(--card);color:var(--text);font:14px Roboto,system-ui,sans-serif}
+.input{min-height:44px;padding:0 12px;border:none;border-bottom:1px solid var(--text2);border-radius:6px 6px 0 0;background:var(--input);color:var(--text);font:15px Roboto,system-ui,sans-serif;box-sizing:border-box}
+.pill{min-height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--divider);background:transparent;color:var(--text);font:500 13px Roboto,system-ui,sans-serif;cursor:pointer}
+.pill.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:500;color:var(--text2);font-size:12px;padding:10px 16px;border-bottom:1px solid var(--divider);white-space:nowrap}
+.tbl td{padding:10px 16px;border-bottom:1px solid var(--divider);vertical-align:top}
+</style>
+</helmet>
+<div class="{{themeClass}}">
+<header style="background: var(--card); border-bottom: 1px solid var(--divider)">
+<div style="max-width: 1240px; margin: 0 auto; padding: 12px 20px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span aria-hidden="true" style="display: inline-flex; width: 36px; height: 36px; border-radius: 10px; align-items: center; justify-content: center; background: var(--primary-tint); color: var(--primary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg></span>
+<h1 style="margin: 0; font-size: 20px; font-weight: 500; flex: 1">HA Climate</h1>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Langue
+<select class="select"><option>Auto · Français</option><option>Français</option><option>English</option></select>
+</label>
+</div>
+<nav aria-label="Navigation principale" style="max-width: 1240px; margin: 0 auto; padding: 0 8px; display: flex; overflow-x: auto">
+<a class="tab" href="Main.dc.html">Vue d'ensemble</a>
+<a class="tab" href="Rooms.dc.html">Pièces</a>
+<a class="tab" href="Schedule.dc.html">Plannings</a>
+<a class="tab" href="Settings.dc.html">Réglages</a>
+<a class="tab" href="Notifications.dc.html">Notifications</a>
+<a class="tab active" href="History.dc.html" aria-current="page">Historique</a>
+</nav>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; padding: 24px 20px 48px; display: flex; flex-direction: column; gap: 16px">
+
+<div class="card" style="padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Pièce
+<select class="input"><option>Toutes les pièces</option><option>Salon</option><option>Cuisine</option><option>Chambre parentale</option><option>Chambre enfant</option><option>Bureau</option><option>Salle de bain</option></select>
+</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Du
+<input class="input" type="date" value="2026-10-24">
+</label>
+<div role="group" aria-label="Origine" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button type="button" class="{{f.cls}}" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}">{{f.label}}</button>
+</sc-for>
+</div>
+<div style="flex: 1"></div>
+<button type="button" class="btn">Exporter en CSV</button>
+</div>
+
+<section class="card" style="overflow: hidden">
+<div style="overflow-x: auto">
+<table class="tbl">
+<thead><tr><th scope="col">Heure</th><th scope="col">Pièce</th><th scope="col">Origine</th><th scope="col">Événement</th></tr></thead>
+<tbody>
+<sc-for list="{{entries}}" as="e" hint-placeholder-count="10">
+<tr>
+<td class="muted" style="white-space: nowrap">{{e.time}}</td>
+<td style="white-space: nowrap; font-weight: 500">{{e.room}}</td>
+<td><span class="{{e.cls}}">{{e.origin}}</span></td>
+<td><div>{{e.text}}</div><sc-if value="{{e.hasDetail}}" hint-placeholder-val="{{false}}"><div class="muted" style="font-size: 12px; margin-top: 2px">{{e.detail}}</div></sc-if></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; flex-wrap: wrap">
+<span class="muted" style="font-size: 13px">{{countLabel}}</span>
+<button type="button" class="btn">Charger plus</button>
+</div>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1280,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all' };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const origins = {
+      user: { label: 'Utilisateur', cls: 'chip tone-info' },
+      auto: { label: 'Automatique', cls: 'chip tone-ok' },
+      device: { label: 'Appareil', cls: 'chip tone-warn' },
+      system: { label: 'Système', cls: 'chip tone-neutral' }
+    };
+    const all = [
+      { time: '17:45', room: 'Chambre enfant', o: 'user', text: 'Boost +1,5 °C demandé par Alex, jusqu’à 18:45', detail: 'Consigne 20,0 → 21,5 °C · climate.chambre_enfant' },
+      { time: '17:40', room: 'Cuisine', o: 'auto', text: 'Inoccupée depuis 20 min : passage en Éco', detail: 'Consigne 21,0 → 19,0 °C · binary_sensor.cuisine_occupancy off depuis 17:20' },
+      { time: '17:15', room: 'Salle de bain', o: 'auto', text: 'Fenêtre ouverte depuis 2 min : chauffage coupé', detail: 'binary_sensor.sdb_fenetre on depuis 17:13 · climate.sdb_seche_serviette → off' },
+      { time: '16:58', room: 'Salon', o: 'auto', text: 'Mise en marche de la clim différée de 6 min (anti-cyclage : arrêt minimum 10 min)', detail: '' },
+      { time: '16:30', room: 'Bureau', o: 'device', text: 'Consigne changée sur l’appareil (22,0 °C) : surcharge manuelle jusqu’à 18:30', detail: 'Contexte HA sans utilisateur, différent des commandes de l’add-on' },
+      { time: '15:12', room: 'Réglages', o: 'user', text: 'Sam a modifié « Pièce inoccupée → Éco après » de la Cuisine : 30 → 20 min', detail: '' },
+      { time: '14:02', room: 'Chambre parentale', o: 'system', text: 'Capteur indisponible : sensor.chambre_parentale_temperature', detail: 'Alerte ouverte · notification envoyée · notification persistante créée' },
+      { time: '12:00', room: 'Toutes', o: 'auto', text: 'Planning « Semaine » : passage en Confort (Mercredi)', detail: 'Préchauffage démarré à 11:24 (vitesse apprise 1,2 °C/h)' },
+      { time: '08:47', room: 'Maison', o: 'auto', text: 'Personne à la maison depuis 15 min : tout est coupé', detail: 'person.alex et person.sam absents depuis 08:32' },
+      { time: '07:02', room: 'Système', o: 'system', text: 'Add-on redémarré : état restauré (3 minuteurs, 1 boost), aucune commande nécessaire', detail: '' }
+    ];
+    const list = s.filter === 'all' ? all : all.filter((e) => e.o === s.filter);
+    const entries = list.map((e) => ({
+      time: e.time,
+      room: e.room,
+      text: e.text,
+      detail: e.detail,
+      hasDetail: e.detail !== '',
+      origin: origins[e.o].label,
+      cls: origins[e.o].cls
+    }));
+    const filters = [['all', 'Tout'], ['user', 'Utilisateur'], ['auto', 'Automatique'], ['device', 'Appareil'], ['system', 'Système']].map((f) => ({
+      label: f[1],
+      cls: f[0] === s.filter ? 'pill on' : 'pill',
+      pressed: f[0] === s.filter ? 'true' : 'false',
+      pick: () => this.setState({ filter: f[0] })
+    }));
+    return {
+      themeClass: this.props.theme === 'dark' ? 'hc dark' : 'hc',
+      entries,
+      filters,
+      countLabel: entries.length + ' entrées affichées sur 214 aujourd’hui'
+    };
+  }
+}
+</script>
+</body>
+</html>

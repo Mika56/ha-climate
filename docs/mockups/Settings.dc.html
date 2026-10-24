@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>HA Climate – Réglages globaux</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.hc{--bg:#fafafa;--card:#ffffff;--text:#212121;--text2:#5f5f5f;--divider:#e0e0e0;--primary:#026aa7;--primary-tint:#e1f5fe;--on-primary:#ffffff;--heat:#c2410c;--heat-tint:#fff1e6;--cool:#0369a1;--cool-tint:#e0f2fe;--ok:#2e7d32;--ok-tint:#e8f5e9;--warn:#a15c00;--warn-tint:#fff4e0;--error:#c62828;--error-tint:#fdecea;--neutral-tint:#f0f0f0;--input:#f3f3f3;--shadow:0 1px 2px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.06);font-family:Roboto,"Noto Sans",system-ui,sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+.hc.dark{--bg:#111111;--card:#1c1c1c;--text:#e1e1e1;--text2:#a0a0a0;--divider:#323232;--primary:#4fc3f7;--primary-tint:#0f2a38;--on-primary:#06202c;--heat:#ff9a50;--heat-tint:#3a2416;--cool:#6cc0f5;--cool-tint:#10283a;--ok:#81c784;--ok-tint:#1a2e1b;--warn:#ffb74d;--warn-tint:#33270f;--error:#ef9a9a;--error-tint:#3a1d1d;--neutral-tint:#2a2a2a;--input:#262626;--shadow:none}
+.hc a{color:var(--primary)}.hc a:hover{text-decoration:underline}
+.hc :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:12px;box-shadow:var(--shadow)}
+.muted{color:var(--text2)}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;color:var(--text2)!important;text-decoration:none!important;border-bottom:2px solid transparent;font-size:14px;font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--text)!important}
+.tab.active{color:var(--primary)!important;border-bottom-color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--divider);background:transparent;color:var(--primary);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer;text-decoration:none!important}
+.btn:hover{background:var(--primary-tint)}
+.btn.filled{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.text{border-color:transparent}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:none;background:transparent;color:var(--text2)!important;cursor:pointer}
+.icon-btn:hover{background:var(--neutral-tint)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:16px;font-size:13px;font-weight:500;line-height:18px}
+.tone-ok{color:var(--ok);background:var(--ok-tint)}
+.tone-warn{color:var(--warn);background:var(--warn-tint)}
+.tone-info{color:var(--primary);background:var(--primary-tint)}
+.tone-neutral{color:var(--text2);background:var(--neutral-tint)}
+.seg{display:inline-flex;border:1px solid var(--divider);border-radius:22px;overflow:hidden;flex-wrap:wrap}
+.seg-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border:none;border-left:1px solid var(--divider);background:transparent;color:var(--text2);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer}
+.seg-btn:first-child{border-left:none}
+.seg-btn.on{background:var(--primary-tint);color:var(--primary)}
+.select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--divider);background:var(--card);color:var(--text);font:14px Roboto,system-ui,sans-serif}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>span{font-size:13px;color:var(--text2)}
+.input{min-height:44px;padding:0 12px;border:none;border-bottom:1px solid var(--text2);border-radius:6px 6px 0 0;background:var(--input);color:var(--text);font:15px Roboto,system-ui,sans-serif;width:100%;box-sizing:border-box}
+.unit{display:flex;align-items:center;gap:8px}.unit>span{font-size:14px;color:var(--text2);white-space:nowrap}
+.switch{appearance:none;-webkit-appearance:none;position:relative;width:36px;height:14px;border-radius:7px;background:#9e9e9e;cursor:pointer;flex:none;margin:15px 4px}
+.switch::before{content:"";position:absolute;top:-3px;left:-2px;width:20px;height:20px;border-radius:50%;background:#fafafa;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:left .15s}
+.switch:checked{background:color-mix(in srgb,var(--primary) 45%,transparent)}
+.switch:checked::before{left:18px;background:var(--primary)}
+.check{display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--primary)}
+.row{display:flex;align-items:center;gap:12px;min-height:48px;padding:4px 0;border-top:1px solid var(--divider)}
+</style>
+</helmet>
+<div class="{{themeClass}}">
+<header style="background: var(--card); border-bottom: 1px solid var(--divider)">
+<div style="max-width: 1240px; margin: 0 auto; padding: 12px 20px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span aria-hidden="true" style="display: inline-flex; width: 36px; height: 36px; border-radius: 10px; align-items: center; justify-content: center; background: var(--primary-tint); color: var(--primary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg></span>
+<h1 style="margin: 0; font-size: 20px; font-weight: 500; flex: 1">HA Climate</h1>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted">Langue
+<select class="select"><option>Auto · Français</option><option>Français</option><option>English</option></select>
+</label>
+</div>
+<nav aria-label="Navigation principale" style="max-width: 1240px; margin: 0 auto; padding: 0 8px; display: flex; overflow-x: auto">
+<a class="tab" href="Main.dc.html">Vue d'ensemble</a>
+<a class="tab" href="Rooms.dc.html">Pièces</a>
+<a class="tab" href="Schedule.dc.html">Plannings</a>
+<a class="tab active" href="Settings.dc.html" aria-current="page">Réglages</a>
+<a class="tab" href="Notifications.dc.html">Notifications</a>
+<a class="tab" href="History.dc.html">Historique</a>
+</nav>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; padding: 24px 20px 48px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 16px; align-items: start">
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Saison</h2>
+<div class="seg" role="group" aria-label="Saison">
+<sc-for list="{{seasons}}" as="s" hint-placeholder-count="3">
+<button type="button" class="{{s.cls}}" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}">{{s.label}}</button>
+</sc-for>
+</div>
+<p class="muted" style="margin: 0; font-size: 13px">Hiver : seuls les appareils de chauffage sont pilotés. Été : seulement la climatisation. Coupé : rien n'est envoyé. Un appareil réversible suit la saison.</p>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0 0 4px; font-size: 16px; font-weight: 500">Présence globale</h2>
+<p class="muted" style="margin: 0 0 8px; font-size: 13px">Personnes découvertes dans Home Assistant. La maison est vide quand toutes les personnes suivies sont absentes.</p>
+<label class="check row"><input type="checkbox" checked="{{true}}">person.alex <span class="chip tone-ok" style="margin-left: auto">à la maison</span></label>
+<label class="check row"><input type="checkbox" checked="{{true}}">person.sam <span class="chip tone-ok" style="margin-left: auto">à la maison</span></label>
+<label class="check row"><input type="checkbox">person.charlie <span class="chip tone-neutral" style="margin-left: auto">non suivi</span></label>
+<label class="field" style="padding-top: 12px; border-top: 1px solid var(--divider)"><span>Tout couper quand la maison est vide depuis</span><div class="unit"><input class="input" type="number" value="15"><span>min</span></div></label>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="flex: 1">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Mode vacances</h2>
+<p class="muted" style="margin: 4px 0 0; font-size: 13px">Tout passe en Absent ou Coupé, puis relance avant le retour, préchauffage compris.</p>
+</div>
+<input class="switch" type="checkbox" checked="{{vacation}}" onChange="{{toggleVacation}}" aria-label="Activer le mode vacances">
+</div>
+<sc-if value="{{vacation}}" hint-placeholder-val="{{true}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px">
+<label class="field"><span>Départ</span><input class="input" type="datetime-local" value="2026-10-31T09:00"></label>
+<label class="field"><span>Retour</span><input class="input" type="datetime-local" value="2026-11-08T18:00"></label>
+<label class="field"><span>Pendant l'absence</span><select class="input"><option>Preset Absent</option><option>Tout coupé</option></select></label>
+</div>
+<p class="chip tone-info" style="margin: 0; align-self: flex-start">Relance prévue le 8 novembre vers 16:20 pour être à la consigne à 18:00</p>
+</sc-if>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Modifications manuelles</h2>
+<p class="muted" style="margin: 0; font-size: 13px">Une consigne changée dans Home Assistant ou sur l'appareil est respectée comme un boost, puis le planning reprend.</p>
+<label class="field"><span>Durée de la surcharge manuelle</span><div class="unit"><input class="input" type="number" value="120"><span>min</span></div></label>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500; flex: 1">Presets</h2>
+<button type="button" class="btn text"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ajouter</button>
+</div>
+<sc-for list="{{presets}}" as="p" hint-placeholder-count="4">
+<div class="row">
+<span style="width: 14px; height: 14px; border-radius: 4px; background: {{p.color}}" aria-hidden="true"></span>
+<span style="flex: 1; font-size: 15px">{{p.name}}</span>
+<span class="muted" style="font-size: 13px">{{p.usage}}</span>
+<button type="button" class="icon-btn" aria-label="{{p.editLabel}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg></button>
+</div>
+</sc-for>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Affichage</h2>
+<label class="field"><span>Entité météo</span><select class="input"><option>weather.maison</option><option>weather.forecast_home</option></select></label>
+<label class="field"><span>Langue de l'interface</span><select class="input"><option>Automatique · langue de votre profil HA (Français)</option><option>Français</option><option>English</option></select></label>
+<label class="field"><span>Langue des notifications et de l'historique</span><select class="input"><option>Automatique · langue du serveur HA (Français)</option><option>Français</option><option>English</option></select></label>
+<label class="field"><span>Thème</span><select class="input"><option>Automatique · comme Home Assistant (Clair)</option><option>Clair</option><option>Sombre</option></select></label>
+<p class="muted" style="margin: 0; font-size: 13px">Le choix d'interface et de thème est mémorisé pour chaque utilisateur Home Assistant.</p>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Journal d'audit</h2>
+<label class="field"><span>Conserver l'historique pendant</span><div class="unit"><input class="input" type="number" value="90"><span>jours</span></div></label>
+<p class="muted" style="margin: 0; font-size: 13px">12 418 entrées · les plus anciennes sont purgées chaque nuit.</p>
+</section>
+
+<section class="card" style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 500">Sauvegarde de la configuration</h2>
+<p class="muted" style="margin: 0; font-size: 13px">Pièces, appareils, presets, plannings, réglages et notifications dans un fichier JSON. Les sauvegardes Home Assistant incluent déjà l'add-on.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" class="btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>Exporter</button>
+<button type="button" class="btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>Importer…</button>
+</div>
+<p class="chip tone-warn" style="margin: 0; align-self: flex-start">L'import remplace toute la configuration actuelle.</p>
+</section>
+
+<div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px">
+<button type="button" class="btn text">Annuler</button>
+<button type="button" class="btn filled">Enregistrer</button>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1280,"height":1560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { season: 'winter', vacation: true };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const seasons = [['winter', 'Hiver'], ['summer', 'Été'], ['off', 'Coupé']].map((d) => ({
+      label: d[1],
+      cls: d[0] === s.season ? 'seg-btn on' : 'seg-btn',
+      pressed: d[0] === s.season ? 'true' : 'false',
+      pick: () => this.setState({ season: d[0] })
+    }));
+    const presets = [
+      { name: 'Confort', color: '#c25400', usage: '4 plannings' },
+      { name: 'Éco', color: '#1b7a34', usage: 'pièce inoccupée, 3 plannings' },
+      { name: 'Nuit', color: '#4a55a2', usage: '4 plannings' },
+      { name: 'Absent', color: '#6b6b6b', usage: 'vacances, 1 planning' }
+    ].map((p) => Object.assign({}, p, { editLabel: 'Modifier le preset ' + p.name }));
+    return {
+      themeClass: this.props.theme === 'dark' ? 'hc dark' : 'hc',
+      seasons,
+      presets,
+      vacation: s.vacation,
+      toggleVacation: () => this.setState({ vacation: !s.vacation })
+    };
+  }
+}
+</script>
+</body>
+</html>
