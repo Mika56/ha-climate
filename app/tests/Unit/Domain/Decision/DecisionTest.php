@@ -68,6 +68,28 @@ final class DecisionTest extends TestCase
         new Decision(HvacMode::Cool, null, new Reason('reason.x'));
     }
 
+    public function testNoReevaluationIsRequestedByDefault(): void
+    {
+        self::assertNull(Decision::off(new Reason('reason.x'))->reevaluateAt);
+    }
+
+    public function testWithReevaluateAtKeepsTheDecisionAndTheEarliestInstant(): void
+    {
+        $decision = Decision::heat(new Temperature(20.0), new Reason('reason.x'));
+        $later = new \DateTimeImmutable('2026-10-24 18:00:00');
+        $earlier = new \DateTimeImmutable('2026-10-24 17:30:00');
+
+        $first = $decision->withReevaluateAt($later);
+        $second = $first->withReevaluateAt($earlier)->withReevaluateAt($later);
+
+        self::assertSame($later, $first->reevaluateAt);
+        self::assertSame($earlier, $second->reevaluateAt);
+        self::assertSame(HvacMode::Heat, $second->mode);
+        self::assertSame(20.0, $second->target?->toFloat());
+        self::assertSame('reason.x', $second->reason->code);
+        self::assertNull($decision->reevaluateAt, 'The original decision is left untouched.');
+    }
+
     public function testReasonCodeMustNotBeBlank(): void
     {
         $this->expectException(InvalidValueException::class);

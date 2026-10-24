@@ -12,6 +12,7 @@ use App\Application\Engine\EngineSnapshotFactory;
 use App\Application\Engine\Facts\RoomFactsBuilder;
 use App\Application\Engine\State\TimeAnchorResolver;
 use App\Application\Engine\Timer\TimerScheduler;
+use App\Domain\Decision\Decision;
 use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Decision\RoomEvaluationContext;
 use App\Domain\Decision\TargetResolver;
@@ -104,20 +105,36 @@ final class RoomEvaluator
         $this->audit->logDecisionChange($room->id, $decision, $cause);
         $this->executor->execute($room, $decision, $snapshot);
         $this->publisher->publish($this->statusFactory->create($room, $decision, $facts, $snapshot));
-        $this->armNextBoundary($room, $schedule, $snapshot);
+        $this->armNextBoundary($room, $schedule, $decision, $snapshot);
     }
 
-    private function armNextBoundary(RoomConfiguration $room, ?WeeklySchedule $schedule, EngineSnapshot $snapshot): void
+    /**
+     * Arms the room's single boundary timer at the earliest of the next schedule slot and the instant a rule
+     * asked to be evaluated again at (requests in the past are ignored).
+     */
+    private function armNextBoundary(RoomConfiguration $room, ?WeeklySchedule $schedule, Decision $decision, EngineSnapshot $snapshot): void
     {
         $key = self::boundaryTimerKey($room->id);
-        if (null === $schedule) {
+        $dueAt = null;
+        $cause = 'schedule';
+
+        if (null !== $schedule) {
+            $dueAt = $schedule->nextSlotAfter($snapshot->now, $this->anchors)->start;
+        }
+
+        $requested = $decision->reevaluateAt;
+        if (null !== $requested && $requested > $snapshot->now && (null === $dueAt || $requested < $dueAt)) {
+            $dueAt = $requested;
+            $cause = 'rule_deadline';
+        }
+
+        if (null === $dueAt) {
             $this->timers->cancel($key);
 
             return;
         }
 
-        $next = $schedule->nextSlotAfter($snapshot->now, $this->anchors);
-        $this->timers->schedule($key, $next->start, self::BOUNDARY_TIMER_TYPE, $room->id, ['cause' => 'schedule']);
+        $this->timers->schedule($key, $dueAt, self::BOUNDARY_TIMER_TYPE, $room->id, ['cause' => $cause]);
     }
 
     private static function boundaryTimerKey(RoomId $roomId): string
