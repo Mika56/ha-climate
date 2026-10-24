@@ -20,6 +20,7 @@ use App\Infrastructure\Persistence\Repository\RoomOverrideRepository;
 use App\Infrastructure\Persistence\Seed\DefaultDataSeeder;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The engine's life cycle: boot, run, reconnect, stop.
@@ -50,6 +51,7 @@ final class Engine
         private readonly ShutdownWaiterInterface $shutdown,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
+        private readonly EventDispatcherInterface $dispatcher,
     ) {
     }
 
@@ -96,6 +98,7 @@ final class Engine
         ], null, ['timezone' => $homeAssistant->timeZone, 'language' => $homeAssistant->language, 'haVersion' => $homeAssistant->version]);
 
         $this->evaluator->evaluate($configuration->roomIds(), 'startup');
+        $this->dispatcher->dispatch(new EngineStateSynchronized(EngineStateSynchronized::STARTUP));
         $this->server->start();
     }
 
