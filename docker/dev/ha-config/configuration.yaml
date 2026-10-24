@@ -1,4 +1,11 @@
-# Minimal Home Assistant configuration with fake entities for scenario tests.
+# Minimal Home Assistant configuration with fake entities to exercise the climate engine.
+#
+# Two rooms, each with:
+#   - a generic_thermostat climate entity (its "heater" is an input_boolean) fed by a temperature sensor
+#     that mirrors an input_number you edit by hand to simulate the room temperature;
+#   - a window contact (input_boolean rendered as a binary_sensor of device class window);
+#   - a presence input_boolean.
+# Plus input_datetime.bedtime (time only) to anchor schedule slots on. There is deliberately no weather entity.
 default_config:
 
 homeassistant:
@@ -17,6 +24,8 @@ input_boolean:
     name: Bedroom presence
   living_heater:
     name: Living room heater switch
+  bedroom_heater:
+    name: Bedroom heater switch
 
 input_number:
   living_temperature:
@@ -41,6 +50,7 @@ input_datetime:
     name: Bedtime
     has_date: false
     has_time: true
+    initial: "22:30"
 
 template:
   - sensor:
@@ -56,6 +66,15 @@ template:
         device_class: temperature
         state_class: measurement
         state: "{{ states('input_number.bedroom_temperature') | float(0) }}"
+  - binary_sensor:
+      - name: Living room window
+        unique_id: living_room_window
+        device_class: window
+        state: "{{ is_state('input_boolean.living_window', 'on') }}"
+      - name: Bedroom window
+        unique_id: bedroom_window
+        device_class: window
+        state: "{{ is_state('input_boolean.bedroom_window', 'on') }}"
 
 climate:
   - platform: generic_thermostat
@@ -66,4 +85,11 @@ climate:
     min_temp: 7
     max_temp: 28
     initial_hvac_mode: "off"
-
+  - platform: generic_thermostat
+    name: Bedroom heater
+    unique_id: bedroom_heater
+    heater: input_boolean.bedroom_heater
+    target_sensor: sensor.bedroom_temperature_sensor
+    min_temp: 7
+    max_temp: 28
+    initial_hvac_mode: "off"
