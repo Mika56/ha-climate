@@ -34,6 +34,8 @@ final readonly class RoomConfiguration
         public int $vacancyDelay,
         public int $windowCutDelay,
         public int $windowNotifyDelay,
+        public bool $preheatEnabled = false,
+        public int $preheatMaxMinutes = 120,
     ) {
         if ('' === trim($name)) {
             throw new InvalidValueException('Room name must not be empty.');
@@ -41,6 +43,10 @@ final readonly class RoomConfiguration
 
         if ($vacancyDelay < 0 || $windowCutDelay < 0 || $windowNotifyDelay < 0) {
             throw new InvalidValueException('Room delays must not be negative.');
+        }
+
+        if ($preheatMaxMinutes < 0) {
+            throw new InvalidValueException('The maximum preheat duration must not be negative.');
         }
     }
 
