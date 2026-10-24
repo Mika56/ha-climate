@@ -144,6 +144,10 @@ final class AuditLoggerTest extends EngineTestCase
         yield 'reloaded' => ['audit.configuration.reloaded', ['rooms' => 2, 'entities' => 9]];
         yield 'connection lost' => ['audit.connection.lost', []];
         yield 'connection restored' => ['audit.connection.restored', []];
+        yield 'alert opened' => ['audit.alert.opened', ['key' => 'entity.sensor.living_temperature', 'type' => 'entity_unavailable']];
+        yield 'alert resolved' => ['audit.alert.resolved', ['key' => 'entity.sensor.living_temperature', 'type' => 'entity_unavailable']];
+        yield 'notification sent' => ['audit.notification.sent', ['type' => 'window_open', 'target' => 'notify.mobile_app_phone']];
+        yield 'notification failed' => ['audit.notification.failed', ['type' => 'window_open', 'target' => 'notify.mobile_app_phone', 'error' => 'boom']];
     }
 
     public function testTheTestedKeysAreExactlyThoseUsedInTheSources(): void

@@ -1,0 +1,20 @@
+# Textes des notifications envoyées au foyer (ICU MessageFormat). Un titre et un message par type.
+window_open:
+    title: 'Fenêtre ouverte'
+    message: >-
+        {room} : une fenêtre ou une porte est ouverte depuis {minutes, plural, one {# minute} other {# minutes}}.
+        Le pilotage de la pièce est suspendu jusqu’à sa fermeture.
+setpoint_not_applicable:
+    title: 'Consigne non applicable'
+    message: '{room} : la consigne de {target, number} °C ne peut pas être appliquée tant qu’une fenêtre ou une porte est ouverte.'
+device_unresponsive:
+    title: 'Appareil sans réponse'
+    message: >-
+        {device} ({room}) n’a pas atteint l’état demandé
+        ({mode, select, off {éteint} other {{mode} à {target, number} °C}})
+        {minutes, plural, one {# minute} other {# minutes}} après la commande. Il est maintenant « {state} ».
+sensor_unavailable:
+    title: 'Entité indisponible'
+    message: >-
+        {entity} ({rooms}) est {state, select, unknown {inconnue} other {indisponible}}.
+        La pièce reste pilotée avec ce qui est connu.

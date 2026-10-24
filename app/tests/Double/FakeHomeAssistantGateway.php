@@ -83,12 +83,24 @@ final class FakeHomeAssistantGateway implements HomeAssistantGatewayInterface
      * @param \Closure(): \DateTimeImmutable|null $now
      */
     public function __construct(
-        private readonly ?\Closure $now = null,
+        private ?\Closure $now = null,
     ) {
         $this->config = new HomeAssistantConfig('en', 'UTC', '°C', '2025.1.0');
     }
 
     // ---------------------------------------------------------------- test API: seeding
+
+    /**
+     * Makes the "last changed" instants follow the given clock (a test's mock clock) instead of the real one.
+     *
+     * @param \Closure(): \DateTimeImmutable $now
+     */
+    public function withNow(\Closure $now): self
+    {
+        $this->now = $now;
+
+        return $this;
+    }
 
     public function withConfig(HomeAssistantConfig $config): self
     {
