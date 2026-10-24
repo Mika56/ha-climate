@@ -59,6 +59,7 @@ final class GlobalPolicyAndFactsTest extends TestCase
         self::assertNull($facts->override);
         self::assertNull($facts->vacation);
         self::assertNull($facts->currentTemperature);
+        self::assertNull($facts->heatingRatePerHour);
     }
 
     public function testFactsKeepProvidedValues(): void
@@ -69,6 +70,16 @@ final class GlobalPolicyAndFactsTest extends TestCase
         self::assertSame($since, $facts->houseEmptySince);
         self::assertSame(19.5, $facts->currentTemperature?->toFloat());
         self::assertNull($facts->override);
+    }
+
+    public function testTheHeatingRateIsKeptWhenOtherFactsChange(): void
+    {
+        $facts = RoomFacts::none()->withHeatingRatePerHour(1.5)->withCurrentTemperature(Fixtures::temperature(19.0))->withHouseEmptySince(Fixtures::at('2026-10-26 07:00'));
+
+        self::assertSame(1.5, $facts->heatingRatePerHour);
+        self::assertSame(1.5, $facts->withRoomVacantSince(null)->withOpeningOpenSince(null)->withOverride(null)->withVacation(null)->heatingRatePerHour);
+        self::assertNull($facts->withHeatingRatePerHour(null)->heatingRatePerHour);
+        self::assertSame(19.0, $facts->withHeatingRatePerHour(2.0)->currentTemperature?->toFloat());
     }
 
     public function testContextDerivesModeFromSeason(): void

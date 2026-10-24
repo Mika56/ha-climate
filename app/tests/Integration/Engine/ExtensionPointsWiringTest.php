@@ -7,13 +7,21 @@ namespace App\Tests\Integration\Engine;
 use App\Application\Engine\Command\CommandExecutor;
 use App\Application\Engine\Facts\ActiveOverrideContributor;
 use App\Application\Engine\Facts\CurrentTemperatureContributor;
+use App\Application\Engine\Facts\HeatingRateContributor;
+use App\Application\Engine\Facts\HouseEmptyContributor;
 use App\Application\Engine\Facts\RoomFactsBuilder;
+use App\Application\Engine\Facts\RoomVacancyContributor;
+use App\Application\Engine\Facts\VacationContributor;
 use App\Application\Engine\Timer\DailyMaintenanceHandler;
 use App\Application\Engine\Timer\RoomReevaluateHandler;
 use App\Application\Engine\Timer\TimerScheduler;
+use App\Domain\Decision\Rule\HouseEmptyRule;
 use App\Domain\Decision\Rule\NoDeviceForModeRule;
+use App\Domain\Decision\Rule\PreheatRule;
+use App\Domain\Decision\Rule\RoomVacancyRule;
 use App\Domain\Decision\Rule\ScheduleRule;
 use App\Domain\Decision\Rule\SeasonOffRule;
+use App\Domain\Decision\Rule\VacationRule;
 use App\Domain\Decision\TargetResolver;
 use App\Infrastructure\Engine\Http\InternalRouter;
 use App\Infrastructure\Engine\Http\LiveRoute;
@@ -41,7 +49,15 @@ final class ExtensionPointsWiringTest extends KernelTestCase
         self::bootKernel();
 
         self::assertSame(
-            [SeasonOffRule::class, NoDeviceForModeRule::class, ScheduleRule::class],
+            [
+                SeasonOffRule::class,
+                NoDeviceForModeRule::class,
+                VacationRule::class,
+                HouseEmptyRule::class,
+                RoomVacancyRule::class,
+                PreheatRule::class,
+                ScheduleRule::class,
+            ],
             array_map(get_debug_type(...), self::iterable(TargetResolver::class, 'rules')),
         );
     }
@@ -54,6 +70,10 @@ final class ExtensionPointsWiringTest extends KernelTestCase
 
         self::assertContains(CurrentTemperatureContributor::class, $contributors);
         self::assertContains(ActiveOverrideContributor::class, $contributors);
+        self::assertContains(HouseEmptyContributor::class, $contributors);
+        self::assertContains(RoomVacancyContributor::class, $contributors);
+        self::assertContains(VacationContributor::class, $contributors);
+        self::assertContains(HeatingRateContributor::class, $contributors);
     }
 
     public function testCommandGuardsAreDiscovered(): void

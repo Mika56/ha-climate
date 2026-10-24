@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Engine\Facts;
 
 use App\Application\Engine\EngineSnapshot;
+use App\Application\Engine\State\StateStore;
 use App\Domain\Climate\Temperature;
 use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Decision\RoomFacts;
@@ -22,15 +23,27 @@ final readonly class CurrentTemperatureContributor implements RoomFactContributo
             return $facts;
         }
 
-        $state = $snapshot->states->get($room->temperatureSensor)?->state;
+        return $facts->withCurrentTemperature(self::read($room, $snapshot->states));
+    }
+
+    /**
+     * The room's temperature as the sensor currently reports it, if it does so in a usable way.
+     */
+    public static function read(RoomConfiguration $room, StateStore $states): ?Temperature
+    {
+        if (null === $room->temperatureSensor) {
+            return null;
+        }
+
+        $state = $states->get($room->temperatureSensor)?->state;
         if (null === $state || !is_numeric($state)) {
-            return $facts->withCurrentTemperature(null);
+            return null;
         }
 
         try {
-            return $facts->withCurrentTemperature(new Temperature((float) $state));
+            return new Temperature((float) $state);
         } catch (InvalidValueException) {
-            return $facts->withCurrentTemperature(null);
+            return null;
         }
     }
 }

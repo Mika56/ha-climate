@@ -11,6 +11,7 @@ use App\Domain\Exception\InvalidValueException;
 use App\Domain\Room\PresetTemperatures;
 use App\Domain\Room\RoomId;
 use App\Domain\Schedule\ScheduleId;
+use App\Tests\Unit\Domain\Support\Contexts;
 use App\Tests\Unit\Domain\Support\Fixtures;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -94,6 +95,29 @@ final class RoomConfigurationTest extends TestCase
         self::assertSame(0, $room->vacancyDelay);
         self::assertSame(0, $room->windowCutDelay);
         self::assertSame(0, $room->windowNotifyDelay);
+    }
+
+    public function testPreheatDefaultsToDisabledWithTwoHoursAtMost(): void
+    {
+        $room = $this->build('Room', 0, 0, 0);
+
+        self::assertFalse($room->preheatEnabled);
+        self::assertSame(120, $room->preheatMaxMinutes);
+    }
+
+    public function testPreheatSettingsAreKeptAndAZeroMaximumAccepted(): void
+    {
+        $room = Contexts::room(true, 0);
+
+        self::assertTrue($room->preheatEnabled);
+        self::assertSame(0, $room->preheatMaxMinutes);
+    }
+
+    public function testNegativePreheatMaximumIsRejected(): void
+    {
+        $this->expectException(InvalidValueException::class);
+
+        new RoomConfiguration(new RoomId('room'), 'Room', [], PresetTemperatures::empty(), null, null, null, null, [], 0, 0, 0, true, -1);
     }
 
     private function build(string $name, int $vacancy, int $cut, int $notify): RoomConfiguration
