@@ -9,9 +9,14 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "amphp/amp": "^3",
+        "amphp/http-server": "^3",
+        "amphp/websocket-client": "^2",
         "doctrine/doctrine-bundle": "^3.3",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.7",
+        "psr/log": "^3.0",
+        "revolt/event-loop": "^1",
         "symfony/clock": "7.4.*",
         "symfony/console": "7.4.*",
         "symfony/dotenv": "7.4.*",
@@ -98,6 +103,7 @@
         }
     },
     "require-dev": {
+        "amphp/websocket-server": "^4",
         "dama/doctrine-test-bundle": "^8.7",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/extension-installer": "^1.4",
