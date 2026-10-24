@@ -1,0 +1,11 @@
+{
+  "app": {
+    "title": "HA Climate",
+    "tagline": "Chauffage et climatisation, pilotés par événements."
+  },
+  "locale": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  }
+}
