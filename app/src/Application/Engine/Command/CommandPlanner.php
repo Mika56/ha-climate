@@ -13,6 +13,9 @@ use App\Domain\Device\Device;
 /**
  * Compares what a decision wants from a device with the device's actual state, and plans the command
  * needed to bridge the gap, if any. A device that cannot operate in the decision's mode is wanted off.
+ *
+ * Hysteresis: a device already running in the wanted mode keeps its setpoint when the wanted one is closer
+ * than the device's hysteresis (a command cannot be cancelled by a guard, so the skip lives here).
  */
 final readonly class CommandPlanner
 {
@@ -27,9 +30,10 @@ final readonly class CommandPlanner
         }
 
         $currentTarget = $current->attributes['temperature'] ?? null;
+        $tolerance = max(self::TEMPERATURE_EPSILON, $device->antiCycling->hysteresis);
         if ($current->state === $decision->mode->value
             && is_numeric($currentTarget)
-            && abs((float) $currentTarget - $target->toFloat()) < self::TEMPERATURE_EPSILON
+            && round(abs((float) $currentTarget - $target->toFloat()), 2) < $tolerance
         ) {
             return null;
         }
