@@ -92,10 +92,15 @@ final class ExtensionPointsWiringTest extends KernelTestCase
     private static function iterable(string $class, string $property): array
     {
         $service = self::getContainer()->get($class);
-        self::assertIsObject($service);
         $value = (new \ReflectionProperty($class, $property))->getValue($service);
         self::assertIsIterable($value);
 
-        return array_values([...$value]);
+        $objects = [];
+        foreach ($value as $item) {
+            self::assertIsObject($item);
+            $objects[] = $item;
+        }
+
+        return $objects;
     }
 }
