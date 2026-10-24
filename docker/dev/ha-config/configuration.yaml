@@ -1,0 +1,69 @@
+# Minimal Home Assistant configuration with fake entities for scenario tests.
+default_config:
+
+homeassistant:
+  name: HA Climate Dev
+  time_zone: Europe/Paris
+  unit_system: metric
+
+input_boolean:
+  living_window:
+    name: Living room window open
+  bedroom_window:
+    name: Bedroom window open
+  living_presence:
+    name: Living room presence
+  bedroom_presence:
+    name: Bedroom presence
+  living_heater:
+    name: Living room heater switch
+
+input_number:
+  living_temperature:
+    name: Living room temperature
+    min: -10
+    max: 40
+    step: 0.1
+    initial: 19
+    unit_of_measurement: "°C"
+    mode: box
+  bedroom_temperature:
+    name: Bedroom temperature
+    min: -10
+    max: 40
+    step: 0.1
+    initial: 18
+    unit_of_measurement: "°C"
+    mode: box
+
+input_datetime:
+  bedtime:
+    name: Bedtime
+    has_date: false
+    has_time: true
+
+template:
+  - sensor:
+      - name: Living room temperature sensor
+        unique_id: living_room_temperature_sensor
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ states('input_number.living_temperature') | float(0) }}"
+      - name: Bedroom temperature sensor
+        unique_id: bedroom_temperature_sensor
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ states('input_number.bedroom_temperature') | float(0) }}"
+
+climate:
+  - platform: generic_thermostat
+    name: Living room heater
+    unique_id: living_room_heater
+    heater: input_boolean.living_heater
+    target_sensor: sensor.living_room_temperature_sensor
+    min_temp: 7
+    max_temp: 28
+    initial_hvac_mode: "off"
+

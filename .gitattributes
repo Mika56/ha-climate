@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.png binary
+/app/composer.lock -diff
+/frontend/package-lock.json -diff

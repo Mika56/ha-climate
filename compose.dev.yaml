@@ -1,0 +1,11 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: ha-climate-dev-ha
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./docker/dev/ha-config:/config
+    environment:
+      TZ: Europe/Paris

@@ -1,0 +1,15 @@
+/.cache/
+/.idea/
+/.vscode/
+.DS_Store
+node_modules/
+/docker/dev/ha-config/*
+!/docker/dev/ha-config/configuration.yaml
+/app/vendor/
+/app/var/
+/app/.env.local
+/app/.env.*.local
+/app/.php-cs-fixer.cache
+/app/.phpunit.cache/
+/frontend/dist/
+/frontend/coverage/
