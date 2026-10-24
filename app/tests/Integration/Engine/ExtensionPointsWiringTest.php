@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Engine;
 
+use App\Application\Engine\Alert\DeviceUnresponsiveHandler;
 use App\Application\Engine\Command\CommandExecutor;
 use App\Application\Engine\Facts\ActiveOverrideContributor;
 use App\Application\Engine\Facts\CurrentTemperatureContributor;
+use App\Application\Engine\Facts\OpeningContributor;
 use App\Application\Engine\Facts\RoomFactsBuilder;
+use App\Application\Engine\Opening\OpeningNotifyHandler;
 use App\Application\Engine\Timer\DailyMaintenanceHandler;
 use App\Application\Engine\Timer\RoomReevaluateHandler;
 use App\Application\Engine\Timer\TimerScheduler;
 use App\Domain\Decision\Rule\NoDeviceForModeRule;
+use App\Domain\Decision\Rule\OpeningRule;
 use App\Domain\Decision\Rule\ScheduleRule;
 use App\Domain\Decision\Rule\SeasonOffRule;
 use App\Domain\Decision\TargetResolver;
@@ -41,7 +45,7 @@ final class ExtensionPointsWiringTest extends KernelTestCase
         self::bootKernel();
 
         self::assertSame(
-            [SeasonOffRule::class, NoDeviceForModeRule::class, ScheduleRule::class],
+            [SeasonOffRule::class, NoDeviceForModeRule::class, OpeningRule::class, ScheduleRule::class],
             array_map(get_debug_type(...), self::iterable(TargetResolver::class, 'rules')),
         );
     }
@@ -54,6 +58,7 @@ final class ExtensionPointsWiringTest extends KernelTestCase
 
         self::assertContains(CurrentTemperatureContributor::class, $contributors);
         self::assertContains(ActiveOverrideContributor::class, $contributors);
+        self::assertContains(OpeningContributor::class, $contributors);
     }
 
     public function testCommandGuardsAreDiscovered(): void
@@ -71,6 +76,8 @@ final class ExtensionPointsWiringTest extends KernelTestCase
 
         self::assertContains(RoomReevaluateHandler::class, $handlers);
         self::assertContains(DailyMaintenanceHandler::class, $handlers);
+        self::assertContains(OpeningNotifyHandler::class, $handlers);
+        self::assertContains(DeviceUnresponsiveHandler::class, $handlers);
     }
 
     public function testInternalRoutesAreDiscovered(): void
