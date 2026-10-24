@@ -34,6 +34,7 @@ final class ConfigurationRepositoryTest extends EngineTestCase
         $this->settings()->changeManualOverrideMinutes(90);
         $room = $this->createRoom(role: DeviceRole::Reversible, withCoolingSchedule: true, nightAnchor: 'input_datetime.bedtime');
         $room->configureDelays(600, 90, 1200);
+        $room->configurePreheat(true, 45);
         $this->em()->flush();
         $configuration = $this->service(ConfigurationRepository::class);
 
@@ -51,6 +52,8 @@ final class ConfigurationRepositoryTest extends EngineTestCase
         self::assertSame('binary_sensor.living_room_presence', (string) $living->presence);
         self::assertSame(['binary_sensor.living_room_window'], array_map(strval(...), $living->openings));
         self::assertSame([600, 90, 1200], [$living->vacancyDelay, $living->windowCutDelay, $living->windowNotifyDelay]);
+        self::assertTrue($living->preheatEnabled);
+        self::assertSame(45, $living->preheatMaxMinutes);
 
         self::assertSame(Season::Summer, $configuration->season());
         self::assertSame(2400, $configuration->policy()->houseEmptyDelaySeconds);

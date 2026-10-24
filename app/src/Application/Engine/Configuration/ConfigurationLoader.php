@@ -136,6 +136,8 @@ final readonly class ConfigurationLoader
             $room->getVacancyDelaySeconds(),
             $room->getWindowCutDelaySeconds(),
             $room->getWindowNotifyDelaySeconds(),
+            $room->isPreheatEnabled(),
+            $room->getPreheatMaxMinutes(),
         );
     }
 
