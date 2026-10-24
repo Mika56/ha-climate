@@ -16,6 +16,7 @@ use App\Infrastructure\Persistence\Repository\NotificationTypeSettingRepository;
 use App\Infrastructure\Persistence\Repository\RoomRepository;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Opens and resolves the alerts (one row per key), and keeps their notifications in step.
@@ -34,6 +35,7 @@ final readonly class AlertService
         private PersistentNotifier $persistent,
         private AuditLogger $audit,
         private ClockInterface $clock,
+        private EventDispatcherInterface $dispatcher,
     ) {
     }
 
@@ -71,6 +73,10 @@ final readonly class AlertService
 
         $this->alerts->save($alert);
 
+        if ($opened && null !== $room) {
+            $this->dispatcher->dispatch(new AlertsChanged($room));
+        }
+
         return new RaisedAlert($alert, $opened);
     }
 
@@ -92,7 +98,11 @@ final readonly class AlertService
         $this->alerts->save($alert);
 
         $room = $alert->getRoom();
-        $this->audit->log(ActorType::System, 'alert', 'audit.alert.resolved', ['key' => $key, 'type' => $alert->getType()], null === $room ? null : new RoomId($room->getId()->toRfc4122()));
+        $roomId = null === $room ? null : new RoomId($room->getId()->toRfc4122());
+        $this->audit->log(ActorType::System, 'alert', 'audit.alert.resolved', ['key' => $key, 'type' => $alert->getType()], $roomId);
+        if (null !== $roomId) {
+            $this->dispatcher->dispatch(new AlertsChanged($roomId));
+        }
     }
 
     public function find(string $key): ?Alert

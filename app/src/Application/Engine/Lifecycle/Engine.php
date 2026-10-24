@@ -118,12 +118,14 @@ final class Engine
 
     private function onConnectionLost(): void
     {
+        $this->context->connectionLost();
         $this->logger->warning('Connection to Home Assistant lost, waiting for it to come back.');
         $this->audit->log(ActorType::System, 'engine', 'audit.connection.lost');
     }
 
     private function onReconnected(): void
     {
+        $this->context->connectionRestored();
         $this->logger->info('Connection to Home Assistant restored, resynchronizing.');
         $this->audit->log(ActorType::System, 'engine', 'audit.connection.restored');
         $this->subscriptions->repairIfStale();

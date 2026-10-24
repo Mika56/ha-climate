@@ -8,6 +8,7 @@ use App\Application\Engine\Audit\AuditLogger;
 use App\Application\Port\HomeAssistant\HomeAssistantException;
 use App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface;
 use App\Domain\Room\RoomId;
+use App\Infrastructure\Persistence\Entity\NotificationTarget;
 use App\Infrastructure\Persistence\Enum\ActorType;
 use App\Infrastructure\Persistence\Enum\NotificationType;
 use App\Infrastructure\Persistence\Repository\NotificationTargetRepository;
@@ -21,6 +22,8 @@ use Psr\Log\LoggerInterface;
  */
 final readonly class NotificationService
 {
+    public const string TEST_TYPE = 'test';
+
     public function __construct(
         private HomeAssistantGatewayInterface $gateway,
         private NotificationTypeSettingRepository $types,
@@ -48,32 +51,60 @@ final readonly class NotificationService
             return false;
         }
 
-        $title = $this->texts->title($type, $params);
-        $message = $this->texts->message($type, $params);
+        [$delivered] = $this->deliver($targets, $type->value, $this->texts->title($type, $params), $this->texts->message($type, $params), $room);
 
-        $delivered = false;
+        return $delivered > 0;
+    }
+
+    /**
+     * Sends a test notification to every enabled destination, whatever the enabled notification types.
+     *
+     * @return array{sent: int, failed: int}|null null when no destination is enabled
+     */
+    public function sendTest(): ?array
+    {
+        $targets = $this->targets->findEnabled();
+        if ([] === $targets) {
+            return null;
+        }
+
+        [$delivered, $failed] = $this->deliver($targets, self::TEST_TYPE, $this->texts->testTitle(), $this->texts->testMessage(), null);
+
+        return ['sent' => $delivered, 'failed' => $failed];
+    }
+
+    /**
+     * @param list<NotificationTarget> $targets
+     *
+     * @return array{int, int} how many destinations received the notification, and how many failed
+     */
+    private function deliver(array $targets, string $type, string $title, string $message, ?RoomId $room): array
+    {
+        $delivered = 0;
+        $failed = 0;
         foreach ($targets as $target) {
             $service = $target->getService();
             try {
                 $this->gateway->callService('notify', substr($service, \strlen('notify.')), ['title' => $title, 'message' => $message]);
             } catch (HomeAssistantException $e) {
-                $this->logger->error('Notification {type} to {service} failed: {message}', ['type' => $type->value, 'service' => $service, 'message' => $e->getMessage()]);
+                $this->logger->error('Notification {type} to {service} failed: {message}', ['type' => $type, 'service' => $service, 'message' => $e->getMessage()]);
                 $this->audit->log(ActorType::System, 'notification', 'audit.notification.failed', [
-                    'type' => $type->value,
+                    'type' => $type,
                     'target' => $service,
                     'error' => $e->getMessage(),
                 ], $room);
+                ++$failed;
 
                 continue;
             }
 
-            $delivered = true;
+            ++$delivered;
             $this->audit->log(ActorType::System, 'notification', 'audit.notification.sent', [
-                'type' => $type->value,
+                'type' => $type,
                 'target' => $service,
             ], $room, ['title' => $title, 'message' => $message]);
         }
 
-        return $delivered;
+        return [$delivered, $failed];
     }
 }

@@ -34,6 +34,28 @@ audit:
         reloaded: >-
             Configuration rechargée : {rooms, plural, =0 {aucune pièce} one {# pièce} other {# pièces}},
             {entities, plural, =0 {aucune entité} one {# entité} other {# entités}} surveillée(s).
+        room_created: 'Pièce {room} créée.'
+        room_updated: 'Pièce {room} modifiée.'
+        room_deleted: 'Pièce {room} supprimée.'
+        rooms_reordered: 'Pièces réordonnées.'
+        preset_created: 'Préréglage {preset} créé.'
+        preset_updated: 'Préréglage {preset} modifié.'
+        preset_deleted: 'Préréglage {preset} supprimé.'
+        schedule_created: 'Planning {schedule} créé.'
+        schedule_updated: 'Planning {schedule} modifié.'
+        schedule_deleted: 'Planning {schedule} supprimé.'
+        schedule_duplicated: 'Planning {source} dupliqué sous le nom {schedule}.'
+        settings_updated: 'Réglages modifiés.'
+        season_changed: >-
+            {season, select,
+            winter {Saison réglée sur hiver}
+            summer {Saison réglée sur été}
+            other {Saison réglée sur arrêt}}
+        notifications_updated: 'Réglages des notifications modifiés.'
+        restored: >-
+            Configuration restaurée depuis une sauvegarde : {rooms, plural, =0 {aucune pièce} one {# pièce} other {# pièces}},
+            {schedules, plural, =0 {aucun planning} one {# planning} other {# plannings}} et
+            {presets, plural, =0 {aucun préréglage} one {# préréglage} other {# préréglages}}.
     connection:
         lost: 'Connexion à Home Assistant perdue.'
         restored: 'Connexion à Home Assistant rétablie.'

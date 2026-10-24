@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Engine\Evaluation;
 
 use Amp\Sync\LocalMutex;
+use App\Application\Engine\Alert\RoomAlertsProvider;
 use App\Application\Engine\Audit\AuditLogger;
 use App\Application\Engine\Command\CommandExecutor;
 use App\Application\Engine\EngineSnapshot;
@@ -45,6 +46,7 @@ final class RoomEvaluator
         private readonly LiveStatusPublisher $publisher,
         private readonly TimerScheduler $timers,
         private readonly LoggerInterface $logger,
+        private readonly RoomAlertsProvider $alerts,
     ) {
         $this->mutex = new LocalMutex();
     }
@@ -104,7 +106,7 @@ final class RoomEvaluator
 
         $this->audit->logDecisionChange($room->id, $decision, $cause);
         $this->executor->execute($room, $decision, $snapshot);
-        $this->publisher->publish($this->statusFactory->create($room, $decision, $facts, $snapshot));
+        $this->publisher->publish($this->statusFactory->create($room, $decision, $facts, $snapshot, $this->alerts->forRoom($room->id, $snapshot->now->getTimezone())));
         $this->armNextBoundary($room, $schedule, $decision, $snapshot);
     }
 

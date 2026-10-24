@@ -9,7 +9,7 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * The web side's handle on the engine: tells it to reload the configuration, reads its status and boosts rooms,
+ * The web side's handle on the engine: tells it to reload the configuration, reads its status, discovers entities and boosts rooms,
  * through the internal HTTP routes, authenticated with the shared token file.
  */
 final readonly class EngineClient
@@ -81,6 +81,55 @@ final readonly class EngineClient
     public function cancelOverride(string $roomId, string $actor): array
     {
         return $this->request('DELETE', \sprintf('/internal/rooms/%s/override', rawurlencode($roomId)), ['query' => ['actor' => $actor]]);
+    }
+
+    /**
+     * What the engine knows about Home Assistant: `connected`, `haLanguage`, `haTimeZone`, `haVersion`.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     */
+    public function context(): array
+    {
+        return $this->request('GET', '/internal/context');
+    }
+
+    /**
+     * The Home Assistant entities and services the configuration can use (the `Discovery` payload of the API).
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     */
+    public function discovery(): array
+    {
+        return $this->request('GET', '/internal/discovery');
+    }
+
+    /**
+     * Live facts of the overview page: `persons`, `weather`, `houseEmptySince`.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     */
+    public function overview(): array
+    {
+        return $this->request('GET', '/internal/overview');
+    }
+
+    /**
+     * Sends a test notification to every enabled destination.
+     *
+     * @return array<string, mixed> the number of destinations reached (`sent`) and failed (`failed`)
+     *
+     * @throws EngineUnavailableException
+     * @throws EngineRejectedException    409 when no destination is enabled
+     */
+    public function sendTestNotification(): array
+    {
+        return $this->request('POST', '/internal/notifications/test');
     }
 
     /**

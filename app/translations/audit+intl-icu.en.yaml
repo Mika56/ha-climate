@@ -34,6 +34,28 @@ audit:
         reloaded: >-
             Configuration reloaded: {rooms, plural, =0 {no room} one {# room} other {# rooms}},
             {entities, plural, =0 {no entity} one {# entity} other {# entities}} watched.
+        room_created: 'Room {room} created.'
+        room_updated: 'Room {room} updated.'
+        room_deleted: 'Room {room} deleted.'
+        rooms_reordered: 'Rooms reordered.'
+        preset_created: 'Preset {preset} created.'
+        preset_updated: 'Preset {preset} updated.'
+        preset_deleted: 'Preset {preset} deleted.'
+        schedule_created: 'Schedule {schedule} created.'
+        schedule_updated: 'Schedule {schedule} updated.'
+        schedule_deleted: 'Schedule {schedule} deleted.'
+        schedule_duplicated: 'Schedule {source} duplicated as {schedule}.'
+        settings_updated: 'Settings updated.'
+        season_changed: >-
+            {season, select,
+            winter {Season set to winter}
+            summer {Season set to summer}
+            other {Season set to off}}
+        notifications_updated: 'Notification settings updated.'
+        restored: >-
+            Configuration restored from a backup: {rooms, plural, =0 {no room} one {# room} other {# rooms}},
+            {schedules, plural, =0 {no schedule} one {# schedule} other {# schedules}} and
+            {presets, plural, =0 {no preset} one {# preset} other {# presets}}.
     connection:
         lost: 'Connection to Home Assistant lost.'
         restored: 'Connection to Home Assistant restored.'
