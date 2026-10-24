@@ -1,0 +1,20 @@
+# Texts of the notifications sent to the household (ICU MessageFormat). One title and one message per type.
+window_open:
+    title: 'Window open'
+    message: >-
+        {room}: a window or door has been open for {minutes, plural, one {# minute} other {# minutes}}.
+        Climate control is paused in this room until it is closed.
+setpoint_not_applicable:
+    title: 'Setpoint not applicable'
+    message: '{room}: the setpoint of {target, number} °C cannot be applied while a window or door is open.'
+device_unresponsive:
+    title: 'Device not responding'
+    message: >-
+        {device} ({room}) did not reach the requested state
+        ({mode, select, off {off} other {{mode} at {target, number} °C}})
+        {minutes, plural, one {# minute} other {# minutes}} after the command. It is now "{state}".
+sensor_unavailable:
+    title: 'Entity unavailable'
+    message: >-
+        {entity} ({rooms}) is {state, select, unknown {unknown} other {unavailable}}.
+        The room keeps being driven with what is known.

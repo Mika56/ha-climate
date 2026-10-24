@@ -25,6 +25,7 @@ use App\Tests\Double\ConfigurableCommandGuard;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
 use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(CommandExecutor::class)]
 #[CoversClass(OwnCommandRegistry::class)]
@@ -53,13 +54,23 @@ final class CommandExecutorTest extends EngineTestCase
         $this->createRoom();
         $this->seedDevice(mode: 'unavailable');
         $this->startEngine();
-        self::assertSame([], $this->homeAssistant()->serviceCalls());
+        self::assertSame([], $this->climateCalls());
 
         $this->homeAssistant()->pushStateChange(self::DEVICE, 'unknown');
-        self::assertSame([], $this->homeAssistant()->serviceCalls());
+        self::assertSame([], $this->climateCalls());
 
         $this->homeAssistant()->pushStateChange(self::DEVICE, 'off', ['temperature' => 7.0]);
-        self::assertCount(1, $this->homeAssistant()->serviceCalls());
+        self::assertCount(1, $this->climateCalls());
+    }
+
+    /**
+     * @return list<\App\Tests\Double\RecordedServiceCall> what was sent to climate devices (an unavailable device also raises a notification)
+     *
+     * @phpstan-impure
+     */
+    private function climateCalls(): array
+    {
+        return [...$this->homeAssistant()->serviceCallsTo('climate', 'set_temperature'), ...$this->homeAssistant()->serviceCallsTo('climate', 'set_hvac_mode')];
     }
 
     public function testADeviceMissingFromHomeAssistantIsSkipped(): void
@@ -207,6 +218,7 @@ final class CommandExecutorTest extends EngineTestCase
             $this->service(AuditLogger::class),
             $this->clock(),
             new NullLogger(),
+            $this->service(EventDispatcherInterface::class),
         );
         $snapshot = $this->service(EngineSnapshotFactory::class)->create();
         $configuration = $snapshot->configuration->room(new RoomId($room->getId()->toRfc4122())) ?? throw new \LogicException('Room not loaded.');

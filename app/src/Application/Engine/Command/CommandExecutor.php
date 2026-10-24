@@ -16,13 +16,15 @@ use App\Infrastructure\Persistence\Enum\ActorType;
 use App\Infrastructure\Persistence\Repository\CommandLogRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Brings the devices of a room to the state a decision wants, sending as little as possible.
  *
  * For each device: plan (nothing if it is already in the wanted state), ask the guards, and either send
  * the command or postpone it with a timer. Every command is logged with the context id Home Assistant
- * returned, so that the device's resulting state change is recognised as ours.
+ * returned, so that the device's resulting state change is recognised as ours, and announced with a
+ * {@see DeviceCommandSent} event.
  */
 final class CommandExecutor
 {
@@ -42,6 +44,7 @@ final class CommandExecutor
         private readonly AuditLogger $audit,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
+        private readonly EventDispatcherInterface $dispatcher,
     ) {
     }
 
@@ -163,5 +166,13 @@ final class CommandExecutor
             'mode' => $command->mode->value,
             'target' => $command->temperature?->toFloat(),
         ], $command->roomId, ['data' => $data, 'contextId' => $result->context->id]);
+        $this->dispatcher->dispatch(new DeviceCommandSent(
+            $command->roomId,
+            $command->device->entityId,
+            $command->mode,
+            $command->temperature?->toFloat(),
+            $this->clock->now(),
+            $result->context->id,
+        ));
     }
 }

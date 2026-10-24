@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Engine;
 
+use App\Application\Engine\Alert\DeviceUnresponsiveHandler;
 use App\Application\Engine\Command\CommandExecutor;
 use App\Application\Engine\Facts\ActiveOverrideContributor;
 use App\Application\Engine\Facts\CurrentTemperatureContributor;
 use App\Application\Engine\Facts\HeatingRateContributor;
 use App\Application\Engine\Facts\HouseEmptyContributor;
+use App\Application\Engine\Facts\OpeningContributor;
 use App\Application\Engine\Facts\RoomFactsBuilder;
 use App\Application\Engine\Facts\RoomVacancyContributor;
 use App\Application\Engine\Facts\VacationContributor;
+use App\Application\Engine\Opening\OpeningNotifyHandler;
 use App\Application\Engine\Timer\DailyMaintenanceHandler;
 use App\Application\Engine\Timer\RoomReevaluateHandler;
 use App\Application\Engine\Timer\TimerScheduler;
 use App\Domain\Decision\Rule\HouseEmptyRule;
 use App\Domain\Decision\Rule\NoDeviceForModeRule;
+use App\Domain\Decision\Rule\OpeningRule;
 use App\Domain\Decision\Rule\PreheatRule;
 use App\Domain\Decision\Rule\RoomVacancyRule;
 use App\Domain\Decision\Rule\ScheduleRule;
@@ -54,6 +58,7 @@ final class ExtensionPointsWiringTest extends KernelTestCase
                 NoDeviceForModeRule::class,
                 VacationRule::class,
                 HouseEmptyRule::class,
+                OpeningRule::class,
                 RoomVacancyRule::class,
                 PreheatRule::class,
                 ScheduleRule::class,
@@ -74,6 +79,7 @@ final class ExtensionPointsWiringTest extends KernelTestCase
         self::assertContains(RoomVacancyContributor::class, $contributors);
         self::assertContains(VacationContributor::class, $contributors);
         self::assertContains(HeatingRateContributor::class, $contributors);
+        self::assertContains(OpeningContributor::class, $contributors);
     }
 
     public function testCommandGuardsAreDiscovered(): void
@@ -91,6 +97,8 @@ final class ExtensionPointsWiringTest extends KernelTestCase
 
         self::assertContains(RoomReevaluateHandler::class, $handlers);
         self::assertContains(DailyMaintenanceHandler::class, $handlers);
+        self::assertContains(OpeningNotifyHandler::class, $handlers);
+        self::assertContains(DeviceUnresponsiveHandler::class, $handlers);
     }
 
     public function testInternalRoutesAreDiscovered(): void

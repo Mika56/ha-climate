@@ -37,3 +37,9 @@ audit:
     connection:
         lost: 'Connection to Home Assistant lost.'
         restored: 'Connection to Home Assistant restored.'
+    alert:
+        opened: 'Alert {key} opened ({type}).'
+        resolved: 'Alert {key} resolved ({type}).'
+    notification:
+        sent: 'Notification {type} sent to {target}.'
+        failed: 'Notification {type} to {target} failed: {error}'

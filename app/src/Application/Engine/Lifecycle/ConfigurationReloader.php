@@ -15,6 +15,7 @@ use App\Application\Port\HomeAssistant\HomeAssistantException;
 use App\Domain\Room\RoomId;
 use App\Infrastructure\Persistence\Enum\ActorType;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Applies a configuration change made on the web side to the running engine: re-reads the database,
@@ -31,6 +32,7 @@ final readonly class ConfigurationReloader
         private RoomEvaluator $evaluator,
         private AuditLogger $audit,
         private LoggerInterface $logger,
+        private EventDispatcherInterface $dispatcher,
     ) {
     }
 
@@ -56,5 +58,6 @@ final readonly class ConfigurationReloader
 
         $this->audit->log(ActorType::System, 'engine', 'audit.configuration.reloaded', ['rooms' => \count($after), 'entities' => \count($this->index->entityIds())]);
         $this->evaluator->evaluate($configuration->roomIds(), 'reload');
+        $this->dispatcher->dispatch(new EngineStateSynchronized(EngineStateSynchronized::RELOAD));
     }
 }
