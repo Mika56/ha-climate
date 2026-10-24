@@ -12,6 +12,11 @@ use App\Domain\Decision\RoomRuleInterface;
 
 final readonly class SeasonOffRule implements RoomRuleInterface
 {
+    public static function priority(): int
+    {
+        return 1000;
+    }
+
     public function apply(RoomEvaluationContext $context, callable $next): Decision
     {
         if (Season::Off === $context->season) {

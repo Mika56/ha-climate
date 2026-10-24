@@ -19,6 +19,11 @@ final class SpyRule implements RoomRuleInterface
     {
     }
 
+    public static function priority(): int
+    {
+        return 0;
+    }
+
     public function apply(RoomEvaluationContext $context, callable $next): Decision
     {
         ++$this->calls;

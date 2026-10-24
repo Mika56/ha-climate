@@ -64,4 +64,9 @@ final class SeasonOffRuleTest extends TestCase
         yield 'winter' => [Season::Winter];
         yield 'summer' => [Season::Summer];
     }
+
+    public function testPriority(): void
+    {
+        self::assertSame(1000, SeasonOffRule::priority());
+    }
 }

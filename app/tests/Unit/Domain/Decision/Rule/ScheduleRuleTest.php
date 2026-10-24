@@ -145,4 +145,9 @@ final class ScheduleRuleTest extends TestCase
         self::assertSame('reason.schedule', $decision->reason->code);
         self::assertSame(0, $after->calls);
     }
+
+    public function testPriority(): void
+    {
+        self::assertSame(-1000, ScheduleRule::priority());
+    }
 }

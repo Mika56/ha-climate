@@ -19,6 +19,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(RoomFacts::class)]
 #[CoversClass(RoomEvaluationContext::class)]
 #[UsesClass(Season::class)]
+#[UsesClass(\App\Domain\Decision\ActiveOverride::class)]
+#[UsesClass(\App\Domain\Decision\VacationPeriod::class)]
+#[UsesClass(\App\Domain\Decision\OverrideType::class)]
 #[UsesClass(\App\Domain\Climate\Temperature::class)]
 #[UsesClass(\App\Domain\Decision\RoomConfiguration::class)]
 #[UsesClass(\App\Domain\Device\AntiCyclingPolicy::class)]
@@ -73,5 +76,32 @@ final class GlobalPolicyAndFactsTest extends TestCase
         self::assertSame(HvacMode::Heat, Fixtures::context(Season::Winter)->mode());
         self::assertSame(HvacMode::Cool, Fixtures::context(Season::Summer)->mode());
         self::assertSame(HvacMode::Off, Fixtures::context(Season::Off)->mode());
+    }
+
+    public function testWithersReplaceOneFactAndKeepTheOthers(): void
+    {
+        $at = Fixtures::at('2026-10-26 07:00');
+        $vacation = new \App\Domain\Decision\VacationPeriod($at, $at->modify('+1 day'), true);
+        $override = \App\Domain\Decision\ActiveOverride::manual(Fixtures::temperature(22.0));
+
+        $facts = RoomFacts::none()
+            ->withHouseEmptySince($at)
+            ->withRoomVacantSince($at->modify('+1 hour'))
+            ->withOpeningOpenSince($at->modify('+2 hours'))
+            ->withOverride($override)
+            ->withVacation($vacation)
+            ->withCurrentTemperature(Fixtures::temperature(19.5));
+
+        self::assertSame($at, $facts->houseEmptySince);
+        self::assertEquals($at->modify('+1 hour'), $facts->roomVacantSince);
+        self::assertEquals($at->modify('+2 hours'), $facts->openingOpenSince);
+        self::assertSame($override, $facts->override);
+        self::assertSame($vacation, $facts->vacation);
+        self::assertSame(19.5, $facts->currentTemperature?->toFloat());
+
+        $cleared = $facts->withOverride(null)->withCurrentTemperature(null);
+        self::assertNull($cleared->override);
+        self::assertNull($cleared->currentTemperature);
+        self::assertSame($vacation, $cleared->vacation);
     }
 }

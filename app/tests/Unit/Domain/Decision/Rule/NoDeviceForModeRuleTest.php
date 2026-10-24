@@ -90,4 +90,9 @@ final class NoDeviceForModeRuleTest extends TestCase
         yield 'reversible both seasons' => [Season::Summer, [DeviceRole::Reversible]];
         yield 'season off is left to its own rule' => [Season::Off, []];
     }
+
+    public function testPriority(): void
+    {
+        self::assertSame(900, NoDeviceForModeRule::priority());
+    }
 }

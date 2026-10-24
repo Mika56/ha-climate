@@ -15,6 +15,11 @@ use App\Domain\Decision\RoomRuleInterface;
  */
 final readonly class ScheduleRule implements RoomRuleInterface
 {
+    public static function priority(): int
+    {
+        return -1000;
+    }
+
     public function apply(RoomEvaluationContext $context, callable $next): Decision
     {
         $mode = $context->mode();
