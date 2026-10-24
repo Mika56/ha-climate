@@ -1,0 +1,39 @@
+# Audit trail messages (ICU MessageFormat). Keys are stored in the database, parameters in `params`.
+audit:
+    engine:
+        started: >-
+            Engine started: {rooms, plural, =0 {no room} one {# room} other {# rooms}} driven,
+            {timers, plural, =0 {no timer} one {# timer} other {# timers}} and
+            {overrides, plural, =0 {no override} one {# override} other {# overrides}} restored.
+    decision:
+        changed: >-
+            {mode, select,
+            off {Switched off}
+            heat {Heating set to {target, number} °C}
+            cool {Cooling set to {target, number} °C}
+            other {Mode changed to {mode}}}
+    command:
+        sent: >-
+            {mode, select,
+            off {{device} turned off}
+            heat {{device} set to heating at {target, number} °C}
+            cool {{device} set to cooling at {target, number} °C}
+            other {{device} set to {mode}}}
+        failed: 'Command {service} on {device} failed: {error}'
+        deferred: 'Command to {device} postponed until {until}.'
+    manual_change:
+        detected: 'Manual change on {device}: {oldMode} {oldTemperature} → {newMode} {newTemperature}'
+    evaluation:
+        failed: 'The room could not be evaluated: {error}'
+    maintenance:
+        done: >-
+            Daily maintenance: {audit, plural, =0 {no audit entry} one {# audit entry} other {# audit entries}},
+            {commands, plural, =0 {no command log} one {# command log} other {# command logs}} and
+            {overrides, plural, =0 {no override} one {# override} other {# overrides}} purged.
+    configuration:
+        reloaded: >-
+            Configuration reloaded: {rooms, plural, =0 {no room} one {# room} other {# rooms}},
+            {entities, plural, =0 {no entity} one {# entity} other {# entities}} watched.
+    connection:
+        lost: 'Connection to Home Assistant lost.'
+        restored: 'Connection to Home Assistant restored.'

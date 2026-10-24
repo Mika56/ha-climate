@@ -11,6 +11,7 @@ use App\Application\Port\HomeAssistant\EntityRegistryEntry;
 use App\Application\Port\HomeAssistant\EntityState;
 use App\Application\Port\HomeAssistant\EntityStateChange;
 use App\Application\Port\HomeAssistant\HomeAssistantConfig;
+use App\Application\Port\HomeAssistant\HomeAssistantException;
 use App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface;
 use App\Application\Port\HomeAssistant\ServiceCallResult;
 use App\Application\Port\HomeAssistant\ServiceDescription;
@@ -43,6 +44,10 @@ final class FakeHomeAssistantGateway implements HomeAssistantGatewayInterface
     private bool $connected = false;
     private bool $connectionAvailable = true;
     private int $contextCounter = 0;
+    private ?HomeAssistantException $nextServiceFailure = null;
+
+    /** Counts how often tests looked at the fake: two looks are not assumed to see the same thing by static analysis. */
+    private int $inspections = 0;
 
     /** @var array<string, EntityState> */
     private array $states = [];
@@ -158,6 +163,14 @@ final class FakeHomeAssistantGateway implements HomeAssistantGatewayInterface
         $this->notify(new EntityStateChange($entityId, $old, null));
     }
 
+    /**
+     * Makes the next service call fail with the given error (once), as Home Assistant rejecting it would.
+     */
+    public function failNextServiceCall(HomeAssistantException $failure): void
+    {
+        $this->nextServiceFailure = $failure;
+    }
+
     public function simulateConnectionLoss(): void
     {
         if (!$this->connectionAvailable) {
@@ -185,14 +198,20 @@ final class FakeHomeAssistantGateway implements HomeAssistantGatewayInterface
 
     /**
      * @return list<RecordedServiceCall>
+     *
+     * @phpstan-impure
      */
     public function serviceCalls(): array
     {
+        ++$this->inspections;
+
         return $this->serviceCalls;
     }
 
     /**
      * @return list<RecordedServiceCall>
+     *
+     * @phpstan-impure
      */
     public function serviceCallsTo(string $domain, string $service): array
     {
@@ -207,8 +226,13 @@ final class FakeHomeAssistantGateway implements HomeAssistantGatewayInterface
         $this->serviceCalls = [];
     }
 
+    /**
+     * @phpstan-impure
+     */
     public function state(string $entityId): ?EntityState
     {
+        ++$this->inspections;
+
         return $this->states[$entityId] ?? null;
     }
 
@@ -270,6 +294,12 @@ final class FakeHomeAssistantGateway implements HomeAssistantGatewayInterface
     public function callService(string $domain, string $service, array $serviceData = [], array $target = []): ServiceCallResult
     {
         $this->assertReady();
+        if (null !== $this->nextServiceFailure) {
+            $failure = $this->nextServiceFailure;
+            $this->nextServiceFailure = null;
+
+            throw $failure;
+        }
 
         $context = new StateContext(\sprintf('fake-context-%04d', ++$this->contextCounter));
         $this->serviceCalls[] = new RecordedServiceCall($domain, $service, $serviceData, $target, $context);

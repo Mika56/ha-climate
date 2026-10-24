@@ -1,0 +1,36 @@
+monolog:
+    channels:
+        - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+
+# The engine and the web side both log to stderr (s6 collects it, `docker logs` shows it).
+# Secrets (Home Assistant token, internal token) are never passed to the logger.
+when@dev:
+    monolog:
+        handlers:
+            main:
+                type: stream
+                path: php://stderr
+                level: info
+                channels: ["!event", "!deprecation", "!doctrine"]
+
+when@test:
+    monolog:
+        handlers:
+            main:
+                type: test
+                level: debug
+
+when@prod:
+    monolog:
+        handlers:
+            main:
+                type: stream
+                path: php://stderr
+                level: info
+                formatter: monolog.formatter.json
+                channels: ["!deprecation"]
+            deprecation:
+                type: stream
+                channels: [deprecation]
+                path: php://stderr
+                formatter: monolog.formatter.json

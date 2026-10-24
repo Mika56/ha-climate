@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Persistence;
 
 use App\Domain\Climate\HvacMode;
+use App\Domain\Decision\OverrideType;
 use App\Infrastructure\Persistence\Entity\Alert;
 use App\Infrastructure\Persistence\Entity\CommandLog;
 use App\Infrastructure\Persistence\Entity\HeatingRate;
 use App\Infrastructure\Persistence\Entity\Room;
 use App\Infrastructure\Persistence\Entity\RoomOverride;
 use App\Infrastructure\Persistence\Entity\Timer;
-use App\Infrastructure\Persistence\Enum\OverrideType;
 use App\Infrastructure\Persistence\Repository\AlertRepository;
 use App\Infrastructure\Persistence\Repository\CommandLogRepository;
 use App\Infrastructure\Persistence\Repository\HeatingRateRepository;

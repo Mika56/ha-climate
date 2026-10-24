@@ -25,4 +25,34 @@ final readonly class RoomFacts
     {
         return new self();
     }
+
+    public function withHouseEmptySince(?\DateTimeImmutable $houseEmptySince): self
+    {
+        return new self($houseEmptySince, $this->roomVacantSince, $this->openingOpenSince, $this->override, $this->vacation, $this->currentTemperature);
+    }
+
+    public function withRoomVacantSince(?\DateTimeImmutable $roomVacantSince): self
+    {
+        return new self($this->houseEmptySince, $roomVacantSince, $this->openingOpenSince, $this->override, $this->vacation, $this->currentTemperature);
+    }
+
+    public function withOpeningOpenSince(?\DateTimeImmutable $openingOpenSince): self
+    {
+        return new self($this->houseEmptySince, $this->roomVacantSince, $openingOpenSince, $this->override, $this->vacation, $this->currentTemperature);
+    }
+
+    public function withOverride(?ActiveOverride $override): self
+    {
+        return new self($this->houseEmptySince, $this->roomVacantSince, $this->openingOpenSince, $override, $this->vacation, $this->currentTemperature);
+    }
+
+    public function withVacation(?VacationPeriod $vacation): self
+    {
+        return new self($this->houseEmptySince, $this->roomVacantSince, $this->openingOpenSince, $this->override, $vacation, $this->currentTemperature);
+    }
+
+    public function withCurrentTemperature(?Temperature $currentTemperature): self
+    {
+        return new self($this->houseEmptySince, $this->roomVacantSince, $this->openingOpenSince, $this->override, $this->vacation, $currentTemperature);
+    }
 }

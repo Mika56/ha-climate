@@ -1,0 +1,39 @@
+# Messages du journal d'audit (ICU MessageFormat). Les clés sont stockées en base, les paramètres dans `params`.
+audit:
+    engine:
+        started: >-
+            Moteur démarré : {rooms, plural, =0 {aucune pièce} one {# pièce} other {# pièces}} pilotée(s),
+            {timers, plural, =0 {aucun minuteur} one {# minuteur} other {# minuteurs}} et
+            {overrides, plural, =0 {aucune dérogation} one {# dérogation} other {# dérogations}} restauré(s).
+    decision:
+        changed: >-
+            {mode, select,
+            off {Arrêt}
+            heat {Chauffage réglé à {target, number} °C}
+            cool {Climatisation réglée à {target, number} °C}
+            other {Mode changé en {mode}}}
+    command:
+        sent: >-
+            {mode, select,
+            off {{device} éteint}
+            heat {{device} réglé en chauffage à {target, number} °C}
+            cool {{device} réglé en climatisation à {target, number} °C}
+            other {{device} réglé en {mode}}}
+        failed: 'La commande {service} sur {device} a échoué : {error}'
+        deferred: 'Commande vers {device} reportée jusqu’à {until}.'
+    manual_change:
+        detected: 'Changement manuel sur {device} : {oldMode} {oldTemperature} → {newMode} {newTemperature}'
+    evaluation:
+        failed: 'La pièce n’a pas pu être évaluée : {error}'
+    maintenance:
+        done: >-
+            Maintenance quotidienne : {audit, plural, =0 {aucune entrée d’audit} one {# entrée d’audit} other {# entrées d’audit}},
+            {commands, plural, =0 {aucun journal de commandes} one {# journal de commandes} other {# journaux de commandes}} et
+            {overrides, plural, =0 {aucune dérogation} one {# dérogation} other {# dérogations}} purgé(s).
+    configuration:
+        reloaded: >-
+            Configuration rechargée : {rooms, plural, =0 {aucune pièce} one {# pièce} other {# pièces}},
+            {entities, plural, =0 {aucune entité} one {# entité} other {# entités}} surveillée(s).
+    connection:
+        lost: 'Connexion à Home Assistant perdue.'
+        restored: 'Connexion à Home Assistant rétablie.'

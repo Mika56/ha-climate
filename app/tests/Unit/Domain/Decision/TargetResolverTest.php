@@ -95,6 +95,11 @@ final class TargetResolverTest extends TestCase
         $rule = new class implements \App\Domain\Decision\RoomRuleInterface {
             public ?\App\Domain\Decision\RoomEvaluationContext $seen = null;
 
+            public static function priority(): int
+            {
+                return 0;
+            }
+
             public function apply(\App\Domain\Decision\RoomEvaluationContext $context, callable $next): Decision
             {
                 $this->seen = $context;

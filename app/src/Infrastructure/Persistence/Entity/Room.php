@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Entity;
 
 use App\Domain\Climate\HvacMode;
-use App\Infrastructure\Persistence\Enum\DeviceRole;
+use App\Domain\Device\DeviceRole;
 use App\Infrastructure\Persistence\Repository\RoomRepository;
 use App\Infrastructure\Persistence\Support\Guard;
 use Doctrine\Common\Collections\ArrayCollection;

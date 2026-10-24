@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Infrastructure\Persistence\Entity;
 
 use App\Domain\Climate\HvacMode;
+use App\Domain\Device\DeviceRole;
 use App\Infrastructure\Persistence\Entity\Device;
 use App\Infrastructure\Persistence\Entity\Preset;
 use App\Infrastructure\Persistence\Entity\Room;
 use App\Infrastructure\Persistence\Entity\RoomPresetTemperature;
 use App\Infrastructure\Persistence\Entity\Schedule;
-use App\Infrastructure\Persistence\Enum\DeviceRole;
 use App\Infrastructure\Persistence\Support\Guard;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

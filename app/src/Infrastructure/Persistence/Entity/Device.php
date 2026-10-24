@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Entity;
 
-use App\Infrastructure\Persistence\Enum\DeviceRole;
+use App\Domain\Device\DeviceRole;
 use App\Infrastructure\Persistence\Support\Guard;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
