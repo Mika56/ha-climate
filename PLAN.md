@@ -118,6 +118,13 @@ API JSON REST sous `/api` (contrat **OpenAPI** écrit en premier, partagé avec 
 
 Rendu « natif HA » : variables CSS HA (`--primary-color`, `--card-background-color`…, thème clair/sombre suivant `prefers-color-scheme`), police Roboto, icônes `@mdi/js`, cartes et listes au style HA. Écrans : vue d'ensemble temps réel (SSE) avec boost par pièce + bandeau alertes + météo ; pièce (capteurs, appareils, températures par preset, délais) ; éditeur de planning hebdo (glisser les bornes, créneaux ancrés sur entité) ; réglages globaux (saison, absence, vacances) ; notifications ; historique/audit ; sauvegarde/restauration. i18n **en + fr** dès le départ (vue-i18n côté front, Symfony Translation côté back pour l'audit et les notifications).
 
+**Langue et thème automatiques** (le sélecteur reste, valeur par défaut « Automatique ») :
+- Le panneau ingress est servi sur la même origine que HA : le front lit `window.parent.document.querySelector('home-assistant').hass` → `hass.language` (langue du profil de l'utilisateur connecté), `hass.themes.darkMode` (mode sombre effectif) et les variables CSS du thème actif (`--primary-color`…) pour s'aligner sur le thème HA. Réagit aux changements à chaud (observateur sur le parent).
+- Replis, dans l'ordre : choix explicite de l'utilisateur → profil HA → langue serveur (`get_config.language`, exposée par `GET /api/context`) → `navigator.language` → `en`. Thème : choix explicite → `hass.themes.darkMode` → `prefers-color-scheme`.
+- Le choix explicite est stocké par utilisateur HA, identifié par l'en-tête `X-Remote-User-Id` que le Supervisor ajoute aux requêtes ingress (table `user_preference`).
+- Côté serveur (notifications, persistent_notification, libellés d'audit exportés) : pas d'utilisateur → langue de HA (`get_config`) ou valeur forcée dans les réglages.
+- Langue non supportée (ex. `de`) → `en`. Accès hors ingress (dev standalone) : le parent n'est pas lisible, les replis s'appliquent.
+
 ## Qualité (gates bloquants pour chaque agent)
 
 - `app/.php-cs-fixer.dist.php` : `@Symfony` + `declare_strict_types`, `risky` autorisé.
