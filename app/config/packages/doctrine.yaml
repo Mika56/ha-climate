@@ -2,6 +2,9 @@ doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
         profiling_collect_backtrace: '%kernel.debug%'
+        types:
+            # Every instant is stored and hydrated in UTC.
+            datetime_immutable: App\Infrastructure\Persistence\Type\UtcDateTimeImmutableType
     orm:
         validate_xml_mapping: true
         naming_strategy: doctrine.orm.naming_strategy.underscore
