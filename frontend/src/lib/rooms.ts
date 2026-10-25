@@ -1,4 +1,4 @@
-import type { DeviceRole, PresetTemperature, Room, RoomInput } from '@/api/types'
+import type { DeviceRole, PresetTemperature, Room, RoomInput, RoomStatus } from '@/api/types'
 
 /** Room as edited in the UI: delays in minutes (the API uses seconds). */
 export interface RoomForm {
@@ -117,4 +117,18 @@ export function fromRoomForm(form: RoomForm): RoomInput {
 
 export function emptyDevice(entityId: string): DeviceForm {
   return { entityId, role: 'heating', minOnMinutes: 5, minOffMinutes: 5, hysteresis: 0.3 }
+}
+
+const ACTIVE_HVAC_MODES = ['heat', 'cool', 'heat_cool', 'auto', 'dry', 'fan_only']
+
+/**
+ * What the devices of a room are doing: `running` when one reports it through hvac_action, `on` when
+ * one reports no hvac_action but sits in an active HVAC mode (it may be idling at its setpoint).
+ */
+export function roomActivity(status: RoomStatus): 'running' | 'on' | 'idle' {
+  if (status.devices.some((d) => d.running === true)) return 'running'
+  const on = status.devices.some(
+    (d) => (d.running ?? null) === null && d.state !== null && ACTIVE_HVAC_MODES.includes(d.state),
+  )
+  return on ? 'on' : 'idle'
 }

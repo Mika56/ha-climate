@@ -16,9 +16,8 @@ describe('OverviewPage', () => {
   it('shows season, presence, weather, vacation, alerts, room cards and recent decisions', async () => {
     const { wrapper } = await mountApp('/')
     const text = wrapper.text()
-    expect(text).toContain('Seuls les appareils de chauffage sont pilotés.')
-    expect(text).toContain('2 personnes à la maison')
-    expect(text).toContain('Alex · à la maison')
+    expect(text).toContain('2 présents')
+    expect(wrapper.find('[data-test="presence-detail"]').text()).toContain('Alex')
     expect(text).toContain('12,5\u00a0°C')
     expect(text).toContain('Partiellement nuageux')
     expect(text).toContain('Désactivé')
@@ -33,6 +32,9 @@ describe('OverviewPage', () => {
     const salon = card(wrapper, 'Salon')
     expect(salon.find('[data-test="activity"]').text()).toBe('Chauffe en cours')
     expect(salon.find('[data-test="target"]').text()).toBe('21,0\u00a0°C')
+    expect(salon.find('[data-test="applied"]').text()).toBe(
+      'Réglage actif\u00a0: Chauffage 21,0\u00a0°C',
+    )
     expect(salon.find('[data-test="reason"]').text()).toMatch(
       /^Planning\u00a0: Confort jusqu’à \d\d:\d\d\./,
     )
@@ -48,6 +50,7 @@ describe('OverviewPage', () => {
     const sdb = card(wrapper, 'Salle de bain')
     expect(sdb.text()).toContain('Fenêtre ouverte · 32\u00a0min')
     expect(sdb.find('[data-test="target"]').text()).toBe('Coupé')
+    expect(sdb.find('[data-test="applied"]').text()).toBe('Réglage actif\u00a0: Éteint')
     expect(sdb.find('[data-test="boost-open"]').exists()).toBe(false)
 
     expect(card(wrapper, 'Bureau').text()).toContain('Surcharge manuelle')
@@ -143,7 +146,7 @@ describe('OverviewPage', () => {
     await summer?.trigger('click')
     await settle()
     expect(mockDb.settings.season).toBe('summer')
-    expect(wrapper.find('[data-test="season-help"]').text()).toContain('climatisation')
+    expect(wrapper.find('.seg-btn.on').text()).toBe('Été')
     expect(wrapper.find('[data-test="rooms-summary"]').text()).toMatch(/en refroidissement/)
 
     expect(wrapper.findAll('.seg-btn').map((b) => b.text())).toEqual(['Hiver', 'Été'])
@@ -225,7 +228,7 @@ describe('OverviewPage', () => {
     const summer = wrapper.findAll('.seg-btn').find((b) => b.text().includes('Été'))
     await summer?.trigger('click')
     await settle()
-    expect(wrapper.find('[data-test="season-help"]').text()).toContain('chauffage')
+    expect(wrapper.find('.seg-btn.on').text()).toBe('Hiver')
     expect(wrapper.find('.toasts').text()).toContain('Une erreur est survenue')
   })
 
@@ -241,6 +244,39 @@ describe('OverviewPage', () => {
     expect(card(wrapper, 'Salon').find('[data-test="current"]').text()).toBe('22,2\u00a0°C')
   })
 
+  it('shows what devices without hvac_action are set to, even while paused', async () => {
+    mockDb.settings.paused = true
+    const { wrapper } = await mountApp('/')
+    const source = FakeEventSource.last
+    source?.open()
+    const cuisine = allStatuses().find((s) => s.name === 'Cuisine')
+    if (!cuisine) throw new Error('no cuisine')
+    const [device] = cuisine.devices
+    source?.emit(
+      'room',
+      JSON.stringify({
+        ...cuisine,
+        devices: [
+          { ...device, state: 'heat', targetTemperature: 20, running: null },
+          {
+            ...device,
+            entityId: 'climate.cuisine_2',
+            state: 'off',
+            targetTemperature: 18,
+            running: null,
+          },
+        ],
+      }),
+    )
+    await settle()
+    const card_ = card(wrapper, 'Cuisine')
+    expect(card_.find('[data-test="activity"]').text()).toBe('Allumé')
+    expect(card_.find('[data-test="applied"]').text()).toBe(
+      'Réglage actif\u00a0: Chauffage 20,0\u00a0°C · Éteint',
+    )
+    expect(wrapper.find('[data-test="rooms-summary"]').text()).toMatch(/^4 sur 6/)
+  })
+
   it('merges live alerts and handles an empty or weatherless house', async () => {
     mockDb.settings.weatherEntity = null
     mockDb.settings.vacation = {
@@ -251,9 +287,9 @@ describe('OverviewPage', () => {
     }
     mockDb.alerts = []
     const { wrapper } = await mountApp('/')
-    expect(wrapper.text()).toContain('Aucune entité météo configurée.')
-    expect(wrapper.text()).toContain('Activé')
-    expect(wrapper.text()).toContain('Retour le')
+    expect(wrapper.text()).toContain('Choisir une entité')
+    expect(wrapper.find('[data-test="vacation-state"]').text()).toBe('Activées')
+    expect(wrapper.text()).toContain('Retour ')
     expect(wrapper.find('[data-test="alert-count"]').text()).toBe('Aucune')
   })
 

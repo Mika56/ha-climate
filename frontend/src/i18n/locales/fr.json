@@ -54,6 +54,7 @@
     "cancel": "Annuler",
     "choose": "Choisir…",
     "delete": "Supprimer",
+    "help": "Aide",
     "dismiss": "Fermer",
     "loading": "Chargement…",
     "none": "Aucun",
@@ -115,32 +116,16 @@
   },
   "overview": {
     "season": "Saison",
-    "seasonHelp": {
-      "winter": "Seuls les appareils de chauffage sont pilotés.",
-      "summer": "Seuls les appareils de climatisation sont pilotés."
-    },
     "presence": "Présence",
-    "home": "{count} personne à la maison | {count} personnes à la maison",
-    "person": {
-      "home": "à la maison",
-      "not_home": "absent",
-      "unavailable": "indisponible",
-      "unknown": "inconnu"
-    },
-    "emptyHelp": "Tout est coupé {delay} après le départ de la dernière personne.",
-    "emptySince": "La maison est vide depuis {time}.",
+    "home": "{count} présent | {count} présents",
+    "emptySince": "Vide depuis {time}",
     "weather": "Météo",
-    "min": "Min",
-    "max": "Max",
-    "humidity": "Humidité",
-    "noWeather": "Aucune entité météo configurée.",
-    "chooseWeather": "Choisir une entité météo",
+    "chooseWeather": "Choisir une entité",
     "vacation": "Vacances",
-    "vacationOn": "Activé",
-    "vacationOff": "Désactivé",
-    "vacationReturn": "Retour le {date}.",
-    "vacationPlan": "Planifier un départ",
-    "vacationEdit": "Modifier",
+    "vacationOn": "Activées",
+    "vacationOff": "Désactivées",
+    "vacationReturn": "Retour {date}",
+    "vacationEdit": "Régler",
     "alerts": "Alertes",
     "alertsActive": "{count} active | {count} actives",
     "alertsNone": "Aucune",
@@ -161,10 +146,13 @@
     "activity": {
       "heating": "Chauffe en cours",
       "cooling": "Refroidissement en cours",
-      "idle": "Au repos"
+      "idle": "Au repos",
+      "on": "Allumé"
     },
     "recent": "Dernières décisions",
-    "allHistory": "Tout l’historique"
+    "paused": "En pause",
+    "active": "Actif",
+    "applied": "Réglage actif\u00a0:"
   },
   "badge": {
     "windowOpen": "Fenêtre ouverte · {duration}",
@@ -243,6 +231,7 @@
     "temperature": "Température",
     "presence": "Présence dans la pièce (facultatif)",
     "openings": "Fenêtres et portes",
+    "openingsHelp": "Capteurs proposés\u00a0: binary_sensor de type Fenêtre, Porte, Ouverture ou Porte de garage, et input_boolean. Un capteur sans type (un groupe, par exemple) n’apparaît pas\u00a0: choisissez son type avec «\u00a0Afficher en tant que\u00a0» dans Home Assistant.",
     "addOpening": "Ajouter un ouvrant",
     "removeEntity": "Retirer {entity}",
     "devices": "Appareils",
@@ -441,5 +430,16 @@
     "heating": "Chauffage",
     "cooling": "Climatisation",
     "reversible": "Réversible"
+  },
+  "hvac": {
+    "heat": "Chauffage",
+    "cool": "Climatisation",
+    "heat_cool": "Auto",
+    "auto": "Auto",
+    "dry": "Déshumidification",
+    "fan_only": "Ventilation",
+    "off": "Éteint",
+    "unavailable": "Indisponible",
+    "unknown": "Inconnu"
   }
 }

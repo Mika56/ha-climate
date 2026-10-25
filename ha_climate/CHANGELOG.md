@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.1
+
+- Overview: the top row (HA Climate switch, season, presence, weather, vacation) fits on one line on a computer,
+  with shorter texts; the link to the full history is gone (the History tab stays).
+- Room cards show the **active setting** of the devices as Home Assistant reports it ("Active setting: Heat
+  20.0 °C"), also while HA Climate is paused.
+- A device that does not report `hvac_action` but is in an active HVAC mode is shown as "On" (it used to show
+  "Idle") and counts in the "x of y heating" summary.
+- Room editor: a help bubble next to "Windows and doors" lists the supported sensor types (a sensor without a
+  device class, such as a group, is not listed: set "Show as" in Home Assistant).
+
 ## 0.2.0
 
 - Behaviour change: the season is now **Winter or Summer** only. The old "Off" position is replaced by a separate

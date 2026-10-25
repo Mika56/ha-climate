@@ -14,6 +14,7 @@ import { useDialogStore } from '@/stores/dialogs'
 import { usePresetStore } from '@/stores/presets'
 import { useToastStore } from '@/stores/toasts'
 import EntitySelect from './EntitySelect.vue'
+import InfoTip from './InfoTip.vue'
 import ErrorSummary from './ErrorSummary.vue'
 import FormField from './FormField.vue'
 import HaIcon from './HaIcon.vue'
@@ -221,7 +222,7 @@ async function remove(): Promise<void> {
         </FormField>
       </div>
       <div class="field">
-        <span>{{ t('rooms.openings') }}</span>
+        <span>{{ t('rooms.openings') }} <InfoTip :text="t('rooms.openingsHelp')" /></span>
         <div class="chips">
           <span
             v-for="(entityId, index) in form.openings"

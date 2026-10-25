@@ -96,14 +96,14 @@ describe('catalogs', () => {
 
   it('pluralise through vue-i18n (French treats 0 and 1 as singular)', () => {
     const fr = createAppI18n('fr').global
-    expect(fr.t('overview.home', 0)).toBe('0 personne à la maison')
-    expect(fr.t('overview.home', 1)).toBe('1 personne à la maison')
-    expect(fr.t('overview.home', 2)).toBe('2 personnes à la maison')
+    expect(fr.t('overview.home', 0)).toBe('0 présent')
+    expect(fr.t('overview.home', 1)).toBe('1 présent')
+    expect(fr.t('overview.home', 2)).toBe('2 présents')
     expect(fr.t('settings.presetUsage', 0)).toBe('aucun planning')
     expect(fr.t('settings.presetUsage', 1)).toBe('1 planning')
     expect(fr.t('settings.presetUsage', 3)).toBe('3 plannings')
     const en = createAppI18n('en').global
-    expect(en.t('overview.home', 1)).toBe('1 person at home')
-    expect(en.t('overview.home', 3)).toBe('3 people at home')
+    expect(en.t('overview.home', 1)).toBe('1 person home')
+    expect(en.t('overview.home', 3)).toBe('3 people home')
   })
 })

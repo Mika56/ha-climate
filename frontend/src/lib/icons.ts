@@ -11,6 +11,7 @@ export {
   mdiFire,
   mdiFlash,
   mdiHome,
+  mdiInformationOutline,
   mdiLink,
   mdiMinus,
   mdiPause,

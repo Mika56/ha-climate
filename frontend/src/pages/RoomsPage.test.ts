@@ -101,6 +101,28 @@ describe('RoomsPage', () => {
     expect(router.currentRoute.value.path).toBe(`/rooms/${mockDb.rooms.at(-1)?.id}`)
   })
 
+  it('explains which opening sensors are listed in a help bubble', async () => {
+    const { wrapper } = await mountApp(`/rooms/${ID.cuisine}`)
+    const tip = wrapper.find('[data-test="info-tip"]')
+    expect(tip.attributes('aria-label')).toBe('Aide')
+    expect(wrapper.find('[data-test="info-tip-text"]').exists()).toBe(false)
+
+    await tip.trigger('click')
+    expect(tip.attributes('aria-expanded')).toBe('true')
+    const text = wrapper.find('[data-test="info-tip-text"]')
+    expect(text.text()).toContain('Fenêtre, Porte, Ouverture ou Porte de garage')
+    expect(tip.attributes('aria-describedby')).toBe(text.attributes('id'))
+
+    await tip.trigger('keydown', { key: 'Escape' })
+    expect(wrapper.find('[data-test="info-tip-text"]').exists()).toBe(false)
+    await wrapper.find('.info-tip').trigger('mouseenter')
+    expect(wrapper.find('[data-test="info-tip-text"]').exists()).toBe(true)
+    await wrapper.find('.info-tip').trigger('mouseleave')
+    await tip.trigger('click')
+    await tip.trigger('blur')
+    expect(wrapper.find('[data-test="info-tip-text"]').exists()).toBe(false)
+  })
+
   it('adds and removes openings, devices and role', async () => {
     const { wrapper } = await mountApp(`/rooms/${ID.cuisine}`)
     await wrapper.find('[data-test="show-all"]').setValue(true)

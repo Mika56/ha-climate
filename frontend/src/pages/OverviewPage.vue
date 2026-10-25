@@ -4,16 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { api, unwrap } from '@/api/client'
 import type { Alert, Overview, Season } from '@/api/types'
 import AlertList from '@/components/AlertList.vue'
-import HaIcon from '@/components/HaIcon.vue'
 import PausedBanner from '@/components/PausedBanner.vue'
-import PauseSwitch from '@/components/PauseSwitch.vue'
 import RoomCard from '@/components/RoomCard.vue'
 import SegmentedControl, { type SegmentOption } from '@/components/SegmentedControl.vue'
+import ToggleSwitch from '@/components/ToggleSwitch.vue'
 import { useErrorReporter } from '@/composables/useErrorReporter'
 import { useFormatter, useNow } from '@/composables/useFormatter'
 import { usePause } from '@/composables/usePause'
-import { mdiAirplane, mdiFire, mdiHome, mdiSnowflake, mdiWeatherPartlyCloudy } from '@/lib/icons'
-import { formatMinutes } from '@/lib/format'
+import { mdiFire, mdiSnowflake } from '@/lib/icons'
+import { roomActivity } from '@/lib/rooms'
 import { useLiveStore } from '@/stores/live'
 
 const { t, te } = useI18n()
@@ -84,9 +83,14 @@ const alerts = computed<Alert[]>(() => {
 const homeCount = computed(
   () => overview.value?.presence.persons.filter((p) => p.tracked && p.state === 'home').length ?? 0,
 )
-const runningCount = computed(
-  () => live.rooms.filter((r) => r.devices.some((d) => d.running === true)).length,
+const presentNames = computed(
+  () =>
+    overview.value?.presence.persons
+      .filter((p) => p.tracked && p.state === 'home')
+      .map((p) => p.name)
+      .join(', ') ?? '',
 )
+const runningCount = computed(() => live.rooms.filter((r) => roomActivity(r) !== 'idle').length)
 const roomsSummary = computed(() => {
   return t(
     overview.value?.season === 'summer' ? 'overview.coolingSummary' : 'overview.heatingSummary',
@@ -97,10 +101,6 @@ const roomsSummary = computed(() => {
   )
 })
 
-function personState(state: string): string {
-  const key = `overview.person.${state}`
-  return te(key) ? t(key) : state
-}
 function condition(value: string): string {
   const key = `weather.${value}`
   return te(key) ? t(key) : value
@@ -111,116 +111,77 @@ function condition(value: string): string {
   <template v-if="overview">
     <PausedBanner v-if="overview.paused" :busy="pause.busy.value" @resume="setPaused(false)" />
 
-    <div class="grid-fit summary">
-      <section class="card panel" aria-labelledby="pause-title">
-        <h2 id="pause-title">{{ t('app.title') }}</h2>
-        <PauseSwitch
-          :paused="overview.paused"
-          :busy="pause.busy.value"
-          @update:paused="setPaused"
-        />
+    <div class="summary">
+      <section class="card tile" aria-labelledby="pause-title">
+        <h2 id="pause-title" class="tile-label">{{ t('app.title') }}</h2>
+        <div class="tile-row">
+          <span class="big" data-test="pause-state">{{
+            overview.paused ? t('overview.paused') : t('overview.active')
+          }}</span>
+          <ToggleSwitch
+            :model-value="!overview.paused"
+            :label="t('pause.switch')"
+            :disabled="pause.busy.value"
+            data-test="pause-switch"
+            @update:model-value="setPaused(!$event)"
+          />
+        </div>
       </section>
 
-      <section class="card panel" aria-labelledby="season-title">
-        <h2 id="season-title">{{ t('overview.season') }}</h2>
+      <section class="card tile" aria-labelledby="season-title">
+        <h2 id="season-title" class="tile-label">{{ t('overview.season') }}</h2>
         <SegmentedControl
           :model-value="overview.season"
           :options="seasonOptions"
           :label="t('overview.season')"
           @update:model-value="setSeason"
         />
-        <p class="hint" data-test="season-help">
-          {{ t(`overview.seasonHelp.${overview.season}`) }}
-        </p>
       </section>
 
-      <section class="card panel" aria-labelledby="presence-title">
-        <div class="card-head">
-          <span class="chip round tone-ok" aria-hidden="true"
-            ><HaIcon :path="mdiHome" :size="18"
-          /></span>
-          <h2 id="presence-title">{{ t('overview.presence') }}</h2>
-        </div>
-        <p class="big">{{ t('overview.home', homeCount) }}</p>
-        <div class="chips">
-          <span
-            v-for="person in overview.presence.persons.filter((p) => p.tracked)"
-            :key="person.entityId"
-            class="chip"
-            :class="person.state === 'home' ? 'tone-ok' : 'tone-neutral'"
-          >
-            {{ person.name }} · {{ personState(person.state) }}
-          </span>
-        </div>
-        <p class="hint">
+      <section class="card tile" aria-labelledby="presence-title">
+        <h2 id="presence-title" class="tile-label">{{ t('overview.presence') }}</h2>
+        <span class="big">{{ t('overview.home', homeCount) }}</span>
+        <p class="hint" data-test="presence-detail">
           <template v-if="overview.presence.houseEmptySince">
             {{
               t('overview.emptySince', { time: fmt.smart(overview.presence.houseEmptySince, now) })
             }}
           </template>
-          <template v-else>
-            {{
-              t('overview.emptyHelp', {
-                delay: formatMinutes(overview.presence.houseEmptyDelaySeconds / 60),
-              })
-            }}
-          </template>
+          <template v-else>{{ presentNames }}</template>
         </p>
       </section>
 
-      <section class="card panel" aria-labelledby="weather-title">
-        <div class="card-head">
-          <span class="chip round tone-info" aria-hidden="true">
-            <HaIcon :path="mdiWeatherPartlyCloudy" :size="18" />
-          </span>
-          <h2 id="weather-title">{{ t('overview.weather') }}</h2>
-        </div>
+      <section class="card tile" aria-labelledby="weather-title">
+        <h2 id="weather-title" class="tile-label">{{ t('overview.weather') }}</h2>
         <template v-if="overview.weather">
-          <p class="big">
-            {{ fmt.temperature(overview.weather.temperature) }}
-            <span class="muted cond">{{ condition(overview.weather.condition) }}</span>
-          </p>
+          <span class="big">{{ fmt.temperature(overview.weather.temperature) }}</span>
           <p class="hint">
-            <template v-if="overview.weather.temperatureLow != null">
-              {{ t('overview.min') }} {{ fmt.number(overview.weather.temperatureLow) }}&nbsp;° ·
+            {{ condition(overview.weather.condition) }}
+            <template
+              v-if="
+                overview.weather.temperatureLow != null && overview.weather.temperatureHigh != null
+              "
+            >
+              · {{ fmt.number(overview.weather.temperatureLow) }}&nbsp;° /
+              {{ fmt.number(overview.weather.temperatureHigh) }}&nbsp;°
             </template>
-            <template v-if="overview.weather.temperatureHigh != null">
-              {{ t('overview.max') }} {{ fmt.number(overview.weather.temperatureHigh) }}&nbsp;° ·
-            </template>
-            <template v-if="overview.weather.humidity != null">
-              {{ t('overview.humidity') }} {{ fmt.number(overview.weather.humidity) }}&nbsp;% ·
-            </template>
-            {{ overview.weather.entityId }}
           </p>
         </template>
-        <template v-else>
-          <p class="muted">{{ t('overview.noWeather') }}</p>
-          <div>
-            <RouterLink class="btn" to="/settings">{{ t('overview.chooseWeather') }}</RouterLink>
-          </div>
-        </template>
+        <RouterLink v-else to="/settings">{{ t('overview.chooseWeather') }}</RouterLink>
       </section>
 
-      <section class="card panel" aria-labelledby="vacation-title">
-        <div class="card-head">
-          <span class="chip round tone-neutral" aria-hidden="true">
-            <HaIcon :path="mdiAirplane" :size="18" />
-          </span>
-          <h2 id="vacation-title">{{ t('overview.vacation') }}</h2>
-        </div>
-        <p class="big" data-test="vacation-state">
+      <section class="card tile" aria-labelledby="vacation-title">
+        <h2 id="vacation-title" class="tile-label">{{ t('overview.vacation') }}</h2>
+        <span class="big" data-test="vacation-state">
           {{ overview.vacation.enabled ? t('overview.vacationOn') : t('overview.vacationOff') }}
+        </span>
+        <p class="hint">
+          <template v-if="overview.vacation.enabled && overview.vacation.returnAt">
+            {{ t('overview.vacationReturn', { date: fmt.dateTime(overview.vacation.returnAt) }) }}
+            ·
+          </template>
+          <RouterLink to="/settings">{{ t('overview.vacationEdit') }}</RouterLink>
         </p>
-        <p v-if="overview.vacation.enabled && overview.vacation.returnAt" class="hint">
-          {{ t('overview.vacationReturn', { date: fmt.dateTime(overview.vacation.returnAt) }) }}
-        </p>
-        <div>
-          <RouterLink class="btn" to="/settings">
-            {{
-              overview.vacation.enabled ? t('overview.vacationEdit') : t('overview.vacationPlan')
-            }}
-          </RouterLink>
-        </div>
       </section>
     </div>
 
@@ -248,7 +209,6 @@ function condition(value: string): string {
     <section class="card" aria-labelledby="log-title" style="padding: 8px 0">
       <div class="log-head">
         <h2 id="log-title" class="h-section">{{ t('overview.recent') }}</h2>
-        <RouterLink to="/history">{{ t('overview.allHistory') }}</RouterLink>
       </div>
       <ul class="log">
         <li v-for="entry in overview.recentDecisions ?? []" :key="entry.id">
@@ -266,26 +226,35 @@ function condition(value: string): string {
 
 <style scoped>
 .summary {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 176px), 1fr));
+  gap: 12px;
 }
-.card-head {
+.tile {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.tile .tile-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text2);
+}
+.tile-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tile .hint {
+  margin: 0;
 }
 .big {
-  margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 500;
-}
-.cond {
-  font-size: 15px;
-  font-weight: 400;
-}
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 .rooms {
   gap: 12px;

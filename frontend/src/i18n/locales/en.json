@@ -16,11 +16,28 @@
     "notifications": "Notifications",
     "history": "History"
   },
-  "locale": { "en": "English", "fr": "Français" },
-  "theme": { "light": "Light", "dark": "Dark" },
-  "units": { "min": "min", "days": "days" },
+  "locale": {
+    "en": "English",
+    "fr": "Français"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "units": {
+    "min": "min",
+    "days": "days"
+  },
   "days": {
-    "short": { "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat", "7": "Sun" },
+    "short": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    },
     "long": {
       "1": "Monday",
       "2": "Tuesday",
@@ -37,6 +54,7 @@
     "cancel": "Cancel",
     "choose": "Choose…",
     "delete": "Delete",
+    "help": "Help",
     "dismiss": "Dismiss",
     "loading": "Loading…",
     "none": "None",
@@ -63,7 +81,10 @@
     "leave": "Leave",
     "stay": "Stay"
   },
-  "season": { "winter": "Winter", "summer": "Summer" },
+  "season": {
+    "winter": "Winter",
+    "summer": "Summer"
+  },
   "pause": {
     "switch": "HA Climate active",
     "stateActive": "Rooms are driven according to their schedules.",
@@ -95,32 +116,16 @@
   },
   "overview": {
     "season": "Season",
-    "seasonHelp": {
-      "winter": "Only heating devices are driven.",
-      "summer": "Only cooling devices are driven."
-    },
     "presence": "Presence",
-    "home": "{count} person at home | {count} people at home",
-    "person": {
-      "home": "home",
-      "not_home": "away",
-      "unavailable": "unavailable",
-      "unknown": "unknown"
-    },
-    "emptyHelp": "Everything is switched off {delay} after the last person leaves.",
-    "emptySince": "The house has been empty since {time}.",
+    "home": "{count} person home | {count} people home",
+    "emptySince": "Empty since {time}",
     "weather": "Weather",
-    "min": "Min",
-    "max": "Max",
-    "humidity": "Humidity",
-    "noWeather": "No weather entity configured.",
-    "chooseWeather": "Choose a weather entity",
+    "chooseWeather": "Choose an entity",
     "vacation": "Vacation",
-    "vacationOn": "Active",
-    "vacationOff": "Disabled",
-    "vacationReturn": "Back on {date}.",
-    "vacationPlan": "Plan a trip",
-    "vacationEdit": "Edit",
+    "vacationOn": "On",
+    "vacationOff": "Off",
+    "vacationReturn": "Back {date}",
+    "vacationEdit": "Set up",
     "alerts": "Alerts",
     "alertsActive": "{count} active",
     "alertsNone": "None",
@@ -141,10 +146,13 @@
     "activity": {
       "heating": "Heating",
       "cooling": "Cooling",
-      "idle": "Idle"
+      "idle": "Idle",
+      "on": "On"
     },
     "recent": "Latest decisions",
-    "allHistory": "Full history"
+    "paused": "Paused",
+    "active": "Active",
+    "applied": "Active setting:"
   },
   "badge": {
     "windowOpen": "Window open · {duration}",
@@ -223,6 +231,7 @@
     "temperature": "Temperature",
     "presence": "Room presence (optional)",
     "openings": "Windows and doors",
+    "openingsHelp": "Listed sensors: binary_sensor with the Window, Door, Opening or Garage door class, and input_boolean. A sensor without a class (a group, for instance) is not listed: set its class with “Show as” in Home Assistant.",
     "addOpening": "Add an opening",
     "removeEntity": "Remove {entity}",
     "devices": "Devices",
@@ -417,5 +426,20 @@
     "count": "{shown} entries shown out of {total}",
     "loadMore": "Load more"
   },
-  "role": { "heating": "Heating", "cooling": "Cooling", "reversible": "Reversible" }
+  "role": {
+    "heating": "Heating",
+    "cooling": "Cooling",
+    "reversible": "Reversible"
+  },
+  "hvac": {
+    "heat": "Heat",
+    "cool": "Cool",
+    "heat_cool": "Heat/cool",
+    "auto": "Auto",
+    "dry": "Dry",
+    "fan_only": "Fan",
+    "off": "Off",
+    "unavailable": "Unavailable",
+    "unknown": "Unknown"
+  }
 }

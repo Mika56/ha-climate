@@ -7,6 +7,7 @@ import { useErrorReporter } from '@/composables/useErrorReporter'
 import { useFormatter } from '@/composables/useFormatter'
 import { useReason } from '@/composables/useReason'
 import { mdiFire, mdiFlash, mdiPencil, mdiSnowflake } from '@/lib/icons'
+import { roomActivity } from '@/lib/rooms'
 import { useLiveStore } from '@/stores/live'
 import { usePresetStore } from '@/stores/presets'
 import BoostPanel from './BoostPanel.vue'
@@ -14,7 +15,7 @@ import HaIcon from './HaIcon.vue'
 
 const props = defineProps<{ status: RoomStatus; season: Season; now: Date }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const fmt = useFormatter()
 const { reasonText } = useReason()
 const presets = usePresetStore()
@@ -30,7 +31,8 @@ interface Badge {
 }
 
 const mode = computed(() => (props.season === 'winter' ? 'heat' : 'cool'))
-const running = computed(() => props.status.devices.some((d) => d.running === true))
+const activityState = computed(() => roomActivity(props.status))
+const running = computed(() => activityState.value !== 'idle')
 const icon = computed(() => (mode.value === 'heat' ? mdiFire : mdiSnowflake))
 const iconTone = computed(() => {
   if (!running.value) return 'tone-neutral'
@@ -38,7 +40,20 @@ const iconTone = computed(() => {
 })
 const activity = computed(() => {
   if (!running.value) return t('overview.activity.idle')
+  if (activityState.value === 'on') return t('overview.activity.on')
   return mode.value === 'heat' ? t('overview.activity.heating') : t('overview.activity.cooling')
+})
+
+/** What the devices are actually set to in Home Assistant, whatever HA Climate decided. */
+const applied = computed(() => {
+  const parts = props.status.devices.map((d) => {
+    const key = `hvac.${d.state ?? 'unknown'}`
+    const label = te(key) ? t(key) : (d.state ?? t('hvac.unknown'))
+    return d.targetTemperature !== null && d.state !== 'off'
+      ? `${label} ${fmt.value.temperature(d.targetTemperature)}`
+      : label
+  })
+  return [...new Set(parts)].join(' · ')
 })
 
 const reasonParams = computed(() => props.status.decision.reason.params)
@@ -180,6 +195,10 @@ async function cancelOverride(): Promise<void> {
       </div>
     </div>
 
+    <p v-if="status.devices.length" class="muted small applied" data-test="applied">
+      {{ t('overview.applied') }} <span class="applied-value">{{ applied }}</span>
+    </p>
+
     <div class="badges">
       <span v-for="badge in badges" :key="badge.label" class="chip" :class="badge.tone">
         {{ badge.label }}
@@ -279,6 +298,12 @@ async function cancelOverride(): Promise<void> {
   font-weight: 500;
   line-height: 28px;
   background: transparent;
+}
+.applied {
+  margin: 0;
+}
+.applied-value {
+  color: var(--text);
 }
 .badges {
   display: flex;
