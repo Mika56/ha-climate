@@ -18,17 +18,21 @@ use Revolt\EventLoop;
  * `GET /api/live`: Server-Sent Events stream of the room statuses.
  *
  * On connection the client receives one `room` event per room (full snapshot), then one event per change.
- * A comment line is sent every `heartbeatSeconds` so proxies keep the idle connection open. No token:
- * nginx only exposes this route behind the Home Assistant ingress.
+ * A comment line is sent every `heartbeatSeconds` so the stream is never idle: the AMPHP HTTP/1 driver closes
+ * a response that writes nothing for HttpDriver::DEFAULT_STREAM_TIMEOUT seconds (15 s), and proxies drop idle
+ * connections too. No token: nginx only exposes this route behind the Home Assistant ingress.
  */
 final class LiveRoute implements InternalRouteInterface, ShutdownAwareRouteInterface
 {
+    /** Well below the server's stream timeout, so a quiet stream is never closed. */
+    public const float DEFAULT_HEARTBEAT_SECONDS = 10.0;
+
     /** @var array<int, \Closure(): void> cleanup of every open stream */
     private array $openStreams = [];
 
     public function __construct(
         private readonly LiveStatusPublisher $publisher,
-        private readonly float $heartbeatSeconds = 20.0,
+        private readonly float $heartbeatSeconds = self::DEFAULT_HEARTBEAT_SECONDS,
     ) {
     }
 

@@ -95,7 +95,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Server-Sent Events: `event: room` with a RoomStatus JSON per change (full snapshot on connect), comment heartbeat every 20 s. */
+        /** Server-Sent Events: `event: room` with a RoomStatus JSON per change (full snapshot on connect), comment heartbeat every 10 s. */
         get: operations["streamRoomStatuses"];
         put?: never;
         post?: never;

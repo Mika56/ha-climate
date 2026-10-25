@@ -210,6 +210,15 @@ final class InternalHttpServerTest extends EngineTestCase
         self::assertSame(404, $this->request($server->port(), 'GET', '/internal/status')->getStatus());
     }
 
+    public function testTheDefaultHeartbeatKeepsTheStreamUnderTheServerStreamTimeout(): void
+    {
+        // A heartbeat slower than the driver's stream timeout let the server close every quiet live stream.
+        self::assertLessThanOrEqual(
+            \Amp\Http\Server\Driver\HttpDriver::DEFAULT_STREAM_TIMEOUT * 2 / 3,
+            LiveRoute::DEFAULT_HEARTBEAT_SECONDS,
+        );
+    }
+
     public function testARouteThatFailsAnswers500WithoutLeakingDetails(): void
     {
         $tokens = $this->service(EngineTokenStore::class);

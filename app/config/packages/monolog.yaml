@@ -28,14 +28,15 @@ when@prod:
                 path: php://stderr
                 level: info
                 formatter: monolog.formatter.json
-                channels: ["!deprecation", "!request"]
-            # The router logs "Matched route" at info for every request (health checks included): keep warnings only.
+                channels: ["!deprecation", "!request", "!http_client"]
+            # The router logs "Matched route" and the web→engine HTTP client logs every call at info (health
+            # checks and page loads included): keep warnings only for those two channels.
             request:
                 type: stream
                 path: php://stderr
                 level: warning
                 formatter: monolog.formatter.json
-                channels: [request]
+                channels: [request, http_client]
             deprecation:
                 type: stream
                 channels: [deprecation]
