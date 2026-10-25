@@ -29,13 +29,24 @@ The script validates the owner, lower-cases it for registry paths, prints the fi
 
 1. Bump `version` in `ha_climate/config.yaml` (semantic versioning).
 2. Add a `## X.Y.Z` section at the top of `ha_climate/CHANGELOG.md`; its content becomes the release notes.
-3. Commit (`chore: release X.Y.Z`) and merge to `main` once CI is green.
-4. Tag and push the tag:
+3. Commit (`chore: release X.Y.Z`) locally, with CI green on the change itself. **Do not push `main` yet.**
+4. Tag that commit and push **only the tag**:
 
    ```bash
    git tag -a vX.Y.Z -m "vX.Y.Z"
    git push origin vX.Y.Z
    ```
+
+5. Wait for the `Release` workflow to succeed (both images pushed, GitHub Release created), then push `main`:
+
+   ```bash
+   gh run watch "$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')" --exit-status
+   git push origin main
+   ```
+
+Why this order: the add-on store reads `config.yaml` from the default branch. If `main` carries the new version
+before the images exist, every Supervisor that refreshes the store in that window (and auto-update installs) tries to
+pull `ghcr.io/<owner>/{arch}-ha-climate:X.Y.Z` and fails with `404 manifest unknown` (seen with 0.1.2).
 
 The workflow fails fast if the tag differs from `config.yaml` `version` or if the changelog has no matching section.
 
@@ -54,5 +65,6 @@ GHCR: `docker pull ghcr.io/<owner>/amd64-ha-climate:X.Y.Z`.
 ## Pitfalls
 
 - Pushing the tag before the version bump fails the `Verify version` job; fix it and move/recreate the tag.
-- The add-on store reads `config.yaml` from the default branch: merge the version bump before announcing the release.
+- The add-on store reads `config.yaml` from the default branch: push `main` only after the release workflow has
+  published the images (see above), never before.
 - Never publish an image tag different from `config.yaml` `version`, or the Supervisor will fail to pull it.
