@@ -99,7 +99,7 @@ jobs:
         id: base
         run: echo "image=$(yq '.build_from.amd64' ha_climate/build.yaml)" >> "$GITHUB_OUTPUT"
       - name: Build (no push)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ha_climate/Dockerfile

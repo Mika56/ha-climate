@@ -82,7 +82,7 @@ jobs:
             io.hass.arch=${{ matrix.arch }}
             io.hass.version=${{ needs.verify.outputs.version }}
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ha_climate/Dockerfile
