@@ -153,39 +153,35 @@ export function computeStatus(
 ): RoomStatus {
   const sc = scenarios[room.id] ?? DEFAULT_SCENARIO
   const season = db.settings.season
-  const mode = season === 'winter' ? 'heat' : season === 'summer' ? 'cool' : 'off'
-  const override = mode === 'off' ? null : (db.overrides[room.id] ?? null)
+  const mode = season === 'winter' ? 'heat' : 'cool'
+  const override = db.overrides[room.id] ?? null
   const iso = (offsetMinutes: number): string =>
     new Date(now + offsetMinutes * MINUTE).toISOString()
   const alerts = db.alerts.filter((a) => a.roomId === room.id)
 
-  let target: number | null = null
-  let reason: RoomStatus['decision']['reason'] = { code: 'reason.season_off', params: {} }
-  let decisionMode: RoomStatus['decision']['mode'] = 'off'
-  let running = false
-
-  if (mode !== 'off') {
-    const temps = room.presetTemperatures.find((p) => p.preset === sc.preset)
-    target = (mode === 'heat' ? temps?.heat : temps?.cool) ?? null
-    decisionMode = mode
-    running = sc.running[mode]
-    reason = { code: 'reason.schedule', params: { preset: sc.preset, until: iso(90) } }
-    if (sc.kind === 'vacant') {
-      reason = { code: 'reason.room_vacant', params: { preset: sc.preset, since: iso(-25) } }
-    } else if (sc.kind === 'window') {
-      decisionMode = 'off'
-      target = null
-      reason = { code: 'reason.opening_open', params: { since: iso(-32) } }
-    }
-    if (override?.type === 'boost' && target !== null) {
-      target += mode === 'cool' ? -(override.delta ?? 0) : (override.delta ?? 0)
-      running = true
-      reason = { code: 'reason.boost', params: { delta: override.delta, until: override.endsAt } }
-    } else if (override?.type === 'manual') {
-      target = override.target
-      running = true
-      reason = { code: 'reason.manual_override', params: { until: override.endsAt } }
-    }
+  const temps = room.presetTemperatures.find((p) => p.preset === sc.preset)
+  let target: number | null = (mode === 'heat' ? temps?.heat : temps?.cool) ?? null
+  let decisionMode: RoomStatus['decision']['mode'] = mode
+  let running = sc.running[mode]
+  let reason: RoomStatus['decision']['reason'] = {
+    code: 'reason.schedule',
+    params: { preset: sc.preset, until: iso(90) },
+  }
+  if (sc.kind === 'vacant') {
+    reason = { code: 'reason.room_vacant', params: { preset: sc.preset, since: iso(-25) } }
+  } else if (sc.kind === 'window') {
+    decisionMode = 'off'
+    target = null
+    reason = { code: 'reason.opening_open', params: { since: iso(-32) } }
+  }
+  if (override?.type === 'boost' && target !== null) {
+    target += mode === 'cool' ? -(override.delta ?? 0) : (override.delta ?? 0)
+    running = true
+    reason = { code: 'reason.boost', params: { delta: override.delta, until: override.endsAt } }
+  } else if (override?.type === 'manual') {
+    target = override.target
+    running = true
+    reason = { code: 'reason.manual_override', params: { until: override.endsAt } }
   }
 
   return {
@@ -209,6 +205,7 @@ export function computeStatus(
       heatingRatePerHour: 1.2,
     },
     alerts,
+    paused: db.settings.paused,
     updatedAt: iso(0),
   }
 }

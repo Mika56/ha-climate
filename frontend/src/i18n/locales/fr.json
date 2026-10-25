@@ -66,7 +66,8 @@
     "network": "Erreur réseau\u00a0: l’add-on est injoignable.",
     "fixFields": "Corrigez les champs suivants\u00a0:",
     "codes": {
-      "no_active_mode": "Rien à booster\u00a0: la saison est coupée.",
+      "no_active_mode": "Rien à booster\u00a0: aucun appareil de cette pièce ne fonctionne pour la saison en cours.",
+      "paused": "HA Climate est en pause\u00a0: reprenez-le pour booster une pièce.",
       "no_enabled_target": "Aucune destination de notification n’est activée.",
       "preset_in_use": "Ce preset est encore utilisé par un planning ou par une règle système.",
       "preset_exists": "Un preset avec cet identifiant existe déjà.",
@@ -81,8 +82,19 @@
   },
   "season": {
     "winter": "Hiver",
-    "summer": "Été",
-    "off": "Coupé"
+    "summer": "Été"
+  },
+  "pause": {
+    "switch": "HA Climate actif",
+    "stateActive": "Les pièces sont pilotées selon leurs plannings.",
+    "statePaused": "En pause\u00a0: rien n’est envoyé à vos appareils.",
+    "explain": "En pause, HA Climate continue d’observer votre logement et de décider (l’historique indique ce qu’il aurait fait) mais n’envoie rien\u00a0: ni commande de chauffage ou de climatisation, ni notification. Utilisez vos appareils librement, puis reprenez.",
+    "banner": "HA Climate est en pause\u00a0: aucune action n’est envoyée, l’historique continue.",
+    "resume": "Reprendre",
+    "simulation": "Simulation",
+    "boostDisabled": "Le boost est indisponible tant que HA Climate est en pause.",
+    "pausedToast": "HA Climate est en pause.",
+    "resumedToast": "HA Climate a repris."
   },
   "weather": {
     "clear-night": "Nuit dégagée",
@@ -105,8 +117,7 @@
     "season": "Saison",
     "seasonHelp": {
       "winter": "Seuls les appareils de chauffage sont pilotés.",
-      "summer": "Seuls les appareils de climatisation sont pilotés.",
-      "off": "Tout est coupé\u00a0: aucune commande n’est envoyée."
+      "summer": "Seuls les appareils de climatisation sont pilotés."
     },
     "presence": "Présence",
     "home": "{count} personne à la maison | {count} personnes à la maison",
@@ -137,10 +148,10 @@
     "rooms": "Pièces",
     "heatingSummary": "{running} sur {total} en chauffe",
     "coolingSummary": "{running} sur {total} en refroidissement",
-    "allOff": "{count} pièces · tout est coupé",
     "noRooms": "Aucune pièce pour le moment.",
     "current": "Actuelle",
     "target": "Consigne",
+    "wouldApply": "Appliquerait",
     "off": "Coupé",
     "manual": "Manuel",
     "configure": "Configurer {name}",
@@ -150,8 +161,7 @@
     "activity": {
       "heating": "Chauffe en cours",
       "cooling": "Refroidissement en cours",
-      "idle": "Au repos",
-      "stopped": "Arrêté"
+      "idle": "Au repos"
     },
     "recent": "Dernières décisions",
     "allHistory": "Tout l’historique"
@@ -317,7 +327,7 @@
   },
   "settings": {
     "season": "Saison",
-    "seasonHint": "Hiver\u00a0: seuls les appareils de chauffage sont pilotés. Été\u00a0: seulement la climatisation. Coupé\u00a0: rien n’est envoyé. Un appareil réversible suit la saison.",
+    "seasonHint": "Hiver\u00a0: seuls les appareils de chauffage sont pilotés. Été\u00a0: seulement la climatisation. Un appareil réversible suit la saison.",
     "presence": "Présence globale",
     "presenceHint": "Personnes découvertes dans Home Assistant. La maison est vide quand toutes les personnes suivies sont absentes.",
     "notTracked": "non suivi",
@@ -391,7 +401,7 @@
       },
       "setpoint_not_applicable": {
         "title": "Consigne non applicable",
-        "desc": "La consigne demandée ne peut pas être appliquée (fenêtre ouverte, saison coupée…).",
+        "desc": "La consigne demandée ne peut pas être appliquée (fenêtre ouverte, aucun appareil pour la saison…).",
         "example": "Salle de bain\u00a0: la consigne de 22,0\u00a0°C ne peut pas être appliquée, la fenêtre est ouverte."
       },
       "device_unresponsive": {

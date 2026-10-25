@@ -146,12 +146,75 @@ describe('OverviewPage', () => {
     expect(wrapper.find('[data-test="season-help"]').text()).toContain('climatisation')
     expect(wrapper.find('[data-test="rooms-summary"]').text()).toMatch(/en refroidissement/)
 
-    const off = wrapper.findAll('.seg-btn').find((b) => b.text().includes('Coupé'))
-    await off?.trigger('click')
+    expect(wrapper.findAll('.seg-btn').map((b) => b.text())).toEqual(['Hiver', 'Été'])
+  })
+
+  it('shows a switch, no banner and live room cards while HA Climate is active', async () => {
+    const { wrapper } = await mountApp('/')
+    const toggle = wrapper.find('[data-test="pause-switch"]')
+    expect(toggle.attributes('role')).toBe('switch')
+    expect(toggle.attributes('aria-label')).toBe('HA Climate actif')
+    expect((toggle.element as HTMLInputElement).checked).toBe(true)
+    expect(wrapper.find('[data-test="pause-banner"]').exists()).toBe(false)
+    expect(card(wrapper, 'Salon').text()).not.toContain('Simulation')
+  })
+
+  it('pauses with the switch: banner, simulation chips, wording and disabled boosts', async () => {
+    const { wrapper } = await mountApp('/')
+    await wrapper.find('[data-test="pause-switch"]').setValue(false)
     await settle()
-    expect(wrapper.find('[data-test="rooms-summary"]').text()).toContain('tout est coupé')
-    expect(card(wrapper, 'Salon').find('[data-test="activity"]').text()).toBe('Arrêté')
-    expect(card(wrapper, 'Salon').find('[data-test="boost-open"]').exists()).toBe(false)
+    expect(mockDb.settings.paused).toBe(true)
+    expect(wrapper.find('[data-test="pause-banner"]').text()).toContain(
+      'HA Climate est en pause\u00a0: aucune action n’est envoyée, l’historique continue.',
+    )
+    expect(wrapper.find('[data-test="pause-state"]').text()).toContain('En pause')
+    expect(wrapper.find('.toasts').text()).toContain('HA Climate est en pause.')
+
+    const salon = card(wrapper, 'Salon')
+    expect(salon.text()).toContain('Simulation')
+    expect(salon.text()).toContain('Appliquerait')
+    expect(salon.text()).not.toContain('Consigne')
+    expect(salon.find('[data-test="target"]').text()).toBe('21,0\u00a0°C')
+    const boost = salon.find('[data-test="boost-open"]')
+    expect(boost.attributes('disabled')).toBeDefined()
+    expect(boost.attributes('title')).toBe(
+      'Le boost est indisponible tant que HA Climate est en pause.',
+    )
+    expect(
+      card(wrapper, 'Chambre enfant').find('[data-test="cancel-override"]').attributes('disabled'),
+    ).toBeDefined()
+  })
+
+  it('resumes from the banner button', async () => {
+    mockDb.settings.paused = true
+    const { wrapper } = await mountApp('/')
+    expect(wrapper.find('[data-test="pause-banner"]').exists()).toBe(true)
+    expect(card(wrapper, 'Salon').text()).toContain('Simulation')
+
+    await wrapper.find('[data-test="pause-resume"]').trigger('click')
+    await settle()
+
+    expect(mockDb.settings.paused).toBe(false)
+    expect(wrapper.find('[data-test="pause-banner"]').exists()).toBe(false)
+    expect(card(wrapper, 'Salon').text()).not.toContain('Simulation')
+    expect(card(wrapper, 'Salon').find('[data-test="boost-open"]').attributes('disabled')).toBe(
+      undefined,
+    )
+    expect(wrapper.find('.toasts').text()).toContain('HA Climate a repris.')
+  })
+
+  it('goes back to the previous state when pausing fails', async () => {
+    const { wrapper } = await mountApp('/')
+    server.use(http.put('*/api/pause', () => HttpResponse.json({ error: 'boom' }, { status: 500 })))
+
+    await wrapper.find('[data-test="pause-switch"]').setValue(false)
+    await settle()
+
+    expect(wrapper.find('[data-test="pause-banner"]').exists()).toBe(false)
+    expect((wrapper.find('[data-test="pause-switch"]').element as HTMLInputElement).checked).toBe(
+      true,
+    )
+    expect(wrapper.find('.toasts').text()).toContain('Une erreur est survenue')
   })
 
   it('reverts the season when the request fails', async () => {

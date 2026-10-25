@@ -121,6 +121,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Pauses (true) or resumes (false) HA Climate. While paused it keeps deciding and auditing what it would do but sends nothing to Home Assistant and creates no override. Audited (actor: the ingress user); the engine has been told to reload. Asking for the state it is already in changes nothing. */
+        put: operations["updatePause"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rooms": {
         parameters: {
             query?: never;
@@ -183,7 +200,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Starts a boost (delta raises the target in heat, lowers it in cool). The actor is the ingress user. */
+        /** Starts a boost (delta raises the target in heat, lowers it in cool). The actor is the ingress user. 409 with code `paused` while HA Climate is paused. */
         post: operations["startBoost"];
         delete?: never;
         options?: never;
@@ -203,7 +220,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Cancels the active boost or manual override of the room. */
+        /** Cancels the active boost or manual override of the room. 409 with code `paused` while HA Climate is paused. */
         delete: operations["cancelOverride"];
         options?: never;
         head?: never;
@@ -461,14 +478,17 @@ export interface components {
         PresetKey: string;
         /** @enum {string} */
         Locale: "en" | "fr";
-        /** @enum {string} */
-        Season: "winter" | "summer" | "off";
+        /**
+         * @description Winter heats, summer cools. Stopping HA Climate is the separate `paused` switch.
+         * @enum {string}
+         */
+        Season: "winter" | "summer";
         /** @enum {string} */
         HvacMode: "heat" | "cool" | "off";
         /** @enum {string} */
         ActorType: "user" | "system" | "device" | "automation";
         Error: {
-            /** @description Stable machine code (not_found, engine_unavailable, preset_in_use, no_active_mode, no_schedule, no_active_override, no_target...). */
+            /** @description Stable machine code (not_found, engine_unavailable, preset_in_use, no_active_mode, no_schedule, no_active_override, paused, no_target...). */
             error: string;
             message?: string;
         };
@@ -510,6 +530,8 @@ export interface components {
         };
         Overview: {
             season: components["schemas"]["Season"];
+            /** @description true while HA Climate is paused: it decides but sends nothing. */
+            paused: boolean;
             presence: {
                 persons: {
                     entityId: components["schemas"]["EntityId"];
@@ -548,10 +570,12 @@ export interface components {
         };
         Reason: {
             /**
-             * @description reason.schedule {preset, until}, reason.preheat {preset, at}, reason.season_off, reason.no_device,
+             * @description reason.schedule {preset, until}, reason.preheat {preset, at}, reason.no_device,
              *     reason.no_schedule, reason.no_rule, reason.vacation {returnAt}, reason.house_empty {since},
              *     reason.opening_open {since}, reason.boost {delta, until}, reason.manual_override {until},
              *     reason.room_vacant {preset, since}, reason.anti_cycling_min_off, reason.anti_cycling_min_on.
+             *     `reason.season_off` is no longer produced (there is no "off" season any more) but may still appear in
+             *     the audit history written by earlier versions.
              *     Param conventions: instants (until, at, since, returnAt) are RFC 3339 in the HA time zone;
              *     preset is a preset key; delta is the positive magnitude (its sign follows decision.mode).
              */
@@ -563,6 +587,8 @@ export interface components {
         RoomStatus: {
             roomId: components["schemas"]["Id"];
             name: string;
+            /** @description true while HA Climate is paused: the decision is what would be applied, nothing is sent. */
+            paused: boolean;
             currentTemperature: number | null;
             decision: {
                 mode: components["schemas"]["HvacMode"];
@@ -710,6 +736,8 @@ export interface components {
         };
         Settings: {
             season: components["schemas"]["Season"];
+            /** @description While true HA Climate observes and decides but sends nothing to Home Assistant. A PUT that leaves it out keeps the current state. */
+            paused: boolean;
             trackedPersons: components["schemas"]["EntityId"][];
             houseEmptyDelaySeconds: number;
             manualOverrideMinutes: number;
@@ -721,6 +749,23 @@ export interface components {
             notificationLocale: null | components["schemas"]["Locale"];
             auditRetentionDays: number;
             readonly auditEntryCount?: number;
+        };
+        /** @description The settings of a backup. Same as `Settings`, except that a version 1 backup may carry the season `off` (read as winter + paused) and no `paused`. */
+        BackupSettings: {
+            /**
+             * @description `off` only in version 1 backups.
+             * @enum {string}
+             */
+            season: "winter" | "summer" | "off";
+            paused?: boolean;
+            trackedPersons: components["schemas"]["EntityId"][];
+            houseEmptyDelaySeconds: number;
+            manualOverrideMinutes: number;
+            vacation: components["schemas"]["Vacation"];
+            weatherEntity: null | components["schemas"]["EntityId"];
+            uiLocale: null | components["schemas"]["Locale"];
+            notificationLocale: null | components["schemas"]["Locale"];
+            auditRetentionDays: number;
         };
         NotificationSettings: {
             targets: {
@@ -790,11 +835,14 @@ export interface components {
         Backup: {
             /** @constant */
             format: "ha-climate-backup";
-            /** @constant */
-            version: 1;
+            /**
+             * @description Exports are version 2. Version 1 (season `off`, no `paused`) is still accepted by the restore.
+             * @enum {integer}
+             */
+            version: 1 | 2;
             /** Format: date-time */
             exportedAt: string;
-            settings: components["schemas"]["Settings"];
+            settings: components["schemas"]["BackupSettings"];
             presets: components["schemas"]["Preset"][];
             schedules: (components["schemas"]["ScheduleInput"] & {
                 /** @description Local id referenced by rooms in this file. */
@@ -1021,6 +1069,35 @@ export interface operations {
             422: components["responses"]["ValidationFailed"];
         };
     };
+    updatePause: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    paused: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Pause state stored. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        paused: boolean;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationFailed"];
+        };
+    };
     listRooms: {
         parameters: {
             query?: never;
@@ -1214,6 +1291,7 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             503: components["responses"]["EngineUnavailable"];
         };
     };

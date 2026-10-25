@@ -40,6 +40,41 @@ describe('SettingsPage', () => {
     expect(wrapper.find('[data-test="export"]').attributes('href')).toBe('./api/backup')
   })
 
+  it('offers winter and summer only, and explains the pause', async () => {
+    const { wrapper } = await mountApp('/settings')
+    expect(wrapper.findAll('.seg-btn').map((b) => b.text())).toEqual(['Hiver', 'Été'])
+    expect(norm(wrapper.text())).toContain('En pause, HA Climate continue d’observer')
+    expect((wrapper.find('[data-test="pause-switch"]').element as HTMLInputElement).checked).toBe(
+      true,
+    )
+  })
+
+  it('pauses at once from the settings, without touching the form', async () => {
+    const { wrapper } = await mountApp('/settings')
+    await wrapper.find('[data-test="pause-switch"]').setValue(false)
+    await settle()
+    expect(mockDb.settings.paused).toBe(true)
+    expect(wrapper.find('[data-test="pause-state"]').text()).toContain('En pause')
+    expect(wrapper.find('[data-test="save-settings"]').attributes('disabled')).toBeDefined()
+
+    await wrapper
+      .findAll('.seg-btn')
+      .find((b) => b.text() === 'Été')
+      ?.trigger('click')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+    expect(mockDb.settings).toMatchObject({ season: 'summer', paused: true })
+  })
+
+  it('goes back when the pause cannot be changed', async () => {
+    const { wrapper } = await mountApp('/settings')
+    server.use(http.put('*/api/pause', () => HttpResponse.json({ error: 'boom' }, { status: 500 })))
+    await wrapper.find('[data-test="pause-switch"]').setValue(false)
+    await settle()
+    expect(mockDb.settings.paused).toBe(false)
+    expect(wrapper.find('[data-test="pause-state"]').text()).not.toContain('En pause')
+  })
+
   it('saves general settings, converting minutes to seconds', async () => {
     const { wrapper } = await mountApp('/settings')
     expect(wrapper.find('[data-test="save-settings"]').attributes('disabled')).toBeDefined()

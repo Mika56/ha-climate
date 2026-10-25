@@ -13,6 +13,7 @@ export {
   mdiHome,
   mdiLink,
   mdiMinus,
+  mdiPause,
   mdiPencil,
   mdiPlus,
   mdiPower,
