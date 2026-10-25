@@ -111,6 +111,6 @@ final class LiveRoute implements InternalRouteInterface, ShutdownAwareRouteInter
 
     private static function event(string $name, mixed $data): string
     {
-        return \sprintf("event: %s\ndata: %s\n\n", $name, json_encode($data, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
+        return \sprintf("event: %s\ndata: %s\n\n", $name, json_encode($data, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION));
     }
 }

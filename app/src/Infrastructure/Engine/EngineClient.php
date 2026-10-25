@@ -67,7 +67,7 @@ final readonly class EngineClient
             $body['durationMinutes'] = $durationMinutes;
         }
 
-        return $this->request('POST', \sprintf('/internal/rooms/%s/boost', rawurlencode($roomId)), ['json' => $body]);
+        return $this->request('POST', \sprintf('/internal/rooms/%s/boost', rawurlencode($roomId)), ['json' => $body], true);
     }
 
     /**
@@ -80,7 +80,7 @@ final readonly class EngineClient
      */
     public function cancelOverride(string $roomId, string $actor): array
     {
-        return $this->request('DELETE', \sprintf('/internal/rooms/%s/override', rawurlencode($roomId)), ['query' => ['actor' => $actor]]);
+        return $this->request('DELETE', \sprintf('/internal/rooms/%s/override', rawurlencode($roomId)), ['query' => ['actor' => $actor]], true);
     }
 
     /**
@@ -129,18 +129,21 @@ final readonly class EngineClient
      */
     public function sendTestNotification(): array
     {
-        return $this->request('POST', '/internal/notifications/test');
+        return $this->request('POST', '/internal/notifications/test', [], true);
     }
 
     /**
-     * @param array<string, mixed> $options extra HttpClient options (`json`, `query`)
+     * @param array<string, mixed> $options        extra HttpClient options (`json`, `query`)
+     * @param bool                 $answersRefusal whether the engine is expected to refuse the request with a 400, 404 or 409
+     *                                             (a business refusal, raised as {@see EngineRejectedException}); for a plain
+     *                                             read any such answer means the engine does not behave and counts as unavailable
      *
      * @return array<string, mixed>
      *
      * @throws EngineUnavailableException
      * @throws EngineRejectedException
      */
-    private function request(string $method, string $path, array $options = []): array
+    private function request(string $method, string $path, array $options = [], bool $answersRefusal = false): array
     {
         $token = $this->tokens->read();
         if (null === $token) {
@@ -156,7 +159,7 @@ final readonly class EngineClient
             ]);
 
             $status = $response->getStatusCode();
-            if (\in_array($status, [400, 404, 409], true)) {
+            if ($answersRefusal && \in_array($status, [400, 404, 409], true)) {
                 /** @var array<string, mixed> $error */
                 $error = $response->toArray(false);
                 $code = $error['error'] ?? null;

@@ -173,7 +173,7 @@ final class WebApiRoutesTest extends NotificationTestCase
             ['entityId' => 'person.alice', 'name' => 'Alice', 'state' => 'not_home'],
             ['entityId' => 'person.bob', 'name' => 'person.bob', 'state' => 'home'],
         ], $overview['persons']);
-        self::assertSame(['entityId' => 'weather.home', 'condition' => 'partlycloudy', 'temperature' => 12.5, 'humidity' => 71, 'temperatureLow' => 8, 'temperatureHigh' => 15.5], $overview['weather']);
+        self::assertSame(['entityId' => 'weather.home', 'condition' => 'partlycloudy', 'temperature' => 12.5, 'humidity' => 71.0, 'temperatureLow' => 8, 'temperatureHigh' => 15.5], $overview['weather']);
         self::assertSame($this->clock()->now()->setTimezone(new \DateTimeZone('Europe/Paris'))->format(\DATE_ATOM), $overview['houseEmptySince']);
     }
 
@@ -308,8 +308,7 @@ final class WebApiRoutesTest extends NotificationTestCase
         self::assertIsArray($items);
         foreach ($items as $item) {
             if (\is_array($item) && ($item['entityId'] ?? null) === $entityId) {
-                /* @var array<string, mixed> $item */
-                return $item;
+                return array_combine(array_map(strval(...), array_keys($item)), $item);
             }
         }
 

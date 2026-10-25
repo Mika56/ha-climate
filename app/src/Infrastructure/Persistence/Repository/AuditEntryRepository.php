@@ -38,7 +38,7 @@ final class AuditEntryRepository extends ServiceEntityRepository
      */
     public function search(AuditSearchCriteria $criteria): array
     {
-        $builder = $this->filtered($this->createQueryBuilder('e'), $criteria)
+        $builder = $this->filtered($this->createQueryBuilder('e')->leftJoin('e.room', 'room')->addSelect('room'), $criteria)
             ->orderBy('e.occurredAt', 'DESC')
             ->addOrderBy('e.id', 'DESC')
             ->setFirstResult($criteria->offset)
@@ -46,6 +46,28 @@ final class AuditEntryRepository extends ServiceEntityRepository
 
         /** @var list<AuditEntry> $entries */
         $entries = $builder->getQuery()->getResult();
+
+        return $entries;
+    }
+
+    /**
+     * The latest entries of the given categories, newest first.
+     *
+     * @param list<string> $categories
+     *
+     * @return list<AuditEntry>
+     */
+    public function latestInCategories(array $categories, int $limit): array
+    {
+        /** @var list<AuditEntry> $entries */
+        $entries = $this->createQueryBuilder('e')
+            ->where('e.category IN (:categories)')
+            ->setParameter('categories', $categories)
+            ->orderBy('e.occurredAt', 'DESC')
+            ->addOrderBy('e.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
 
         return $entries;
     }

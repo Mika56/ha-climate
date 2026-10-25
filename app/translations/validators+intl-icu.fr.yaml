@@ -1,0 +1,11 @@
+# Messages de validation de l'API web que les traductions du validateur Symfony ne couvrent pas.
+api:
+    unknown_preset: 'Préréglage « {preset} » inconnu.'
+    unknown_schedule: 'Planning inconnu.'
+    unknown_schedule_ref: 'Référence de planning « {ref} » inconnue.'
+    unknown_room: 'Pièce inconnue.'
+    schedule_mode: 'Un planning de {mode, select, heat {chauffage} other {climatisation}} est requis ici.'
+    duplicate_value: 'Cette valeur est donnée deux fois.'
+    device_taken: 'Cet appareil est déjà utilisé par la pièce {room}.'
+    required_preset: 'Le préréglage « {preset} » est obligatoire : le moteur l’utilise pour les politiques d’inoccupation et d’absence.'
+    unsupported_format: 'Ce fichier n’est pas une sauvegarde HA Climate d’une version prise en charge.'

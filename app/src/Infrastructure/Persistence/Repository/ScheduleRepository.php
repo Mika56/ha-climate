@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Repository;
 
+use App\Infrastructure\Persistence\Entity\Preset;
 use App\Infrastructure\Persistence\Entity\Schedule;
+use App\Infrastructure\Persistence\Entity\ScheduleSlot;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -36,5 +38,21 @@ final class ScheduleRepository extends ServiceEntityRepository
     public function findAllOrdered(): array
     {
         return $this->findBy([], ['name' => 'ASC']);
+    }
+
+    /**
+     * How many schedule slots use the preset.
+     */
+    public function countSlotsUsing(Preset $preset): int
+    {
+        $count = $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(s.id)')
+            ->from(ScheduleSlot::class, 's')
+            ->where('s.preset = :preset')
+            ->setParameter('preset', $preset->getId(), 'uuid')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return is_numeric($count) ? (int) $count : 0;
     }
 }

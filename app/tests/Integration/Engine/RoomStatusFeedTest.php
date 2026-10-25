@@ -79,6 +79,9 @@ final class RoomStatusFeedTest extends NotificationTestCase
         self::assertNull($json['facts']['houseEmptySince']);
     }
 
+    /**
+     * @phpstan-impure
+     */
     private function roomStatus(): RoomStatus
     {
         $statuses = $this->service(LiveStatusPublisher::class)->snapshot();
