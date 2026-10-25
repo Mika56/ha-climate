@@ -15,7 +15,7 @@ Contraintes imposées :
 Décisions prises avec l'utilisateur : **Vue 3 + Vite** ; **images pré-construites sur GHCR** ; **anti-cyclage en v1** (durées min marche/arrêt + hystérésis) ; alertes d'indisponibilité = **section UI + notification + persistent_notification HA** (retirée au retour du capteur).
 
 Décisions tranchées dans ce plan (questions ouvertes du doc) :
-- **Chauffer et climatiser en même temps** : impossible par construction — le sélecteur de saison (hiver / été / coupé) détermine le seul mode actif.
+- **Chauffer et climatiser en même temps** : impossible par construction — le sélecteur de saison (hiver / été) détermine le seul mode actif. Depuis la 0.2.0, « coupé » n'est plus une saison : c'est l'interrupteur séparé « HA Climate actif / en pause » (en pause : le moteur observe et décide, journalise ce qu'il *aurait* fait, mais n'envoie rien à Home Assistant).
 - **Écouteur WS ↔ Symfony** : voir Architecture (base SQLite partagée + canal HTTP interne en localhost).
 
 ## Stack
@@ -74,7 +74,7 @@ Nom provisoire : add-on « HA Climate », slug `ha_climate`, dépôt `<owner>/ha
 
 ### Modèle de domaine (`app/src/Domain`, PHP pur, sans dépendance framework)
 
-- `Season` (enum Winter/Summer/Off) → `HvacMode` actif (heat/cool/off).
+- `Season` (enum Winter/Summer) → `HvacMode` actif (heat/cool) ; la pause n'est pas une règle du domaine (`GlobalSettings.paused`, appliquée par le moteur).
 - `Room` : capteur de température, entité de présence (optionnelle), capteurs ouvrants, délais (absence pièce, coupure fenêtre, notification fenêtre), planning chauffage + planning clim, températures par preset et par mode.
 - `Device` : entité `climate.*`, rôle (heating / cooling / reversible), anti-cyclage (`minOnDuration`, `minOffDuration`, `hysteresis`).
 - `Preset` (comfort, eco, night, away… extensibles) ; `RoomPresetTemperature(room, preset, mode, °C)`.

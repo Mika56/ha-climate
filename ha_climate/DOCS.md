@@ -26,8 +26,8 @@ Everything else is configured in the add-on's own interface. Restart the add-on 
 
 ## First configuration walkthrough
 
-1. **Settings**: choose the current **season** (winter = heating, summer = cooling, off), review the presets
-   (comfort, eco, night, away...) and the notification options.
+1. **Settings**: choose the current **season** (winter = heating, summer = cooling), check that HA Climate is
+   **active** (see [Pause](#pause)), review the presets (comfort, eco, night, away...) and the notification options.
 2. **Schedules**: create a weekly schedule. A slot starts at a fixed time or relative to a Home Assistant entity
    (for example "bedtime"), and applies a preset.
 3. **Rooms**: add a room, pick its temperature sensor, optional presence sensor, window/door contacts and its
@@ -42,7 +42,6 @@ wins**, and its reason is shown in the interface:
 
 | Priority | Rule                    | Meaning                                                                |
 | -------: | ----------------------- | ---------------------------------------------------------------------- |
-|     1000 | Season off              | The season is "off": nothing runs.                                     |
 |      900 | No device for the mode  | The room has no device able to heat (or cool) in the current mode.     |
 |      800 | Vacation                | A vacation period is active: the away preset applies.                  |
 |      700 | House empty             | Nobody is home (all presence sensors empty long enough).               |
@@ -55,6 +54,30 @@ wins**, and its reason is shown in the interface:
 Devices are protected against short cycling (minimum on/off times) and use a hysteresis around the target. If a
 sensor or device becomes unavailable, the room is removed from control and an alert is raised (including a
 Home Assistant persistent notification).
+
+## Pause
+
+The **HA Climate active** switch (on the Overview and in Settings) pauses HA Climate without losing anything.
+While it is paused, **HA Climate controls nothing**, so you can use your heaters and air conditioners freely:
+
+- no command is sent to any device, no `notify` notification and no persistent notification is created;
+- no anti-cycling postponement and no "device not responding" watch: nothing is commanded;
+- a change you make on a device is not turned into a manual override, and boosts are unavailable;
+- the overview shows a banner with a **Resume** button, and each room card a **Simulation** chip with the target it
+  *would* apply.
+
+HA Climate keeps **observing and deciding** with the current season: rules, timers and alerts keep working (alerts
+are displayed but not notified), and the **History** keeps recording every decision change as what HA Climate
+*would* have done, clearly marked as not applied ("Paused: HA Climate would have turned the heating off (nobody
+home). Nothing was sent."). Pausing and resuming are themselves recorded, with the Home Assistant user.
+
+- **Pausing** dismisses the Home Assistant persistent notifications HA Climate created (the alerts stay visible in
+  the interface). Boosts and manual overrides that were running keep their timers, but are ignored while paused.
+- **Resuming** re-evaluates every room at once: commands are sent normally (anti-cycling applies), alerts opened
+  while paused and never notified are notified (respecting the notification type settings) and their persistent
+  notifications are recreated.
+
+Versions before 0.2.0 had an "Off" season for this; an installation that was "Off" is now "Winter" and paused.
 
 ## Language and theme
 
@@ -76,7 +99,7 @@ and **import** of your configuration, useful to move to another installation.
   Home Assistant by itself and is restarted automatically if it stops.
 - **A room is "not controlled" with an alert**: its temperature sensor or a device is `unavailable`; the room
   resumes by itself when the entity is back.
-- **Nothing happens when the season is "off"**: this is intended, change the season in **Settings**.
+- **Nothing happens, and the overview shows a banner**: HA Climate is paused (see [Pause](#pause)); press **Resume**.
 - **Need more detail**: set `log_level` to `debug` and restart; logs are JSON lines on the add-on Log tab.
 - A Docker health check probes `/api/health`; turn on **Watchdog** on the add-on page to have it restarted automatically when it stops answering.
 
