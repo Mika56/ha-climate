@@ -33,7 +33,7 @@ function label(day: number, start: number, end: number, slot: EditorSlot): strin
         <span></span>
         <div class="hours" aria-hidden="true">
           <span v-for="h in hours" :key="h" class="muted" :style="{ left: pct(h * 60) }">
-            {{ minutesToTime(h * 60 === DAY_MINUTES ? 0 : h * 60) }}
+            {{ minutesToTime(h * 60) }}
           </span>
         </div>
       </div>
