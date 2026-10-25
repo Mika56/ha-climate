@@ -689,7 +689,12 @@ components:
         haLanguage: { type: ['string', 'null'], description: 'Server language of Home Assistant (get_config), e.g. fr.' }
         haTimeZone: { type: ['string', 'null'], examples: [Europe/Paris] }
         haVersion: { type: ['string', 'null'] }
-        preferences: { $ref: '#/components/schemas/UserPreferences' }
+        preferences:
+          description: >-
+            The current user's stored choice; when the user has none (or there is no user) the locale falls back
+            to Settings.uiLocale and the theme to auto.
+          allOf:
+            - $ref: '#/components/schemas/UserPreferences'
         engine:
           type: object
           required: [running, connected]
@@ -775,6 +780,8 @@ components:
             reason.no_schedule, reason.no_rule, reason.vacation {returnAt}, reason.house_empty {since},
             reason.opening_open {since}, reason.boost {delta, until}, reason.manual_override {until},
             reason.room_vacant {preset, since}, reason.anti_cycling_min_off, reason.anti_cycling_min_on.
+            Param conventions: instants (until, at, since, returnAt) are RFC 3339 in the HA time zone;
+            preset is a preset key; delta is the positive magnitude (its sign follows decision.mode).
         params:
           type: object
           additionalProperties:

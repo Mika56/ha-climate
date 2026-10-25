@@ -493,6 +493,7 @@ export interface components {
             /** @example Europe/Paris */
             haTimeZone: string | null;
             haVersion?: string | null;
+            /** @description The current user's stored choice; when the user has none (or there is no user) the locale falls back to Settings.uiLocale and the theme to auto. */
             preferences: components["schemas"]["UserPreferences"];
             engine: {
                 running: boolean;
@@ -550,6 +551,8 @@ export interface components {
              *     reason.no_schedule, reason.no_rule, reason.vacation {returnAt}, reason.house_empty {since},
              *     reason.opening_open {since}, reason.boost {delta, until}, reason.manual_override {until},
              *     reason.room_vacant {preset, since}, reason.anti_cycling_min_off, reason.anti_cycling_min_on.
+             *     Param conventions: instants (until, at, since, returnAt) are RFC 3339 in the HA time zone;
+             *     preset is a preset key; delta is the positive magnitude (its sign follows decision.mode).
              */
             code: string;
             params: {
