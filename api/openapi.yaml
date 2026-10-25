@@ -376,7 +376,7 @@ paths:
     put:
       tags: [schedules]
       operationId: updateSchedule
-      summary: Replaces name and all slots.
+      summary: Replaces name and all slots (the mode cannot change and is ignored).
       requestBody:
         required: true
         content:
@@ -464,6 +464,7 @@ paths:
     put:
       tags: [notifications]
       operationId: updateNotificationSettings
+      summary: The targets sent replace the stored ones; notification types not sent are left unchanged.
       requestBody:
         required: true
         content:

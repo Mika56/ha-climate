@@ -64,7 +64,7 @@ final class OverrideRuleTest extends TestCase
 
         self::assertSame(22.5, $decision->target?->toFloat());
         self::assertSame('reason.boost', $decision->reason->code);
-        self::assertSame(['delta' => 1.5, 'until' => '08:30'], $decision->reason->params);
+        self::assertSame(['delta' => 1.5, 'until' => '2026-10-26T08:30:00+01:00'], $decision->reason->params);
         self::assertEquals($endsAt, $decision->reevaluateAt);
     }
 
@@ -121,7 +121,7 @@ final class OverrideRuleTest extends TestCase
         self::assertSame(0, $next->calls);
         self::assertSame(24.5, $decision->target?->toFloat());
         self::assertSame('reason.manual_override', $decision->reason->code);
-        self::assertSame(['until' => '09:00'], $decision->reason->params);
+        self::assertSame(['until' => '2026-10-26T09:00:00+01:00'], $decision->reason->params);
     }
 
     public function testAManualOverrideInSummerCools(): void
@@ -159,7 +159,7 @@ final class OverrideRuleTest extends TestCase
 
         $decision = self::resolve(new SpyRule(), self::context($override));
 
-        self::assertSame('09:30', $decision->reason->params['until']);
+        self::assertSame('2026-10-26T09:30:00+01:00', $decision->reason->params['until']);
     }
 
     public function testPriority(): void

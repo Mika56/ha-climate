@@ -72,7 +72,7 @@ final class OverrideRoutesTest extends EngineTestCase
         self::assertSame(200, $response->getStatus());
         $payload = $this->json($response);
         self::assertSame($this->roomId, $payload['roomId']);
-        self::assertSame(['mode' => 'heat', 'target' => 22.5, 'reason' => ['code' => 'reason.boost', 'params' => ['delta' => 1.5, 'until' => '09:00']]], $payload['decision']);
+        self::assertSame(['mode' => 'heat', 'target' => 22.5, 'reason' => ['code' => 'reason.boost', 'params' => ['delta' => 1.5, 'until' => '2026-10-26T09:00:00+01:00']]], $payload['decision']);
         self::assertIsArray($payload['override']);
         self::assertSame('boost', $payload['override']['type']);
         self::assertSame(22.5, $this->homeAssistant()->serviceCalls()[0]->serviceData['temperature']);

@@ -82,6 +82,6 @@ final readonly class OverrideRule implements RoomRuleInterface
 
     private static function until(RoomEvaluationContext $context, ActiveOverride $override): ?string
     {
-        return $override->endsAt?->setTimezone($context->now->getTimezone())->format('H:i');
+        return $override->endsAt?->setTimezone($context->now->getTimezone())->format(\DATE_ATOM);
     }
 }
