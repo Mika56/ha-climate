@@ -1,0 +1,4 @@
+configuration:
+  log_level:
+    name: Niveau de journalisation
+    description: Verbosité du journal du module. Redémarrez le module après modification.

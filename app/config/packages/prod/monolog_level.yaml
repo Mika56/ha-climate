@@ -1,0 +1,6 @@
+# Default minimum level of the main log handler. The add-on's init-app service rewrites this file
+# from the `log_level` option at start-up (and clears the cache when it changes).
+monolog:
+    handlers:
+        main:
+            level: info
