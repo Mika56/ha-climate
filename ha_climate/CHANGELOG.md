@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Fix: the Schedules page stayed on "Loading…" when no schedule existed; it now offers to create the first one
+  (and says so when a schedule link points to a deleted schedule).
+- Fix: long notification service names were squeezed letter by letter in the Notifications targets list.
+
 ## 0.1.1
 
 - Fix: the live room updates were cut every ~15 seconds behind the Home Assistant ingress (the heartbeat was

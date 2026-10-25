@@ -284,6 +284,8 @@
     "usedBy": "Utilisé par\u00a0:",
     "usedByHint": "Chaque pièce applique ses propres températures pour chaque preset.",
     "unused": "Ce planning n’est utilisé par aucune pièce.",
+    "empty": "Aucun planning pour l’instant. Créez-en un, puis choisissez-le dans les réglages de chaque pièce.",
+    "notFound": "Ce planning n’existe pas (il a peut-être été supprimé).",
     "name": "Nom",
     "mode": "Mode",
     "week": "Semaine",

@@ -9,6 +9,9 @@ describe('NotificationsPage', () => {
     const old = wrapper.findAll('[data-test="target"]')[3]
     expect(old.text()).toContain('notify.old_phone')
     expect(old.text()).toContain('indisponible')
+    const first = wrapper.findAll('[data-test="target"]')[0]
+    // The service id and its name are stacked in one text column (not squeezed side by side).
+    expect(first.find('.target-text .service').exists()).toBe(true)
     expect(wrapper.findAll('[data-test="type"]')).toHaveLength(4)
     expect(norm(wrapper.text())).toContain('Salle de bain : la fenêtre est ouverte depuis 30 min.')
     expect((wrapper.find('[data-test="delay"] input').element as HTMLInputElement).value).toBe('5')

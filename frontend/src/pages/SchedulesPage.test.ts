@@ -182,6 +182,24 @@ describe('SchedulesPage', () => {
     expect((select.element as HTMLSelectElement).value).toBe(ID.semaine)
   })
 
+  it('offers to create the first schedule when there is none, instead of loading forever', async () => {
+    mockDb.schedules = []
+    const { wrapper, router } = await mountApp('/schedules')
+    expect(router.currentRoute.value.path).toBe('/schedules')
+    const empty = wrapper.find('[data-test="schedules-empty"]')
+    expect(empty.exists()).toBe(true)
+    expect(empty.text()).toContain('Aucun planning')
+    expect(wrapper.text()).not.toContain('Chargement')
+    expect(empty.find('[data-test="create-first-schedule"]').attributes('href')).toContain(
+      '/schedules/new',
+    )
+  })
+
+  it('tells when the requested schedule does not exist', async () => {
+    const { wrapper } = await mountApp('/schedules/00000000-0000-4000-8000-000000000000')
+    expect(wrapper.find('[data-test="schedules-empty"]').text()).toContain('n’existe pas')
+  })
+
   it('shows a schedule that no room uses', async () => {
     mockDb.rooms.forEach((r) => (r.coolingScheduleId = null))
     const { wrapper } = await mountApp(`/schedules/${ID.eteChambres}`)

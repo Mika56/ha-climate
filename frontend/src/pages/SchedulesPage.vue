@@ -433,7 +433,15 @@ function slotTitle(slot: EditorSlot): string {
         </button>
       </div>
     </template>
-    <p v-else class="muted" role="status">{{ t('common.loading') }}</p>
+    <p v-else-if="!loaded" class="muted" role="status">{{ t('common.loading') }}</p>
+    <section v-else class="card panel empty" data-test="schedules-empty">
+      <p class="muted">
+        {{ schedules.length === 0 ? t('schedules.empty') : t('schedules.notFound') }}
+      </p>
+      <RouterLink class="btn filled" to="/schedules/new" data-test="create-first-schedule">
+        <HaIcon :path="mdiPlus" :size="18" />{{ t('schedules.new') }}
+      </RouterLink>
+    </section>
   </div>
 </template>
 

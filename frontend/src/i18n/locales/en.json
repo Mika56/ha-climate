@@ -263,6 +263,8 @@
     "usedBy": "Used by:",
     "usedByHint": "Each room applies its own temperatures for every preset.",
     "unused": "Not used by any room yet.",
+    "empty": "No schedule yet. Create one, then pick it in each room’s settings.",
+    "notFound": "This schedule does not exist (it may have been deleted).",
     "name": "Name",
     "mode": "Mode",
     "week": "Week",

@@ -117,11 +117,13 @@ async function sendTest(): Promise<void> {
         data-test="target"
       >
         <input v-model="target.enabled" type="checkbox" :data-test="`target-${target.service}`" />
-        <span class="service">{{ target.service }}</span>
+        <span class="target-text">
+          <span class="service">{{ target.service }}</span>
+          <span v-if="target.available && target.name" class="muted small">{{ target.name }}</span>
+        </span>
         <span v-if="!target.available" class="chip tone-warn">{{
           t('notifications.unavailable')
         }}</span>
-        <span v-else-if="target.name" class="muted small">{{ target.name }}</span>
       </label>
       <p v-if="form.targets.length === 0" class="muted">{{ t('notifications.noTargets') }}</p>
       <div class="test">
@@ -207,11 +209,18 @@ async function sendTest(): Promise<void> {
 .row {
   border-top: 1px solid var(--divider);
   min-height: 48px;
+  padding: 6px 0;
 }
-.service {
+.target-text {
   flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+}
+/* Service ids are long and have no spaces: break them only where needed, never letter by letter. */
+.service {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .small {
   font-size: 13px;
