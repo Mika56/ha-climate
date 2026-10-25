@@ -45,16 +45,6 @@ final class OverrideRuleTest extends TestCase
         self::assertSame(21.0, $decision->target?->toFloat());
     }
 
-    public function testAnOverrideIsIgnoredWhenTheSeasonHasNoMode(): void
-    {
-        $next = new SpyRule(Decision::off(new Reason('reason.next')));
-        $override = ActiveOverride::manual(Fixtures::temperature(23.0), Fixtures::at('2026-10-26 09:00'));
-
-        $decision = self::resolve($next, self::context($override, season: Season::Off));
-
-        self::assertSame('reason.next', $decision->reason->code);
-    }
-
     public function testABoostRaisesTheBaseTargetWhenHeating(): void
     {
         $next = new SpyRule(Decision::heat(Fixtures::temperature(21.0), new Reason('reason.schedule')));

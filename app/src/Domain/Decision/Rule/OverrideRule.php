@@ -41,7 +41,7 @@ final readonly class OverrideRule implements RoomRuleInterface
         $override = $context->facts->override;
         $mode = $context->mode();
 
-        if (null === $override || HvacMode::Off === $mode || $override->hasEndedAt($context->now)) {
+        if (null === $override || $override->hasEndedAt($context->now)) {
             return $next($context);
         }
 

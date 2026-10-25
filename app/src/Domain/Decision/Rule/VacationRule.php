@@ -30,7 +30,7 @@ final readonly class VacationRule implements RoomRuleInterface
     {
         $vacation = $context->facts->vacation;
         $mode = $context->mode();
-        if (null === $vacation || HvacMode::Off === $mode) {
+        if (null === $vacation) {
             return $next($context);
         }
 

@@ -152,16 +152,11 @@ final class VacationRuleTest extends TestCase
         self::assertEquals(Fixtures::at('2026-10-30 18:00:00'), $decision->reevaluateAt);
     }
 
-    public function testIsIgnoredWithoutVacationOrWithTheSeasonOff(): void
+    public function testIsIgnoredWithoutVacation(): void
     {
         $none = (new TargetResolver([new VacationRule(), new ScheduleRule()]))->resolve(Contexts::make('2026-10-27 12:00:00'));
-        $off = (new VacationRule())->apply(
-            Contexts::make('2026-10-27 12:00:00', Season::Off, RoomFacts::none()->withVacation($this->vacation())),
-            static fn (): Decision => Decision::off(new Reason('reason.season_off')),
-        );
 
         self::assertSame('reason.schedule', $none->reason->code);
-        self::assertSame('reason.season_off', $off->reason->code);
     }
 
     public function testPriority(): void

@@ -122,7 +122,6 @@ final class ScheduleRuleTest extends TestCase
     {
         yield 'no schedule' => [Season::Winter, null];
         yield 'schedule of the wrong mode' => [Season::Winter, Fixtures::weeklySchedule(HvacMode::Cool)];
-        yield 'season off' => [Season::Off, Fixtures::weeklySchedule()];
     }
 
     public function testMissingPresetTemperatureIsReported(): void

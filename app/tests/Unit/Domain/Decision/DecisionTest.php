@@ -20,12 +20,12 @@ final class DecisionTest extends TestCase
 {
     public function testOff(): void
     {
-        $decision = Decision::off(new Reason('reason.season_off'));
+        $decision = Decision::off(new Reason('reason.no_rule'));
 
         self::assertSame(HvacMode::Off, $decision->mode);
         self::assertNull($decision->target);
         self::assertTrue($decision->isOff());
-        self::assertSame('reason.season_off', $decision->reason->code);
+        self::assertSame('reason.no_rule', $decision->reason->code);
     }
 
     public function testHeat(): void

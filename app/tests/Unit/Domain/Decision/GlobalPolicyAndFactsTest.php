@@ -86,7 +86,6 @@ final class GlobalPolicyAndFactsTest extends TestCase
     {
         self::assertSame(HvacMode::Heat, Fixtures::context(Season::Winter)->mode());
         self::assertSame(HvacMode::Cool, Fixtures::context(Season::Summer)->mode());
-        self::assertSame(HvacMode::Off, Fixtures::context(Season::Off)->mode());
     }
 
     public function testWithersReplaceOneFactAndKeepTheOthers(): void
