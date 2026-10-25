@@ -22,7 +22,7 @@ Décisions tranchées dans ce plan (questions ouvertes du doc) :
 
 | Couche | Choix |
 |---|---|
-| Langage | PHP 8.4 |
+| Langage | PHP 8.5 |
 | Framework | Symfony 7.4 LTS (console, http-kernel, doctrine, serializer, validator, translation, clock, uid) |
 | Persistance | SQLite dans `/data` (persistant, inclus dans les backups HA), Doctrine ORM + Migrations |
 | Démon temps réel | Commande console `app:engine:run` sur AMPHP v3 / Revolt : `amphp/websocket-client`, `amphp/http-client`, `amphp/http-server` |
@@ -61,7 +61,7 @@ ha_climate/                     # dossier de l'add-on (slug)
   translations/en.yaml fr.yaml  # libellés des options de l'add-on
   Dockerfile                    # multi-stage (front Node → composer → runtime)
   rootfs/etc/s6-overlay/s6-rc.d/{init-app,php-fpm,nginx,engine}/
-  rootfs/etc/nginx/  rootfs/etc/php84/
+  rootfs/etc/nginx/  rootfs/etc/php85/
 app/                            # application Symfony
   src/Domain/  src/Application/  src/Infrastructure/  src/UI/
   tests/Unit/  tests/Integration/  tests/Functional/

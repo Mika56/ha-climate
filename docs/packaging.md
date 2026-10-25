@@ -6,10 +6,10 @@ The repository root is a Home Assistant add-on repository (`repository.yaml`); t
 
 Built by `ha_climate/Dockerfile` with the **repository root as build context** (it needs `app/` and `frontend/`):
 
-1. `frontend` stage: `node:22.12.0-alpine` on `$BUILDPLATFORM`, `npm ci && npm run build`.
-2. `vendor` stage: `php:8.4-cli-alpine`, `composer install --no-dev`, then a classmap-authoritative autoloader.
+1. `frontend` stage: `node:24.22.1-alpine` on `$BUILDPLATFORM`, `npm ci && npm run build`.
+2. `vendor` stage: `php:8.5-cli-alpine`, `composer install --no-dev`, then a classmap-authoritative autoloader.
 3. Runtime stage: `ARG BUILD_FROM` (Home Assistant base image, Alpine 3.24, pinned in `build.yaml`) with
-   Alpine's `php84*` packages, `nginx`, an unprivileged `app` user.
+   Alpine's `php85*` packages, `nginx`, an unprivileged `app` user.
 
 | Path in the image             | Content                                              |
 | ----------------------------- | ---------------------------------------------------- |
@@ -62,3 +62,11 @@ docker compose -f compose.dev.yaml down
 The Supervisor cannot build this image from a repository (its build context is `ha_climate/`): releases publish a
 prebuilt image (`image:` key in `config.yaml`, published to GHCR by `.github/workflows/release.yml`, see
 [releasing.md](releasing.md)).
+
+## Keeping versions up to date
+
+Dependabot (`.github/dependabot.yml`) groups the routine npm, Composer and GitHub Actions updates. It also watches
+the `FROM` lines of `ha_climate/Dockerfile` and `docker/dev/php/Dockerfile`, but it cannot follow
+`ARG BUILD_FROM`: the Home Assistant base image (`build_from` in `ha_climate/build.yaml`, plus the default of
+`BUILD_FROM` in the Dockerfile) is bumped manually. PHP (Alpine `php85*` packages) and Node (24 LTS) minors and
+majors are upgraded deliberately; the Node pin lives in `Makefile`, `docker/dev/bootstrap-ha.sh` and `ha_climate/Dockerfile`.

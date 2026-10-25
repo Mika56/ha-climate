@@ -62,7 +62,7 @@ The host only needs Docker and git; all tooling runs in containers through `make
 | `make ci` | `php-ci` + `front-ci` |
 | `make sh-php` / `make sh-node` | Shell in the PHP / Node container |
 
-Repository layout: `app/` (PHP 8.4, Symfony 7.4 engine and API), `frontend/` (Vue), `api/` (OpenAPI contract),
+Repository layout: `app/` (PHP 8.5, Symfony 7.4 engine and API), `frontend/` (Vue), `api/` (OpenAPI contract),
 `ha_climate/` (add-on: Dockerfile, config, docs), `docker/dev/` (development tooling), `docs/` (packaging and release
 notes).
 

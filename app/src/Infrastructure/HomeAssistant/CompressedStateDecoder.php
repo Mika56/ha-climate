@@ -150,7 +150,7 @@ final class CompressedStateDecoder
     {
         $date = \DateTimeImmutable::createFromFormat('U.u', \sprintf('%.6F', $timestamp));
         if (false === $date) {
-            throw new InvalidPayloadException(\sprintf('Invalid timestamp %s.', $timestamp));
+            throw new InvalidPayloadException(\sprintf('Invalid timestamp %s.', var_export($timestamp, true)));
         }
 
         return $date;

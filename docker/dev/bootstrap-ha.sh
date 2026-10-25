@@ -7,13 +7,13 @@
 #   HA_URL, HA_TOKEN             -> read by the engine in standalone mode (export them or `set -a; . docker/dev/.env.dev`)
 #   HA_DEV_USER, HA_DEV_PASSWORD -> the local test user, to log into the Home Assistant UI
 #
-# Needs only Docker (node:22 runs the onboarding script, with the host network to reach localhost:8123).
+# Needs only Docker (node:24 runs the onboarding script, with the host network to reach localhost:8123).
 set -euo pipefail
 
 DEV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${DEV_DIR}/../.." && pwd)"
 ENV_FILE="${DEV_DIR}/.env.dev"
-NODE_IMAGE="node:22.12.0-alpine"
+NODE_IMAGE="node:24.22.1-alpine"
 
 docker compose -f "${ROOT_DIR}/compose.dev.yaml" up -d
 

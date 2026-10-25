@@ -12,7 +12,7 @@ export async function startMocks(): Promise<typeof EventSource> {
     const { setupWorker } = await import('msw/browser')
     await setupWorker(...handlers).start({
       serviceWorker: { url: './mockServiceWorker.js' },
-      onUnhandledRequest: 'bypass',
+      onUnhandledFrame: 'bypass',
     })
   } catch {
     installFetchMock()

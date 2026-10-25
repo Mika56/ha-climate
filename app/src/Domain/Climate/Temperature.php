@@ -21,7 +21,7 @@ final readonly class Temperature
         $rounded = round($celsius, 1);
 
         if (!is_finite($celsius) || $rounded < self::MIN || $rounded > self::MAX) {
-            throw new InvalidValueException(\sprintf('Temperature must be between %.1f and %.1f °C, got %s.', self::MIN, self::MAX, (string) $celsius));
+            throw new InvalidValueException(\sprintf('Temperature must be between %.1f and %.1f °C, got %s.', self::MIN, self::MAX, var_export($celsius, true)));
         }
 
         $this->celsius = $rounded;
