@@ -1,14 +1,14 @@
 # HA Climate
 
-[![CI](https://github.com/OWNER/ha-climate/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/ha-climate/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/OWNER/ha-climate)](https://github.com/OWNER/ha-climate/releases)
+[![CI](https://github.com/Mika56/ha-climate/actions/workflows/ci.yml/badge.svg)](https://github.com/Mika56/ha-climate/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Mika56/ha-climate)](https://github.com/Mika56/ha-climate/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A Home Assistant add-on that drives the heating and air conditioning of your home, room by room. It controls the
 `climate` entities you already have, decides on events (not on a polling timer), and keeps a full audit trail of
 every decision.
 
-[![Add this repository to your Home Assistant instance.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FOWNER%2Fha-climate)
+[![Add this repository to your Home Assistant instance.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMika56%2Fha-climate)
 
 ## Features
 
@@ -35,10 +35,10 @@ Requires Home Assistant OS or Supervised (add-ons are not available in Container
 
 1. Click the button below, or add the repository manually (next step):
 
-   [![Add this repository to your Home Assistant instance.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FOWNER%2Fha-climate)
+   [![Add this repository to your Home Assistant instance.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMika56%2Fha-climate)
 
 2. Manually: **Settings › Add-ons › Add-on store › ⋮ (top right) › Repositories**, paste
-   `https://github.com/OWNER/ha-climate` and click **Add**.
+   `https://github.com/Mika56/ha-climate` and click **Add**.
 3. Reload the store, open **HA Climate**, click **Install**, then **Start**. Enable **Show in sidebar** to get the
    *Climate* panel.
 

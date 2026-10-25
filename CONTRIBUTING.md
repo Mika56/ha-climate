@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping! Issues and pull requests are welcome at <https://github.com/OWNER/ha-climate>.
+Thanks for helping! Issues and pull requests are welcome at <https://github.com/Mika56/ha-climate>.
 
 ## Workflow
 

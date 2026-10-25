@@ -9,7 +9,7 @@ target temperature. It talks to Home Assistant only (through the Supervisor); it
 
 1. In Home Assistant, open **Settings > Add-ons > Add-on store**.
 2. Open the menu (three dots, top right) > **Repositories** and add the repository URL:
-   `https://github.com/OWNER/ha-climate`
+   `https://github.com/Mika56/ha-climate`
 3. Install **HA Climate**, then **Start** it. Enable **Show in sidebar** to get the **Climate** panel.
 4. Open the panel (or **Open Web UI**): the interface is served through Home Assistant's ingress, so it uses
    your Home Assistant login and needs no extra port or password.

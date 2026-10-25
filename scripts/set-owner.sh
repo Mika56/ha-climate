@@ -45,7 +45,7 @@ for file in "${FILES[@]}"; do
     path="${root}/${file}"
     [[ -f "${path}" ]] || continue
     tmp="$(mktemp)"
-    sed -e "s|ghcr\.io/OWNER\b|ghcr.io/${owner_lower}|g" -e "s|\bOWNER\b|${owner}|g" "${path}" > "${tmp}"
+    sed -e "s|%2FOWNER%2F|%2F${owner}%2F|g" -e "s|ghcr\.io/OWNER\b|ghcr.io/${owner_lower}|g" -e "s|\bOWNER\b|${owner}|g" "${path}" > "${tmp}"
     if [[ -n "${email}" ]]; then
         sed -e "s|${PLACEHOLDER_EMAIL}|${email}|g" "${tmp}" > "${tmp}.new" && mv "${tmp}.new" "${tmp}"
     fi

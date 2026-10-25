@@ -2,8 +2,8 @@ name: HA Climate
 slug: ha_climate
 version: 0.1.0
 description: Room-by-room heating and air-conditioning scheduler driving your Home Assistant climate entities.
-url: https://github.com/OWNER/ha-climate
-image: ghcr.io/OWNER/{arch}-ha-climate
+url: https://github.com/Mika56/ha-climate
+image: ghcr.io/mika56/{arch}-ha-climate
 arch:
   - amd64
   - aarch64

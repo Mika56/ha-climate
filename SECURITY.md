@@ -7,7 +7,7 @@ Only the latest release receives security fixes.
 ## Reporting a vulnerability
 
 Please do **not** open a public issue. Use GitHub's private vulnerability reporting instead:
-<https://github.com/OWNER/ha-climate/security/advisories/new> (repository **Security** tab › **Report a
+<https://github.com/Mika56/ha-climate/security/advisories/new> (repository **Security** tab › **Report a
 vulnerability**).
 
 Include the add-on version, what you observed, and steps to reproduce. You can expect an acknowledgement within a few

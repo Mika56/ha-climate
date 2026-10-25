@@ -84,7 +84,7 @@ LABEL io.hass.name="HA Climate" \
       io.hass.version="${BUILD_VERSION}" \
       org.opencontainers.image.title="HA Climate" \
       org.opencontainers.image.description="Home Assistant add-on driving heating and air conditioning" \
-      org.opencontainers.image.source="https://github.com/OWNER/ha-climate" \
+      org.opencontainers.image.source="https://github.com/Mika56/ha-climate" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${BUILD_VERSION}"
 
