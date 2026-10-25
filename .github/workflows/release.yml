@@ -70,7 +70,7 @@ jobs:
           echo "base=$(ARCH="${ARCH}" yq '.build_from[strenv(ARCH)]' ha_climate/build.yaml)" >> "$GITHUB_OUTPUT"
       - name: Image metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ steps.names.outputs.image }}
           tags: |
