@@ -1,0 +1,129 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: config.yaml version must match the tag
+        id: check
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(yq '.version' ha_climate/config.yaml)"
+          if [ "${TAG#v}" != "${version}" ]; then
+            echo "::error::Tag ${TAG} does not match ha_climate/config.yaml version ${version}"
+            exit 1
+          fi
+          if ! grep -qxF "## ${version}" ha_climate/CHANGELOG.md; then
+            echo "::error::ha_climate/CHANGELOG.md has no '## ${version}' section"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+  image:
+    name: Image (${{ matrix.arch }})
+    needs: verify
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compute image name and base image
+        id: names
+        env:
+          ARCH: ${{ matrix.arch }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "image=ghcr.io/${OWNER,,}/${ARCH}-ha-climate" >> "$GITHUB_OUTPUT"
+          echo "base=$(ARCH="${ARCH}" yq '.build_from[strenv(ARCH)]' ha_climate/build.yaml)" >> "$GITHUB_OUTPUT"
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.names.outputs.image }}
+          tags: |
+            type=raw,value=${{ needs.verify.outputs.version }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=HA Climate
+            org.opencontainers.image.licenses=MIT
+            io.hass.arch=${{ matrix.arch }}
+            io.hass.version=${{ needs.verify.outputs.version }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ha_climate/Dockerfile
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            BUILD_FROM=${{ steps.names.outputs.base }}
+            BUILD_ARCH=${{ matrix.arch }}
+            BUILD_VERSION=${{ needs.verify.outputs.version }}
+          push: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=release-${{ matrix.arch }}
+          cache-to: type=gha,scope=release-${{ matrix.arch }},mode=max
+
+  release:
+    name: GitHub Release
+    needs: [verify, image]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract the changelog section
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          awk -v header="## ${VERSION}" '
+            $0 == header { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' ha_climate/CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::Empty changelog section for ${VERSION}"
+            exit 1
+          fi
+          cat release-notes.md
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "${TAG}" --repo "${GITHUB_REPOSITORY}" --verify-tag \
+            --title "HA Climate ${TAG}" --notes-file release-notes.md
