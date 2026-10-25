@@ -115,7 +115,9 @@ abstract class ApiTestCase extends WebTestCase
      */
     protected static function with(array $document, string $path, mixed $value): array
     {
-        [$head, $rest] = array_pad(explode('.', $path, 2), 2, null);
+        $parts = explode('.', $path, 2);
+        $head = $parts[0];
+        $rest = $parts[1] ?? null;
         $key = ctype_digit($head) ? (int) $head : $head;
         if (null === $rest) {
             $document[$key] = $value;
