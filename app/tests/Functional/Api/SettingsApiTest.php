@@ -60,7 +60,8 @@ final class SettingsApiTest extends ApiTestCase
     private static function settingsBody(): array
     {
         return [
-            'season' => 'winter',
+            'season' => 'summer',
+            'paused' => false,
             'trackedPersons' => ['person.alice', 'person.bob'],
             'houseEmptyDelaySeconds' => 1800,
             'manualOverrideMinutes' => 90,
@@ -77,7 +78,8 @@ final class SettingsApiTest extends ApiTestCase
     {
         $settings = $this->call('getSettings', 'GET', '/api/settings')->assertStatus(200)->json();
 
-        self::assertSame('off', $settings['season']);
+        self::assertSame('winter', $settings['season']);
+        self::assertFalse($settings['paused']);
         self::assertSame([], $settings['trackedPersons']);
         self::assertSame(['enabled' => false, 'startAt' => null, 'returnAt' => null, 'offDuringVacation' => true], $settings['vacation']);
         self::assertNull($settings['weatherEntity']);
@@ -89,7 +91,8 @@ final class SettingsApiTest extends ApiTestCase
     {
         $saved = $this->call('updateSettings', 'PUT', '/api/settings', self::settingsBody(), self::asUser())->assertStatus(200)->json();
 
-        self::assertSame('winter', $saved['season']);
+        self::assertSame('summer', $saved['season']);
+        self::assertFalse($saved['paused']);
         self::assertSame(['person.alice', 'person.bob'], $saved['trackedPersons']);
         self::assertSame(['enabled' => true, 'startAt' => '2026-12-20T08:00:00+01:00', 'returnAt' => '2027-01-03T19:30:00+01:00', 'offDuringVacation' => false], $saved['vacation']);
         self::assertSame('fr', $saved['uiLocale']);
@@ -101,9 +104,63 @@ final class SettingsApiTest extends ApiTestCase
         $payload = $entry->getPayload();
         self::assertIsArray($payload['before']);
         self::assertIsArray($payload['after']);
-        self::assertSame('off', $payload['before']['season']);
-        self::assertSame('winter', $payload['after']['season']);
+        self::assertSame('winter', $payload['before']['season']);
+        self::assertSame('summer', $payload['after']['season']);
+        self::assertSame([], $this->auditEntries('audit.engine.paused'), 'The pause did not change.');
         self::assertCount(1, $this->engine()->requestsTo('/internal/reload'));
+    }
+
+    public function testThePauseCanBeChangedThroughTheSettingsAndIsAudited(): void
+    {
+        $paused = $this->call('updateSettings', 'PUT', '/api/settings', [...self::settingsBody(), 'paused' => true], self::asUser())->assertStatus(200)->json();
+        self::assertTrue($paused['paused']);
+        self::assertCount(1, $this->auditEntries('audit.engine.paused'));
+
+        $this->call('updateSettings', 'PUT', '/api/settings', [...self::settingsBody(), 'paused' => false], self::asUser())->assertStatus(200);
+        self::assertCount(1, $this->auditEntries('audit.engine.resumed'));
+    }
+
+    public function testASettingsUpdateWithoutThePauseKeepsIt(): void
+    {
+        $this->call('updatePause', 'PUT', '/api/pause', ['paused' => true])->assertStatus(200);
+        $body = self::settingsBody();
+        unset($body['paused']);
+
+        $saved = $this->call('updateSettings', 'PUT', '/api/settings', $body)->assertStatus(200)->json();
+
+        self::assertTrue($saved['paused']);
+    }
+
+    public function testHomeAssistantClimateIsPausedAndResumedAndAudited(): void
+    {
+        $paused = $this->call('updatePause', 'PUT', '/api/pause', ['paused' => true], self::asUser())->assertStatus(200);
+
+        self::assertSame(['paused' => true], $paused->json());
+        self::assertTrue($this->call('getSettings', 'GET', '/api/settings')->json()['paused']);
+        $entry = $this->auditEntries('audit.engine.paused')[0];
+        self::assertSame('engine', $entry->getCategory());
+        self::assertSame('Alice', $entry->getActorName());
+        self::assertCount(1, $this->engine()->requestsTo('/internal/reload'));
+
+        $resumed = $this->call('updatePause', 'PUT', '/api/pause', ['paused' => false], self::asUser())->assertStatus(200);
+
+        self::assertSame(['paused' => false], $resumed->json());
+        self::assertSame('Alice', $this->auditEntries('audit.engine.resumed')[0]->getActorName());
+        self::assertCount(2, $this->engine()->requestsTo('/internal/reload'));
+    }
+
+    public function testAskingForTheCurrentPauseStateChangesNothing(): void
+    {
+        $this->call('updatePause', 'PUT', '/api/pause', ['paused' => false])->assertStatus(200);
+
+        self::assertSame([], $this->auditEntries('audit.engine.resumed'));
+        self::assertSame([], $this->engine()->requestsTo('/internal/reload'));
+    }
+
+    public function testThePauseRequestMustBeABoolean(): void
+    {
+        $this->call('updatePause', 'PUT', '/api/pause', [])->assertStatus(422);
+        $this->call('updatePause', 'PUT', '/api/pause', ['paused' => 'yes'])->assertStatus(422);
     }
 
     public function testInvalidSettingsAreRefused(): void
@@ -137,6 +194,7 @@ final class SettingsApiTest extends ApiTestCase
         self::assertCount(1, $this->engine()->requestsTo('/internal/reload'));
 
         $this->call('updateSeason', 'PUT', '/api/season', ['season' => 'spring'])->assertViolation('season');
+        $this->call('updateSeason', 'PUT', '/api/season', ['season' => 'off'])->assertViolation('season');
     }
 
     public function testTheNotificationSettingsListEveryDestinationHomeAssistantOffers(): void

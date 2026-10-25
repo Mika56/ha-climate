@@ -26,6 +26,23 @@ final readonly class ConfigurationAudit
     }
 
     /**
+     * Records that HA Climate was paused or resumed (`audit.engine.paused` / `audit.engine.resumed`, category `engine`).
+     */
+    public function recordPause(?IngressUser $user, bool $paused): void
+    {
+        $this->entityManager->persist(new AuditEntry(
+            $this->clock->now(),
+            ActorType::User,
+            'engine',
+            $paused ? 'audit.engine.paused' : 'audit.engine.resumed',
+            [],
+            ['paused' => $paused],
+            $user?->id,
+            $user?->displayName,
+        ));
+    }
+
+    /**
      * @param array<string, scalar|null> $params
      * @param array<string, mixed>|null  $before
      * @param array<string, mixed>|null  $after

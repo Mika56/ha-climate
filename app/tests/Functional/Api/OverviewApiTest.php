@@ -62,6 +62,7 @@ final class OverviewApiTest extends ApiTestCase
         $overview = $this->call('getOverview', 'GET', '/api/overview')->assertStatus(200)->data();
 
         self::assertSame('winter', $overview->at('season')->value());
+        self::assertFalse($overview->at('paused')->value());
         self::assertSame([
             ['entityId' => 'person.alice', 'name' => 'Alice', 'state' => 'not_home', 'tracked' => true],
             ['entityId' => 'person.bob', 'name' => 'Bob', 'state' => 'home', 'tracked' => false],
@@ -73,6 +74,16 @@ final class OverviewApiTest extends ApiTestCase
         self::assertFalse($overview->at('vacation.enabled')->value());
         self::assertSame([], $overview->at('alerts')->value());
         self::assertSame([], $overview->at('recentDecisions')->value());
+    }
+
+    public function testTheOverviewSaysWhenHaClimateIsPaused(): void
+    {
+        $this->call('updatePause', 'PUT', '/api/pause', ['paused' => true])->assertStatus(200);
+        $roomId = $this->createRoom();
+        $this->engine()->answer('GET', '/internal/status', ['rooms' => [self::roomStatus($roomId, overrides: ['paused' => true])]]);
+
+        self::assertTrue($this->call('getOverview', 'GET', '/api/overview')->assertStatus(200)->data()->at('paused')->value());
+        self::assertTrue($this->call('listRoomStatuses', 'GET', '/api/status')->assertStatus(200)->data()->at('0.paused')->value());
     }
 
     public function testTheOverviewStillWorksWithoutTheEngine(): void
@@ -130,7 +141,7 @@ final class OverviewApiTest extends ApiTestCase
         $statuses = $this->call('listRoomStatuses', 'GET', '/api/status')->assertStatus(200)->data();
 
         self::assertSame([$first, $second, '0199e3a0-0000-7000-8000-000000000000'], $statuses->column('roomId'));
-        self::assertSame('reason.season_off', $statuses->at('0.decision.reason.code')->value());
+        self::assertSame('reason.no_rule', $statuses->at('0.decision.reason.code')->value());
 
         $this->engine()->goDown();
         $this->call('listRoomStatuses', 'GET', '/api/status')->assertError(503, 'engine_unavailable');

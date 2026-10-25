@@ -17,7 +17,7 @@ use App\Infrastructure\Persistence\Repository\AuditEntryRepository;
 use App\Infrastructure\Persistence\Repository\GlobalSettingsRepository;
 
 /**
- * The overview page besides the live room cards: season, who is home, weather, vacation, active alerts and the
+ * The overview page besides the live room cards: season, whether HA Climate is paused, who is home, weather, vacation, active alerts and the
  * latest decisions.
  *
  * Persons: every person Home Assistant has (read live by the engine), each flagged `tracked` when the settings
@@ -60,6 +60,7 @@ final readonly class OverviewService
 
         return [
             'season' => $settings->getSeason()->value,
+            'paused' => $settings->isPaused(),
             'presence' => [
                 'persons' => $this->persons($settings->getTrackedPersons(), $live['persons'] ?? []),
                 'houseEmptySince' => \is_string($since) ? $since : null,

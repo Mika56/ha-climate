@@ -7,13 +7,14 @@ namespace App\Application\Api\Settings;
 use App\Application\Api\ConfigurationAudit;
 use App\Application\Api\EngineNotifier;
 use App\Application\Api\IngressUser;
+use App\Application\Api\Input\PauseRequest;
 use App\Application\Api\Input\SeasonRequest;
 use App\Application\Api\Input\SettingsRequest;
 use App\Infrastructure\Persistence\Repository\GlobalSettingsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * The global settings (season, presence, vacation, weather, languages, audit retention).
+ * The global settings (season, pause, presence, vacation, weather, languages, audit retention).
  */
 final readonly class SettingsService
 {
@@ -46,6 +47,9 @@ final readonly class SettingsService
         $this->applier->apply($settings, $request);
 
         $this->audit->record($user, 'settings_updated', [], $before, $this->normalizer->normalize($settings, false));
+        if ($before['paused'] !== $settings->isPaused()) {
+            $this->audit->recordPause($user, $settings->isPaused());
+        }
         $this->entityManager->flush();
         $this->engine->configurationChanged();
 
@@ -66,5 +70,25 @@ final readonly class SettingsService
         $this->engine->configurationChanged();
 
         return ['season' => $settings->getSeason()->value];
+    }
+
+    /**
+     * Pauses or resumes HA Climate. Asking for the state it already is in changes nothing and is not audited.
+     *
+     * @return array{paused: bool}
+     */
+    public function changePause(PauseRequest $request, ?IngressUser $user): array
+    {
+        $settings = $this->settings->get();
+        if ($settings->isPaused() === $request->paused) {
+            return ['paused' => $request->paused];
+        }
+
+        $settings->changePaused($request->paused);
+        $this->audit->recordPause($user, $request->paused);
+        $this->entityManager->flush();
+        $this->engine->configurationChanged();
+
+        return ['paused' => $settings->isPaused()];
     }
 }
