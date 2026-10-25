@@ -1,7 +1,7 @@
 UID := $(shell id -u)
 GID := $(shell id -g)
-PHP_IMAGE := ha-climate-php-dev:8.4
-NODE_IMAGE := node:22.12.0-alpine
+PHP_IMAGE := ha-climate-php-dev:8.5
+NODE_IMAGE := node:24.22.1-alpine
 
 DOCKER_PHP = docker run --rm --user $(UID):$(GID) -e HOME=/workspace/.cache -v $(PWD):/workspace -w /workspace/app $(PHP_IMAGE)
 DOCKER_NODE = docker run --rm --user $(UID):$(GID) -e HOME=/workspace/.cache -e npm_config_cache=/workspace/.cache/npm -v $(PWD):/workspace -w /workspace/frontend $(NODE_IMAGE)

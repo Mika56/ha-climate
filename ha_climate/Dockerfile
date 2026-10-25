@@ -11,7 +11,7 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.24-2026.10.1
 
 # --- (a) front end, built natively on the builder's platform (output is architecture independent) ---------
-FROM --platform=$BUILDPLATFORM node:22.12.0-alpine AS frontend
+FROM --platform=$BUILDPLATFORM node:24.22.1-alpine AS frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -19,7 +19,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # --- (b) PHP dependencies (needs the extensions Composer checks at install time) ---------------------------
-FROM php:8.4-cli-alpine AS vendor
+FROM php:8.5-cli-alpine AS vendor
 COPY --from=ghcr.io/mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 # hadolint ignore=DL3018
@@ -44,16 +44,17 @@ FROM ${BUILD_FROM}
 ARG BUILD_VERSION=0.1.0
 ARG BUILD_ARCH=amd64
 
-# PHP 8.4 comes from Alpine's php84 packages; the list matches `composer check-platform-reqs`.
+# PHP 8.5 comes from Alpine's php85 packages (OPcache is built into the core package since 8.5); the list matches
+# `composer check-platform-reqs`.
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
         nginx \
-        php84 php84-fpm php84-opcache \
-        php84-ctype php84-dom php84-iconv php84-intl php84-mbstring php84-openssl php84-pcntl php84-pdo \
-        php84-pdo_sqlite php84-phar php84-posix php84-session php84-simplexml php84-sqlite3 \
-        php84-tokenizer php84-xml php84-xmlreader php84-xmlwriter \
-    && ln -s /usr/bin/php84 /usr/bin/php \
-    && rm -f /etc/nginx/http.d/default.conf /etc/php84/php-fpm.d/www.conf \
+        php85 php85-fpm \
+        php85-ctype php85-dom php85-iconv php85-intl php85-mbstring php85-openssl php85-pcntl php85-pdo \
+        php85-pdo_sqlite php85-phar php85-posix php85-session php85-simplexml php85-sqlite3 \
+        php85-tokenizer php85-xml php85-xmlreader php85-xmlwriter \
+    && ln -sf /usr/bin/php85 /usr/bin/php \
+    && rm -f /etc/nginx/http.d/default.conf /etc/php85/php-fpm.d/www.conf \
     && adduser -D -H -u 1000 -s /sbin/nologin app
 
 COPY ha_climate/rootfs/ /

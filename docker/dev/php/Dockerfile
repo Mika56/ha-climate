@@ -1,4 +1,4 @@
-FROM php:8.4-cli-alpine
+FROM php:8.5-cli-alpine
 
 COPY --from=ghcr.io/mlocati/php-extension-installer:latest /usr/bin/install-php-extensions /usr/local/bin/
 RUN apk add --no-cache git unzip bash \
