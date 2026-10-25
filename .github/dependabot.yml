@@ -4,11 +4,68 @@ updates:
     directory: /app
     schedule:
       interval: weekly
+    groups:
+      composer-minor-patch:
+        update-types: [minor, patch]
+    # Symfony stays on the 7.4 LTS line (project decision): do not open PRs for Symfony 8.
+    ignore:
+      - dependency-name: "symfony/*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: npm
     directory: /frontend
     schedule:
       interval: weekly
+    groups:
+      npm-prod-minor-patch:
+        dependency-type: production
+        update-types: [minor, patch]
+      npm-dev-minor-patch:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # TypeScript 7 is not supported yet by the tooling: typescript-eslint requires typescript <6.1 and
+      # openapi-typescript requires typescript ^5.x (already forced onto 6.x through `overrides`).
+      # Remove this rule once both support TypeScript 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # @types/node must match the Node runtime major (24 LTS, see frontend/package.json "engines" and the
+      # Node image pins); bump it by hand together with the runtime.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Docker base images that Dependabot can parse. The Home Assistant base image is passed through
+  # `ARG BUILD_FROM` (value pinned in ha_climate/build.yaml), which Dependabot cannot track: bump
+  # `build_from` in ha_climate/build.yaml and the default `BUILD_FROM` in ha_climate/Dockerfile by hand.
+  - package-ecosystem: docker
+    directory: /ha_climate
+    schedule:
+      interval: weekly
+    groups:
+      docker-addon-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Node is pinned to the 24 LTS line and PHP to 8.5: majors (and PHP minors, which must match Alpine's
+      # php8x packages) are upgraded deliberately. When a Node bump is merged, also update Makefile and
+      # docker/dev/bootstrap-ha.sh so the pins stay identical.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+      - dependency-name: php
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: docker
+    directory: /docker/dev/php
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: php
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
