@@ -9,13 +9,9 @@ arch:
   - aarch64
 init: false
 ingress: true
-ingress_port: 8099
 panel_icon: mdi:thermostat
 panel_title: Climate
 homeassistant_api: true
-hassio_api: false
-backup: hot
-watchdog: http://[HOST]:[PORT:8099]/api/health
 stage: experimental
 options:
   log_level: info

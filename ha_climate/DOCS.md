@@ -78,7 +78,7 @@ and **import** of your configuration, useful to move to another installation.
   resumes by itself when the entity is back.
 - **Nothing happens when the season is "off"**: this is intended, change the season in **Settings**.
 - **Need more detail**: set `log_level` to `debug` and restart; logs are JSON lines on the add-on Log tab.
-- The watchdog restarts the add-on if `/api/health` stops answering.
+- A Docker health check probes `/api/health`; turn on **Watchdog** on the add-on page to have it restarted automatically when it stops answering.
 
 ## Privacy
 
