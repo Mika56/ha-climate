@@ -1,0 +1,6 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# PHP-FPM for the web API (master as root, workers as the `app` user, see php-fpm.d/www.conf).
+bashio::log.info "Starting PHP-FPM"
+mkdir -p /run/php
+exec php-fpm84 --nodaemonize --fpm-config /etc/php84/php-fpm.conf

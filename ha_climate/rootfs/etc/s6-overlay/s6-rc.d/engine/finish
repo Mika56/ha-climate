@@ -1,0 +1,7 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# $1 = exit code (256 when killed by a signal), $2 = signal. s6 restarts the service by itself after this script.
+if [[ "${1}" -ne 0 && "${1}" -ne 256 ]]; then
+    bashio::log.warning "Engine exited with code ${1}, s6 restarts it"
+    sleep 2
+fi

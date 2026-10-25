@@ -1,0 +1,6 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# The long-running decision engine. with-contenv exposes SUPERVISOR_TOKEN (add-on) or HA_URL/HA_TOKEN (standalone).
+bashio::log.info "Starting the engine"
+cd /opt/ha-climate/app
+exec /command/s6-setuidgid app php bin/console app:engine:run --env=prod --no-debug

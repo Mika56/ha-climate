@@ -1,0 +1,23 @@
+name: HA Climate
+slug: ha_climate
+version: 0.1.0
+description: Room-by-room heating and air-conditioning scheduler driving your Home Assistant climate entities.
+url: https://github.com/OWNER/ha-climate
+arch:
+  - amd64
+  - aarch64
+init: false
+ingress: true
+ingress_port: 8099
+ingress_stream: true
+panel_icon: mdi:thermostat
+panel_title: Climate
+homeassistant_api: true
+hassio_api: false
+backup: hot
+watchdog: http://[HOST]:[PORT:8099]/api/health
+stage: experimental
+options:
+  log_level: info
+schema:
+  log_level: list(trace|debug|info|notice|warning|error|fatal)?

@@ -1,0 +1,21 @@
+# Build context for ha_climate/Dockerfile is the repository root: keep it small.
+.git
+.claude
+.cache
+.github
+docker
+docs
+api
+**/node_modules
+frontend/dist
+frontend/coverage
+app/vendor
+app/var
+app/tests
+app/.env.local
+app/.env.*.local
+app/.env.test
+app/.phpunit.cache
+app/.php-cs-fixer*
+app/phpunit.dist.xml
+app/phpstan.dist.neon

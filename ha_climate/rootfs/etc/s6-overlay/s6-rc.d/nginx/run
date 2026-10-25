@@ -1,0 +1,12 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# nginx on the ingress port. Access is limited to the Supervisor ingress proxy (172.30.32.2) and loopback
+# (health check). HA_CLIMATE_DEV_ALLOW_ALL=1 lifts the restriction: DEVELOPMENT ONLY, to test outside Home Assistant.
+if [[ "${HA_CLIMATE_DEV_ALLOW_ALL:-0}" == "1" ]]; then
+    bashio::log.warning "HA_CLIMATE_DEV_ALLOW_ALL=1: ingress access restriction DISABLED (development only)"
+    printf 'allow all;\n' > /etc/nginx/ingress-access.conf
+else
+    printf 'allow 172.30.32.2;\nallow 127.0.0.1;\ndeny all;\n' > /etc/nginx/ingress-access.conf
+fi
+bashio::log.info "Starting nginx"
+exec nginx -g 'daemon off;'
