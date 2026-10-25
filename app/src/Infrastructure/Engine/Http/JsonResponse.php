@@ -18,7 +18,7 @@ final class JsonResponse
         return new Response(
             $status,
             ['content-type' => 'application/json; charset=utf-8', 'cache-control' => 'no-store'],
-            json_encode($data, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE),
+            json_encode($data, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION),
         );
     }
 

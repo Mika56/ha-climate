@@ -59,7 +59,7 @@ final class ScheduleRuleTest extends TestCase
         self::assertSame(HvacMode::Heat, $decision->mode);
         self::assertSame(21.0, $decision->target?->toFloat());
         self::assertSame('reason.schedule', $decision->reason->code);
-        self::assertSame(['preset' => 'comfort', 'until' => '08:30'], $decision->reason->params);
+        self::assertSame(['preset' => 'comfort', 'until' => '2026-10-26T08:30:00+01:00'], $decision->reason->params);
     }
 
     public function testCoolsUsingCoolTemperatures(): void
@@ -70,7 +70,7 @@ final class ScheduleRuleTest extends TestCase
 
         self::assertSame(HvacMode::Cool, $decision->mode);
         self::assertSame(27.0, $decision->target?->toFloat());
-        self::assertSame(['preset' => 'eco', 'until' => '17:00'], $decision->reason->params);
+        self::assertSame(['preset' => 'eco', 'until' => '2026-10-26T17:00:00+01:00'], $decision->reason->params);
     }
 
     public function testUntilIsTheNextSlotOfTheFollowingDay(): void
@@ -80,7 +80,7 @@ final class ScheduleRuleTest extends TestCase
         $decision = (new ScheduleRule())->apply($context, static fn () => self::fail('Terminal rule must not delegate.'));
 
         self::assertSame(17.0, $decision->target?->toFloat());
-        self::assertSame(['preset' => 'night', 'until' => '06:30'], $decision->reason->params);
+        self::assertSame(['preset' => 'night', 'until' => '2026-10-27T06:30:00+01:00'], $decision->reason->params);
     }
 
     public function testAnchoredSlotsUseTheAnchorResolver(): void
@@ -100,7 +100,7 @@ final class ScheduleRuleTest extends TestCase
         $decision = (new ScheduleRule())->apply($context, static fn () => self::fail('Terminal rule must not delegate.'));
 
         self::assertSame(21.0, $decision->target?->toFloat());
-        self::assertSame(['preset' => 'comfort', 'until' => '22:30'], $decision->reason->params);
+        self::assertSame(['preset' => 'comfort', 'until' => '2026-10-26T22:30:00+01:00'], $decision->reason->params);
     }
 
     #[DataProvider('provideScheduleLessContexts')]

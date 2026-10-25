@@ -34,6 +34,10 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        exclude:
+            # Request models and the ingress user are built per request, never injected.
+            - '../src/Application/Api/Input/'
+            - '../src/Application/Api/IngressUser.php'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
@@ -48,6 +52,10 @@ services:
 
     App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface:
         alias: App\Infrastructure\HomeAssistant\AmpHomeAssistantGateway
+
+    # The catalogue of the translator, to tell whether a message exists before translating it.
+    Symfony\Component\Translation\TranslatorBagInterface:
+        alias: translator.default
 
     # Rule chain: highest priority() first. A new rule is picked up with no change here.
     App\Domain\Decision\TargetResolver:
@@ -146,6 +154,14 @@ when@test:
             public: true
             arguments:
                 $port: '%env(int:ENGINE_PORT)%'
+
+        # The web side talks to a scripted fake of the engine instead of its HTTP server.
+        App\Tests\Double\FakeEngine:
+            public: true
+
+        Symfony\Contracts\HttpClient\HttpClientInterface:
+            class: Symfony\Component\HttpClient\MockHttpClient
+            arguments: ['@App\Tests\Double\FakeEngine']
 
         # Read by the wiring tests.
         App\Domain\Decision\TargetResolver:

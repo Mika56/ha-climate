@@ -35,7 +35,7 @@ final readonly class ScheduleRule implements RoomRuleInterface
         $target = $context->room->presetTemperatures->for($preset, $mode);
         $reason = new Reason('reason.schedule', [
             'preset' => (string) $preset,
-            'until' => $following->start->format('H:i'),
+            'until' => $following->start->format(\DATE_ATOM),
         ]);
 
         return HvacMode::Heat === $mode ? Decision::heat($target, $reason) : Decision::cool($target, $reason);

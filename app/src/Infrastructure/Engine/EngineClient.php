@@ -9,7 +9,7 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * The web side's handle on the engine: tells it to reload the configuration, reads its status and boosts rooms,
+ * The web side's handle on the engine: tells it to reload the configuration, reads its status, discovers entities and boosts rooms,
  * through the internal HTTP routes, authenticated with the shared token file.
  */
 final readonly class EngineClient
@@ -67,7 +67,7 @@ final readonly class EngineClient
             $body['durationMinutes'] = $durationMinutes;
         }
 
-        return $this->request('POST', \sprintf('/internal/rooms/%s/boost', rawurlencode($roomId)), ['json' => $body]);
+        return $this->request('POST', \sprintf('/internal/rooms/%s/boost', rawurlencode($roomId)), ['json' => $body], true);
     }
 
     /**
@@ -80,18 +80,70 @@ final readonly class EngineClient
      */
     public function cancelOverride(string $roomId, string $actor): array
     {
-        return $this->request('DELETE', \sprintf('/internal/rooms/%s/override', rawurlencode($roomId)), ['query' => ['actor' => $actor]]);
+        return $this->request('DELETE', \sprintf('/internal/rooms/%s/override', rawurlencode($roomId)), ['query' => ['actor' => $actor]], true);
     }
 
     /**
-     * @param array<string, mixed> $options extra HttpClient options (`json`, `query`)
+     * What the engine knows about Home Assistant: `connected`, `haLanguage`, `haTimeZone`, `haVersion`.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     */
+    public function context(): array
+    {
+        return $this->request('GET', '/internal/context');
+    }
+
+    /**
+     * The Home Assistant entities and services the configuration can use (the `Discovery` payload of the API).
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     */
+    public function discovery(): array
+    {
+        return $this->request('GET', '/internal/discovery');
+    }
+
+    /**
+     * Live facts of the overview page: `persons`, `weather`, `houseEmptySince`.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws EngineUnavailableException
+     */
+    public function overview(): array
+    {
+        return $this->request('GET', '/internal/overview');
+    }
+
+    /**
+     * Sends a test notification to every enabled destination.
+     *
+     * @return array<string, mixed> the number of destinations reached (`sent`) and failed (`failed`)
+     *
+     * @throws EngineUnavailableException
+     * @throws EngineRejectedException    409 when no destination is enabled
+     */
+    public function sendTestNotification(): array
+    {
+        return $this->request('POST', '/internal/notifications/test', [], true);
+    }
+
+    /**
+     * @param array<string, mixed> $options        extra HttpClient options (`json`, `query`)
+     * @param bool                 $answersRefusal whether the engine is expected to refuse the request with a 400, 404 or 409
+     *                                             (a business refusal, raised as {@see EngineRejectedException}); for a plain
+     *                                             read any such answer means the engine does not behave and counts as unavailable
      *
      * @return array<string, mixed>
      *
      * @throws EngineUnavailableException
      * @throws EngineRejectedException
      */
-    private function request(string $method, string $path, array $options = []): array
+    private function request(string $method, string $path, array $options = [], bool $answersRefusal = false): array
     {
         $token = $this->tokens->read();
         if (null === $token) {
@@ -107,7 +159,7 @@ final readonly class EngineClient
             ]);
 
             $status = $response->getStatusCode();
-            if (\in_array($status, [400, 404, 409], true)) {
+            if ($answersRefusal && \in_array($status, [400, 404, 409], true)) {
                 /** @var array<string, mixed> $error */
                 $error = $response->toArray(false);
                 $code = $error['error'] ?? null;

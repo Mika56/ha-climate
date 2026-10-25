@@ -15,11 +15,15 @@ use App\Domain\Climate\Season;
 use App\Infrastructure\Engine\EngineTokenStore;
 use App\Infrastructure\Engine\Http\BoostRoute;
 use App\Infrastructure\Engine\Http\CancelOverrideRoute;
+use App\Infrastructure\Engine\Http\ContextRoute;
+use App\Infrastructure\Engine\Http\DiscoveryRoute;
 use App\Infrastructure\Engine\Http\InternalHttpServer;
 use App\Infrastructure\Engine\Http\InternalRouteInterface;
 use App\Infrastructure\Engine\Http\InternalRouter;
 use App\Infrastructure\Engine\Http\JsonResponse;
 use App\Infrastructure\Engine\Http\LiveRoute;
+use App\Infrastructure\Engine\Http\NotificationTestRoute;
+use App\Infrastructure\Engine\Http\OverviewRoute;
 use App\Infrastructure\Engine\Http\ReloadRoute;
 use App\Infrastructure\Engine\Http\StatusRoute;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -42,6 +46,10 @@ use Psr\Log\NullLogger;
 #[UsesClass(EngineTokenStore::class)]
 #[UsesClass(BoostRoute::class)]
 #[UsesClass(CancelOverrideRoute::class)]
+#[UsesClass(ContextRoute::class)]
+#[UsesClass(DiscoveryRoute::class)]
+#[UsesClass(OverviewRoute::class)]
+#[UsesClass(NotificationTestRoute::class)]
 final class InternalHttpServerTest extends EngineTestCase
 {
     /** @var list<InternalHttpServer> */
@@ -113,7 +121,7 @@ final class InternalHttpServerTest extends EngineTestCase
         self::assertCount(1, $payload['rooms']);
         self::assertSame('Living room', $payload['rooms'][0]['name']);
         self::assertSame(19.5, $payload['rooms'][0]['currentTemperature']);
-        self::assertEquals(['mode' => 'heat', 'target' => 21.0, 'reason' => ['code' => 'reason.schedule', 'params' => ['preset' => 'comfort', 'until' => '22:30']]], $payload['rooms'][0]['decision']);
+        self::assertEquals(['mode' => 'heat', 'target' => 21.0, 'reason' => ['code' => 'reason.schedule', 'params' => ['preset' => 'comfort', 'until' => '2026-10-26T22:30:00+01:00']]], $payload['rooms'][0]['decision']);
     }
 
     public function testReloadAppliesTheConfigurationChange(): void

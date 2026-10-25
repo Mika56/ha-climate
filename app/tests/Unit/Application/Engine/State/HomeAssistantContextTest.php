@@ -42,4 +42,33 @@ final class HomeAssistantContextTest extends TestCase
         self::assertSame('UTC', $context->timeZone()->getName());
         self::assertSame('en', $context->language());
     }
+
+    public function testNothingIsKnownBeforeTheConfigurationIsRead(): void
+    {
+        $context = new HomeAssistantContext();
+
+        self::assertFalse($context->isKnown());
+        self::assertFalse($context->isConnected());
+        self::assertNull($context->version());
+    }
+
+    public function testTracksTheVersionAndTheConnection(): void
+    {
+        $context = new HomeAssistantContext();
+        $context->update(new HomeAssistantConfig('fr', 'Europe/Paris', '°C', '2026.10.0'));
+
+        self::assertTrue($context->isKnown());
+        self::assertTrue($context->isConnected());
+        self::assertSame('2026.10.0', $context->version());
+
+        $context->connectionLost();
+        self::assertFalse($context->isConnected());
+        self::assertTrue($context->isKnown(), 'What was learnt stays valid while the connection is down.');
+
+        $context->connectionRestored();
+        self::assertTrue($context->isConnected());
+
+        $context->update(new HomeAssistantConfig('fr', 'Europe/Paris', '°C', ''));
+        self::assertNull($context->version());
+    }
 }

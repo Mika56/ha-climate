@@ -45,6 +45,16 @@ final readonly class NotificationTexts
         return $this->translator->trans($type->value.'.message', $params, self::DOMAIN, $this->locale());
     }
 
+    public function testTitle(): string
+    {
+        return $this->translator->trans('test.title', [], self::DOMAIN, $this->locale());
+    }
+
+    public function testMessage(): string
+    {
+        return $this->translator->trans('test.message', [], self::DOMAIN, $this->locale());
+    }
+
     public function locale(): string
     {
         $wanted = $this->settings->get()->getNotificationLocale() ?? $this->context->language();

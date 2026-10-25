@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Application\Engine\Facts;
 
 use App\Application\Engine\EngineSnapshot;
+use App\Application\Engine\State\StateStore;
 use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Decision\RoomFacts;
+use App\Domain\HomeAssistant\EntityId;
 
 /**
  * Since when nobody is home: the latest change among the tracked persons, when none of them is `home`.
@@ -19,15 +21,23 @@ final readonly class HouseEmptyContributor implements RoomFactContributorInterfa
 
     public function contribute(RoomConfiguration $room, RoomFacts $facts, EngineSnapshot $snapshot): RoomFacts
     {
+        return $facts->withHouseEmptySince(self::emptySince($snapshot->configuration->trackedPersons, $snapshot->states));
+    }
+
+    /**
+     * @param list<EntityId> $trackedPersons
+     */
+    public static function emptySince(array $trackedPersons, StateStore $states): ?\DateTimeImmutable
+    {
         $since = null;
-        foreach ($snapshot->configuration->trackedPersons as $person) {
-            $state = $snapshot->states->get($person);
+        foreach ($trackedPersons as $person) {
+            $state = $states->get($person);
             if (null === $state || \in_array($state->state, ['unavailable', 'unknown'], true)) {
                 continue;
             }
 
             if (self::HOME === $state->state) {
-                return $facts->withHouseEmptySince(null);
+                return null;
             }
 
             if (null === $since || $state->lastChanged > $since) {
@@ -35,6 +45,6 @@ final readonly class HouseEmptyContributor implements RoomFactContributorInterfa
             }
         }
 
-        return $facts->withHouseEmptySince($since);
+        return $since;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Application\Engine\Evaluation;
 
+use App\Application\Engine\Alert\AlertView;
 use App\Application\Engine\Configuration\EngineConfiguration;
 use App\Application\Engine\EngineSnapshot;
 use App\Application\Engine\Evaluation\DeviceStatus;
@@ -24,6 +25,7 @@ use App\Domain\Room\RoomId;
 use App\Tests\Double\CallRecorder;
 use App\Tests\Unit\Domain\Support\Fixtures;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DeviceStatus::class)]
 #[CoversClass(RoomStatusFactory::class)]
 #[CoversClass(LiveStatusPublisher::class)]
+#[CoversClass(AlertView::class)]
 #[UsesClass(EngineSnapshot::class)]
 #[UsesClass(EngineConfiguration::class)]
 #[UsesClass(StateStore::class)]
@@ -61,9 +64,11 @@ final class RoomStatusTest extends TestCase
             'currentTemperature' => 19.5,
             'decision' => ['mode' => 'heat', 'target' => 21.0, 'reason' => ['code' => 'reason.schedule', 'params' => ['preset' => 'comfort']]],
             'override' => ['type' => 'boost', 'delta' => 2.0, 'target' => null, 'endsAt' => '2026-10-26T10:00:00+01:00', 'untilNextSlot' => true],
-            'devices' => [new DeviceStatus('climate.living', 'reversible', 'heat', 21.0, 19.5)],
+            'devices' => [['entityId' => 'climate.living', 'role' => 'reversible', 'state' => 'heat', 'targetTemperature' => 21.0, 'currentTemperature' => 19.5, 'running' => null]],
+            'facts' => ['openingOpenSince' => null, 'roomVacantSince' => null, 'houseEmptySince' => null, 'heatingRatePerHour' => null],
+            'alerts' => [],
             'updatedAt' => '2026-10-26T08:00:00+01:00',
-        ], [...$status->jsonSerialize(), 'devices' => [...$status->devices]]);
+        ], $status->jsonSerialize());
         self::assertJson(json_encode($status, \JSON_THROW_ON_ERROR));
     }
 
@@ -78,8 +83,67 @@ final class RoomStatusTest extends TestCase
         $status = (new RoomStatusFactory())->create(Fixtures::room(), Decision::off(new Reason('reason.season_off')), RoomFacts::none(), $snapshot);
 
         self::assertEquals([new DeviceStatus('climate.living', 'reversible', null, null, null)], $status->devices);
-        self::assertSame(['entityId' => 'climate.living', 'role' => 'reversible', 'state' => null, 'targetTemperature' => null, 'currentTemperature' => null], $status->devices[0]->jsonSerialize());
+        self::assertSame(['entityId' => 'climate.living', 'role' => 'reversible', 'state' => null, 'targetTemperature' => null, 'currentTemperature' => null, 'running' => null], $status->devices[0]->jsonSerialize());
         self::assertNull($status->jsonSerialize()['override']);
+        self::assertStringContainsString('"reason":{"code":"reason.season_off","params":{}}', json_encode($status, \JSON_THROW_ON_ERROR), 'No parameter is an empty object, not an empty list.');
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('hvacActions')]
+    public function testADeviceIsRunningWhenItReportsHeatingOrCooling(array $attributes, ?bool $running): void
+    {
+        $store = new StateStore();
+        $store->load([new EntityState('climate.living', 'heat', $attributes, new \DateTimeImmutable(), new \DateTimeImmutable(), new StateContext('c'))]);
+        $snapshot = new EngineSnapshot(
+            Fixtures::at('2026-10-26 08:00'),
+            new EngineConfiguration([], [], new GlobalPolicy(1800, Fixtures::preset('eco'), Fixtures::preset('away')), Season::Winter, [], null, null, 90, 120),
+            $store,
+        );
+
+        $status = (new RoomStatusFactory())->create(Fixtures::room(), Decision::off(new Reason('reason.season_off')), RoomFacts::none(), $snapshot);
+
+        self::assertSame($running, $status->devices[0]->running);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, bool|null}>
+     */
+    public static function hvacActions(): iterable
+    {
+        yield 'heating' => [['hvac_action' => 'heating'], true];
+        yield 'cooling' => [['hvac_action' => 'cooling'], true];
+        yield 'idle' => [['hvac_action' => 'idle'], false];
+        yield 'off' => [['hvac_action' => 'off'], false];
+        yield 'not reported' => [[], null];
+        yield 'not a text' => [['hvac_action' => 3], null];
+    }
+
+    public function testTheStatusCarriesTheFactsAndTheAlertsOfTheRoom(): void
+    {
+        $facts = RoomFacts::none()
+            ->withOpeningOpenSince(new \DateTimeImmutable('2026-10-26 06:55:00', new \DateTimeZone('UTC')))
+            ->withRoomVacantSince(new \DateTimeImmutable('2026-10-26 06:00:00', new \DateTimeZone('UTC')))
+            ->withHouseEmptySince(new \DateTimeImmutable('2026-10-25 20:00:00', new \DateTimeZone('UTC')))
+            ->withHeatingRatePerHour(1.23456);
+        $alert = new AlertView('entity.sensor.x', 'entity_unavailable', 'sensor.x', 'living', 'Living room', '2026-10-26T07:30:00+01:00', null);
+        $status = new RoomStatus(new RoomId('living'), 'Living room', null, Decision::heat(Fixtures::temperature(21.0), new Reason('reason.schedule')), null, [], Fixtures::at('2026-10-26 08:00'), $facts, [$alert]);
+
+        $json = $status->jsonSerialize();
+
+        self::assertSame(['openingOpenSince' => '2026-10-26T07:55:00+01:00', 'roomVacantSince' => '2026-10-26T07:00:00+01:00', 'houseEmptySince' => '2026-10-25T21:00:00+01:00', 'heatingRatePerHour' => 1.23], $json['facts']);
+        self::assertSame([$alert->jsonSerialize()], $json['alerts']);
+        self::assertFalse($status->sameContentAs(self::roomStatus('2026-10-26 08:00', 21.0)), 'Facts and alerts are part of the content.');
+        self::assertTrue((new RoomStatus(new RoomId('living'), 'Living room', null, Decision::heat(Fixtures::temperature(21.0), new Reason('reason.schedule')), null, [], Fixtures::at('2026-10-26 09:00'), $facts, [clone $alert]))->sameContentAs($status));
+    }
+
+    public function testStatusesWithEqualDevicesAreEqual(): void
+    {
+        $device = static fn (): DeviceStatus => new DeviceStatus('climate.living', 'heating', 'heat', 21.0, 19.5, true);
+        $make = static fn (string $at): RoomStatus => new RoomStatus(new RoomId('living'), 'Living room', null, Decision::heat(Fixtures::temperature(21.0), new Reason('reason.schedule')), null, [$device()], Fixtures::at($at));
+
+        self::assertTrue($make('2026-10-26 08:00')->sameContentAs($make('2026-10-26 08:30')), 'Two evaluations building distinct device objects still have the same content.');
     }
 
     public function testStatusesWithTheSameContentAreEqualWhateverTheirTime(): void

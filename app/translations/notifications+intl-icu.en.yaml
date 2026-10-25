@@ -18,3 +18,6 @@ sensor_unavailable:
     message: >-
         {entity} ({rooms}) is {state, select, unknown {unknown} other {unavailable}}.
         The room keeps being driven with what is known.
+test:
+    title: 'HA Climate test'
+    message: 'This is a test notification from HA Climate. If you can read it, notifications work.'

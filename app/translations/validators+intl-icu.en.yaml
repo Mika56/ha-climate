@@ -1,0 +1,11 @@
+# Validation messages of the web API that Symfony's own validator translations do not cover.
+api:
+    unknown_preset: 'Unknown preset "{preset}".'
+    unknown_schedule: 'Unknown schedule.'
+    unknown_schedule_ref: 'Unknown schedule reference "{ref}".'
+    unknown_room: 'Unknown room.'
+    schedule_mode: 'A {mode, select, heat {heating} other {cooling}} schedule is required here.'
+    duplicate_value: 'This value is given twice.'
+    device_taken: 'This device is already used by the room {room}.'
+    required_preset: 'The preset "{preset}" is required: the engine uses it for the vacancy and absence policies.'
+    unsupported_format: 'This file is not a HA Climate backup of a supported version.'
