@@ -74,7 +74,7 @@ final class RoomOverrideRepository extends ServiceEntityRepository
             ->andWhere('o.endsAt IS NULL OR o.endsAt > :now')
             ->setParameter('room', $room->getId(), 'uuid')
             ->setParameter('now', $now, Types::DATETIME_IMMUTABLE)
-            ->orderBy('o.startedAt', 'DESC')
+            ->orderBy('o.startedAt', \SortDirection::Descending)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
@@ -94,7 +94,7 @@ final class RoomOverrideRepository extends ServiceEntityRepository
             ->where('o.startedAt <= :now')
             ->andWhere('o.endsAt IS NULL OR o.endsAt > :now')
             ->setParameter('now', $now, Types::DATETIME_IMMUTABLE)
-            ->orderBy('o.startedAt', 'ASC')
+            ->orderBy('o.startedAt', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 

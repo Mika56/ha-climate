@@ -43,7 +43,7 @@ final class TimerRepository extends ServiceEntityRepository
         $timers = $this->createQueryBuilder('t')
             ->where('t.dueAt <= :moment')
             ->setParameter('moment', $moment, Types::DATETIME_IMMUTABLE)
-            ->orderBy('t.dueAt', 'ASC')
+            ->orderBy('t.dueAt', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 

@@ -40,7 +40,7 @@ final class AlertRepository extends ServiceEntityRepository
         /** @var list<Alert> $alerts */
         $alerts = $this->createQueryBuilder('a')
             ->where('a.resolvedAt IS NULL')
-            ->orderBy('a.openedAt', 'ASC')
+            ->orderBy('a.openedAt', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 

@@ -39,8 +39,8 @@ final class AuditEntryRepository extends ServiceEntityRepository
     public function search(AuditSearchCriteria $criteria): array
     {
         $builder = $this->filtered($this->createQueryBuilder('e')->leftJoin('e.room', 'room')->addSelect('room'), $criteria)
-            ->orderBy('e.occurredAt', 'DESC')
-            ->addOrderBy('e.id', 'DESC')
+            ->orderBy('e.occurredAt', \SortDirection::Descending)
+            ->addOrderBy('e.id', \SortDirection::Descending)
             ->setFirstResult($criteria->offset)
             ->setMaxResults($criteria->limit);
 
@@ -63,8 +63,8 @@ final class AuditEntryRepository extends ServiceEntityRepository
         $entries = $this->createQueryBuilder('e')
             ->where('e.category IN (:categories)')
             ->setParameter('categories', $categories)
-            ->orderBy('e.occurredAt', 'DESC')
-            ->addOrderBy('e.id', 'DESC')
+            ->orderBy('e.occurredAt', \SortDirection::Descending)
+            ->addOrderBy('e.id', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
