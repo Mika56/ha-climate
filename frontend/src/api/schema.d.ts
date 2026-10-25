@@ -271,7 +271,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getSchedule"];
-        /** Replaces name and all slots. */
+        /** Replaces name and all slots (the mode cannot change and is ignored). */
         put: operations["updateSchedule"];
         post?: never;
         /** Deletes the schedule; rooms using it lose it (they will be switched off for that season). */
@@ -323,6 +323,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getNotificationSettings"];
+        /** The targets sent replace the stored ones; notification types not sent are left unchanged. */
         put: operations["updateNotificationSettings"];
         post?: never;
         delete?: never;
