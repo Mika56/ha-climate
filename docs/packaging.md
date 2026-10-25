@@ -60,4 +60,5 @@ docker compose -f compose.dev.yaml down
 `ha_climate/assets-src/build-icons.sh` regenerates `icon.png` / `logo.png` from the SVG sources.
 
 The Supervisor cannot build this image from a repository (its build context is `ha_climate/`): releases publish a
-prebuilt image and add the `image:` key to `config.yaml`.
+prebuilt image (`image:` key in `config.yaml`, published to GHCR by `.github/workflows/release.yml`, see
+[releasing.md](releasing.md)).
