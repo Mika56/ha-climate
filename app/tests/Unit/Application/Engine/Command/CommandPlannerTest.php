@@ -89,7 +89,7 @@ final class CommandPlannerTest extends TestCase
 
     public function testAnOffDecisionTurnsARunningDeviceOff(): void
     {
-        $command = (new CommandPlanner())->plan(Fixtures::room(), Fixtures::device(), Decision::off(new Reason('reason.season_off')), self::state('heat', ['temperature' => 21.0]));
+        $command = (new CommandPlanner())->plan(Fixtures::room(), Fixtures::device(), Decision::off(new Reason('reason.no_rule')), self::state('heat', ['temperature' => 21.0]));
 
         self::assertSame('set_hvac_mode', $command?->service());
         self::assertSame(['hvac_mode' => 'off'], $command->serviceData());
@@ -97,7 +97,7 @@ final class CommandPlannerTest extends TestCase
 
     public function testNothingToDoForADeviceAlreadyOff(): void
     {
-        self::assertNull((new CommandPlanner())->plan(Fixtures::room(), Fixtures::device(), Decision::off(new Reason('reason.season_off')), self::state('off')));
+        self::assertNull((new CommandPlanner())->plan(Fixtures::room(), Fixtures::device(), Decision::off(new Reason('reason.no_rule')), self::state('off')));
     }
 
     public function testADeviceThatCannotOperateInTheModeIsWantedOff(): void

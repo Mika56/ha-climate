@@ -20,6 +20,7 @@ every decision.
 - **Manual changes are respected**: a change made on the thermostat is detected and kept until the next slot.
 - **Pre-heating**: learns how long each room takes to warm up and starts early enough to reach the target on time.
 - **Anti short-cycling**: minimum on/off times protect your equipment.
+- **Pause switch**: pause HA Climate and use your devices freely; it keeps deciding and logs what it *would* have done, but sends nothing.
 - **Alerts and notifications**: unavailable sensors or thermostats raise an alert and a Home Assistant notification.
 - **Audit**: every action is recorded with its reason, searchable and exportable.
 - **Backup and restore**: export and import the whole configuration; the add-on is included in Home Assistant backups.

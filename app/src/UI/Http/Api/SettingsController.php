@@ -6,6 +6,7 @@ namespace App\UI\Http\Api;
 
 use App\Application\Api\IngressUser;
 use App\Application\Api\Input\NotificationSettingsRequest;
+use App\Application\Api\Input\PauseRequest;
 use App\Application\Api\Input\SeasonRequest;
 use App\Application\Api\Input\SettingsRequest;
 use App\Application\Api\Settings\NotificationSettingsService;
@@ -17,7 +18,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Settings, season, notifications and discovery: the configuration screens that are not about one room.
+ * Settings, season, pause, notifications and discovery: the configuration screens that are not about one room.
  */
 #[AsController]
 final readonly class SettingsController
@@ -45,6 +46,12 @@ final readonly class SettingsController
     public function updateSeason(#[MapRequestPayload] SeasonRequest $request, ?IngressUser $user): ApiJsonResponse
     {
         return new ApiJsonResponse($this->settings->changeSeason($request, $user));
+    }
+
+    #[Route('/api/pause', name: 'api_pause_update', methods: ['PUT'])]
+    public function updatePause(#[MapRequestPayload] PauseRequest $request, ?IngressUser $user): ApiJsonResponse
+    {
+        return new ApiJsonResponse($this->settings->changePause($request, $user));
     }
 
     #[Route('/api/notifications', name: 'api_notifications_get', methods: ['GET'])]

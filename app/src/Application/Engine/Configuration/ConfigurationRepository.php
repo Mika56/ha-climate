@@ -74,6 +74,14 @@ final class ConfigurationRepository
     }
 
     /**
+     * Whether HA Climate is paused: it decides and audits but sends nothing to Home Assistant.
+     */
+    public function isPaused(): bool
+    {
+        return $this->snapshot()->paused;
+    }
+
+    /**
      * @return list<EntityId>
      */
     public function trackedPersons(): array

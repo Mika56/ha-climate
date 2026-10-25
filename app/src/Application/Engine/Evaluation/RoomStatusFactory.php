@@ -33,7 +33,7 @@ final readonly class RoomStatusFactory
             );
         }
 
-        return new RoomStatus($room->id, $room->name, $facts->currentTemperature, $decision, $facts->override, $devices, $snapshot->now, $facts, $alerts);
+        return new RoomStatus($room->id, $room->name, $facts->currentTemperature, $decision, $facts->override, $devices, $snapshot->now, $facts, $alerts, $snapshot->configuration->paused);
     }
 
     /**

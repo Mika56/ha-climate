@@ -75,7 +75,13 @@ describe('catalogs', () => {
   })
 
   it('translate every error code of the contract used by the UI', () => {
-    for (const code of ['no_active_mode', 'no_enabled_target', 'preset_in_use', 'not_found']) {
+    for (const code of [
+      'no_active_mode',
+      'paused',
+      'no_enabled_target',
+      'preset_in_use',
+      'not_found',
+    ]) {
       expect(enKeys.has(`errors.codes.${code}`)).toBe(true)
     }
   })

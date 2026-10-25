@@ -77,6 +77,24 @@ final class TimerScheduler
     }
 
     /**
+     * Cancels every pending timer of a type.
+     *
+     * @return int the number of timers cancelled
+     */
+    public function cancelOfType(string $type): int
+    {
+        $cancelled = 0;
+        foreach ($this->timers->findAllPending() as $timer) {
+            if ($timer->getType() === $type) {
+                $this->cancel($timer->getKey());
+                ++$cancelled;
+            }
+        }
+
+        return $cancelled;
+    }
+
+    /**
      * Whether a timer with this key is waiting.
      */
     public function isScheduled(string $key): bool

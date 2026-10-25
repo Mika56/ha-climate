@@ -100,16 +100,6 @@ final class RoomVacancyRuleTest extends TestCase
         self::assertSame('reason.house_empty', $decision->reason->code);
     }
 
-    public function testLeavesATargetAloneWhenTheSeasonIsOff(): void
-    {
-        $facts = RoomFacts::none()->withRoomVacantSince(Fixtures::at('2026-10-26 06:00:00'));
-        $context = Contexts::make('2026-10-26 07:00:00', Season::Off, $facts);
-
-        $decision = (new RoomVacancyRule())->apply($context, static fn (): Decision => Decision::heat(Fixtures::temperature(21.0), new Reason('other')));
-
-        self::assertSame('other', $decision->reason->code);
-    }
-
     public function testKeepsTheDeadlineOfTheRulesBelow(): void
     {
         $facts = RoomFacts::none()->withRoomVacantSince(Fixtures::at('2026-10-26 06:00:00'));

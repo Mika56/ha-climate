@@ -88,7 +88,6 @@ final class NoDeviceForModeRuleTest extends TestCase
         yield 'winter heater' => [Season::Winter, [DeviceRole::Heating]];
         yield 'summer air conditioner' => [Season::Summer, [DeviceRole::Heating, DeviceRole::Cooling]];
         yield 'reversible both seasons' => [Season::Summer, [DeviceRole::Reversible]];
-        yield 'season off is left to its own rule' => [Season::Off, []];
     }
 
     public function testPriority(): void

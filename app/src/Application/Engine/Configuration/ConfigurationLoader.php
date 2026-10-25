@@ -70,6 +70,7 @@ final readonly class ConfigurationLoader
             $this->lenientEntityIds(null === $settings->getWeatherEntity() ? [] : [$settings->getWeatherEntity()])[0] ?? null,
             $settings->getAuditRetentionDays(),
             $settings->getManualOverrideMinutes(),
+            $settings->isPaused(),
         );
     }
 

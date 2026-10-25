@@ -8,7 +8,8 @@ use App\Domain\Climate\Season;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * The global settings (`Settings` of the contract); the read-only `auditEntryCount` is ignored.
+ * The global settings (`Settings` of the contract); the read-only `auditEntryCount` is ignored. A request that
+ * leaves `paused` out keeps the current state of the pause: forgetting the field never resumes HA Climate.
  */
 final readonly class SettingsRequest
 {
@@ -27,6 +28,7 @@ final readonly class SettingsRequest
         public VacationRequest $vacation,
         #[Assert\Range(min: 1, max: 3650)]
         public int $auditRetentionDays,
+        public ?bool $paused = null,
         #[Assert\Regex(pattern: EntityIdPattern::ENTITY_ID)]
         public ?string $weatherEntity = null,
         #[Assert\Choice(choices: ['en', 'fr'])]

@@ -5,18 +5,14 @@ import { api, unwrap } from '@/api/client'
 import type { Alert, Overview, Season } from '@/api/types'
 import AlertList from '@/components/AlertList.vue'
 import HaIcon from '@/components/HaIcon.vue'
+import PausedBanner from '@/components/PausedBanner.vue'
+import PauseSwitch from '@/components/PauseSwitch.vue'
 import RoomCard from '@/components/RoomCard.vue'
 import SegmentedControl, { type SegmentOption } from '@/components/SegmentedControl.vue'
 import { useErrorReporter } from '@/composables/useErrorReporter'
 import { useFormatter, useNow } from '@/composables/useFormatter'
-import {
-  mdiAirplane,
-  mdiFire,
-  mdiHome,
-  mdiPower,
-  mdiSnowflake,
-  mdiWeatherPartlyCloudy,
-} from '@/lib/icons'
+import { usePause } from '@/composables/usePause'
+import { mdiAirplane, mdiFire, mdiHome, mdiSnowflake, mdiWeatherPartlyCloudy } from '@/lib/icons'
 import { formatMinutes } from '@/lib/format'
 import { useLiveStore } from '@/stores/live'
 
@@ -25,13 +21,13 @@ const fmt = useFormatter()
 const now = useNow()
 const live = useLiveStore()
 const report = useErrorReporter()
+const pause = usePause()
 
 const overview = ref<Overview | null>(null)
 
 const seasonOptions = computed<SegmentOption<Season>[]>(() => [
   { value: 'winter', label: t('season.winter'), icon: mdiFire },
   { value: 'summer', label: t('season.summer'), icon: mdiSnowflake },
-  { value: 'off', label: t('season.off'), icon: mdiPower },
 ])
 
 async function load(): Promise<void> {
@@ -59,6 +55,14 @@ async function setSeason(season: Season): Promise<void> {
   }
 }
 
+async function setPaused(paused: boolean): Promise<void> {
+  const current = overview.value
+  if (!current) return
+  const previous = current.paused
+  current.paused = paused
+  if (!(await pause.setPaused(paused))) current.paused = previous
+}
+
 /** Once the live statuses are known, their alerts replace the room-level ones of the overview. */
 const alerts = computed<Alert[]>(() => {
   const base = overview.value?.alerts ?? []
@@ -84,12 +88,13 @@ const runningCount = computed(
   () => live.rooms.filter((r) => r.devices.some((d) => d.running === true)).length,
 )
 const roomsSummary = computed(() => {
-  const season = overview.value?.season
-  if (season === 'off') return t('overview.allOff', { count: live.rooms.length })
-  return t(season === 'summer' ? 'overview.coolingSummary' : 'overview.heatingSummary', {
-    running: runningCount.value,
-    total: live.rooms.length,
-  })
+  return t(
+    overview.value?.season === 'summer' ? 'overview.coolingSummary' : 'overview.heatingSummary',
+    {
+      running: runningCount.value,
+      total: live.rooms.length,
+    },
+  )
 })
 
 function personState(state: string): string {
@@ -104,7 +109,18 @@ function condition(value: string): string {
 
 <template>
   <template v-if="overview">
+    <PausedBanner v-if="overview.paused" :busy="pause.busy.value" @resume="setPaused(false)" />
+
     <div class="grid-fit summary">
+      <section class="card panel" aria-labelledby="pause-title">
+        <h2 id="pause-title">{{ t('app.title') }}</h2>
+        <PauseSwitch
+          :paused="overview.paused"
+          :busy="pause.busy.value"
+          @update:paused="setPaused"
+        />
+      </section>
+
       <section class="card panel" aria-labelledby="season-title">
         <h2 id="season-title">{{ t('overview.season') }}</h2>
         <SegmentedControl

@@ -114,6 +114,7 @@ function buildOverview(): Overview {
   }))
   return {
     season: settings.season,
+    paused: settings.paused,
     presence: {
       persons,
       houseEmptySince: null,
@@ -154,7 +155,7 @@ function filterAudit(params: URLSearchParams): AuditEntry[] {
 function buildBackup(): Backup {
   return {
     format: 'ha-climate-backup',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     settings: db.settings,
     presets: db.presets,
@@ -176,7 +177,14 @@ function buildBackup(): Backup {
 function restoreBackup(backup: Backup): { rooms: number; schedules: number; presets: number } {
   const ids = new Map<string, string>()
   db.presets = backup.presets
-  db.settings = { ...backup.settings, auditEntryCount: db.settings.auditEntryCount }
+  // A version 1 backup may carry the season `off` (winter + paused) and no `paused`.
+  const { season, paused, ...rest } = backup.settings
+  db.settings = {
+    ...rest,
+    season: season === 'off' ? 'winter' : season,
+    paused: season === 'off' || (paused ?? false),
+    auditEntryCount: db.settings.auditEntryCount,
+  }
   db.schedules = backup.schedules.map(({ ref, name, mode, slots }) => {
     const id = newId()
     ids.set(ref, id)
@@ -218,12 +226,21 @@ export const handlers = [
 
   http.put('*/api/season', async ({ request }) => {
     const { season } = (await request.json()) as { season: Season }
-    if (!['winter', 'summer', 'off'].includes(season)) {
+    if (!['winter', 'summer'].includes(season)) {
       return invalid([{ path: 'season', message: 'Saison inconnue.' }])
     }
     db.settings.season = season
     allStatuses().forEach((s) => statusBus.emit(s))
     return json({ season })
+  }),
+  http.put('*/api/pause', async ({ request }) => {
+    const { paused } = (await request.json()) as { paused: boolean }
+    if (typeof paused !== 'boolean') {
+      return invalid([{ path: 'paused', message: 'Cette valeur doit être un booléen.' }])
+    }
+    db.settings.paused = paused
+    allStatuses().forEach((s) => statusBus.emit(s))
+    return json({ paused })
   }),
 
   http.get('*/api/rooms', () => json<Room[]>(db.rooms)),
@@ -278,7 +295,7 @@ export const handlers = [
       })
     }
     if (violations.length > 0) return invalid(violations)
-    if (db.settings.season === 'off') return fail(409, 'no_active_mode', 'The season is off.')
+    if (db.settings.paused) return fail(409, 'paused', 'HA Climate is paused.')
     db.overrides[id] = {
       type: 'boost',
       delta: body.delta,
@@ -293,6 +310,7 @@ export const handlers = [
   http.delete('*/api/rooms/:roomId/override', ({ params }) => {
     const id = String(params.roomId)
     if (!db.rooms.some((r) => r.id === id)) return fail(404, 'not_found')
+    if (db.settings.paused) return fail(409, 'paused', 'HA Climate is paused.')
     delete db.overrides[id]
     return json<RoomStatus>(emitRoom(id) as RoomStatus)
   }),
@@ -431,7 +449,7 @@ export const handlers = [
   http.get('*/api/backup', () => json<Backup>(buildBackup())),
   http.post('*/api/backup/restore', async ({ request }) => {
     const backup = (await request.json()) as Backup
-    if (backup.format !== 'ha-climate-backup' || backup.version !== 1) {
+    if (backup.format !== 'ha-climate-backup' || ![1, 2].includes(backup.version)) {
       return invalid([{ path: 'format', message: 'Fichier de sauvegarde non reconnu.' }])
     }
     return json(restoreBackup(backup))

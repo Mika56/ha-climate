@@ -49,7 +49,8 @@ final class SettingsAndNotificationsTest extends PersistenceTestCase
         $this->em()->clear();
 
         self::assertSame(GlobalSettings::SINGLETON_ID, $settings->getId());
-        self::assertSame(Season::Off, $settings->getSeason());
+        self::assertSame(Season::Winter, $settings->getSeason());
+        self::assertFalse($settings->isPaused());
         self::assertSame(1, $this->em()->getRepository(GlobalSettings::class)->count([]));
         self::assertSame(1, $repository->get()->getId());
         self::assertSame(1, $this->em()->getRepository(GlobalSettings::class)->count([]));

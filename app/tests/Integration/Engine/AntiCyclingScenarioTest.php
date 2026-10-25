@@ -72,7 +72,8 @@ final class AntiCyclingScenarioTest extends EngineTestCase
 
     public function testASwitchOffWantedTooSoonIsDeferredEvenWhenTheSeasonRequiresIt(): void
     {
-        $this->setSeason(Season::Off);
+        // Summer: the room has no device able to cool, so the heater has to go off.
+        $this->setSeason(Season::Summer);
         $this->service(ConfigurationRepository::class)->reload();
         $this->deviceSeen('heat');
         $this->evaluate();

@@ -12,7 +12,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class BackupRequest
 {
     public const string FORMAT = 'ha-climate-backup';
-    public const int VERSION = 1;
+    public const int VERSION = 2;
+
+    /** Version 1 had `off` among the seasons and no `paused`; it is still read. */
+    public const array READABLE_VERSIONS = [1, 2];
 
     /**
      * @param list<PresetRequest>   $presets
@@ -22,10 +25,10 @@ final readonly class BackupRequest
     public function __construct(
         #[Assert\IdenticalTo(self::FORMAT)]
         public string $format,
-        #[Assert\IdenticalTo(self::VERSION)]
+        #[Assert\Choice(choices: self::READABLE_VERSIONS)]
         public int $version,
         #[Assert\Valid]
-        public SettingsRequest $settings,
+        public BackupSettingsRequest $settings,
         #[Assert\Valid]
         public array $presets,
         #[Assert\Valid]

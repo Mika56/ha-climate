@@ -15,6 +15,9 @@ final readonly class SettingsApplier
     public function apply(GlobalSettings $settings, SettingsRequest $request): void
     {
         $settings->changeSeason($request->season);
+        if (null !== $request->paused) {
+            $settings->changePaused($request->paused);
+        }
         $settings->configurePresence($request->houseEmptyDelaySeconds, $request->trackedPersons);
         $settings->changeManualOverrideMinutes($request->manualOverrideMinutes);
         $settings->configureVacation($request->vacation->enabled, $request->vacation->startAt, $request->vacation->returnAt, $request->vacation->offDuringVacation);

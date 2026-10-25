@@ -151,7 +151,7 @@ final class RoomEvaluatorTest extends EngineTestCase
         self::assertSame('schedule', $timer->getPayload()['cause']);
     }
 
-    public function testSeasonOffTurnsEveryDeviceOff(): void
+    public function testASeasonWithoutDeviceForItTurnsTheHeatersOff(): void
     {
         $this->setSeason(Season::Winter);
         $this->createRoom('Living room', 'climate.living');
@@ -162,7 +162,7 @@ final class RoomEvaluatorTest extends EngineTestCase
         $this->startEngine();
         self::assertSame([], $this->homeAssistant()->serviceCalls());
 
-        $this->setSeason(Season::Off);
+        $this->setSeason(Season::Summer);
         $this->service(ConfigurationReloader::class)->reload();
 
         $calls = $this->homeAssistant()->serviceCalls();
@@ -173,8 +173,9 @@ final class RoomEvaluatorTest extends EngineTestCase
         }
         self::assertEqualsCanonicalizing(['climate.living', 'climate.bedroom'], array_map(static fn ($call) => $call->target['entity_id'], $calls));
         foreach ($this->service(LiveStatusPublisher::class)->snapshot() as $status) {
-            self::assertSame('reason.season_off', $status->decision->reason->code);
+            self::assertSame('reason.no_device', $status->decision->reason->code);
             self::assertSame(HvacMode::Off, $status->decision->mode);
+            self::assertFalse($status->paused);
         }
         self::assertCount(2, $this->auditEntries('audit.decision.changed'));
     }

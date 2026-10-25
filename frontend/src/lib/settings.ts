@@ -14,6 +14,7 @@ export interface SettingsForm {
   auditRetentionDays: number
 }
 
+/** Settings without the pause (see {@link fromSettingsForm}). */
 export function toSettingsForm(settings: Settings, timeZone?: string): SettingsForm {
   return {
     season: settings.season,
@@ -33,7 +34,8 @@ export function toSettingsForm(settings: Settings, timeZone?: string): SettingsF
   }
 }
 
-export function fromSettingsForm(form: SettingsForm, timeZone?: string): Settings {
+/** The settings to save. The pause is not edited here: it has its own switch, which applies at once. */
+export function fromSettingsForm(form: SettingsForm, timeZone?: string): Omit<Settings, 'paused'> {
   return {
     season: form.season,
     trackedPersons: form.trackedPersons,

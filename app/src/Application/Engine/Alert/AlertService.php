@@ -24,6 +24,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * Raising is idempotent: an alert that is already open is not opened again, and one whose notification was
  * delivered is not notified again, even after a restart. A persistent notification is created when the type's
  * setting asks for it, and dismissed when the alert is resolved. Alerts never change how rooms are driven.
+ *
+ * While HA Climate is paused alerts still open and resolve (they are displayed) but nothing is sent: the alert
+ * remembers what it should notify with, and {@see deliverPending()} catches up when HA Climate resumes.
  */
 final readonly class AlertService
 {
@@ -60,17 +63,8 @@ final readonly class AlertService
             $this->audit->log(ActorType::System, 'alert', 'audit.alert.opened', ['key' => $key, 'type' => $alertType], $room, ['entityId' => $entityId]);
         }
 
-        if (null === $alert->getNotifiedAt() && $this->notifications->notify($notification, $params, $room)) {
-            $alert->markNotified($now);
-        }
-
-        if (null === $alert->getPersistentNotificationId() && $this->wantsPersistentNotification($notification)) {
-            $id = PersistentNotifier::idFor($key);
-            if ($this->persistent->create($id, $notification, $params, $room)) {
-                $alert->attachPersistentNotification($id);
-            }
-        }
-
+        $alert->rememberNotification($notification->value, $params);
+        $this->deliver($alert, $notification, $params, $room);
         $this->alerts->save($alert);
 
         if ($opened && null !== $room) {
@@ -105,9 +99,62 @@ final readonly class AlertService
         }
     }
 
+    /**
+     * HA Climate was paused: dismisses the persistent notifications it created for the active alerts (the alerts
+     * stay open and visible in the interface) and forgets them, so that resuming creates them again.
+     */
+    public function dismissPersistentNotifications(): void
+    {
+        foreach ($this->alerts->findActive() as $alert) {
+            $id = $alert->getPersistentNotificationId();
+            if (null === $id) {
+                continue;
+            }
+
+            $this->persistent->dismiss($id);
+            $alert->attachPersistentNotification(null);
+            $this->alerts->save($alert);
+        }
+    }
+
+    /**
+     * HA Climate resumed: sends what was held back for the active alerts, the notification that never went out and
+     * the persistent notification that was dismissed or never created (each respecting the settings of its type).
+     */
+    public function deliverPending(): void
+    {
+        foreach ($this->alerts->findActive() as $alert) {
+            $type = NotificationType::tryFrom($alert->getNotificationType() ?? '');
+            if (null === $type) {
+                continue; // Opened before alerts remembered their notification: nothing to rebuild it from.
+            }
+
+            $room = $alert->getRoom();
+            $this->deliver($alert, $type, $alert->getNotificationParams(), null === $room ? null : new RoomId($room->getId()->toRfc4122()));
+            $this->alerts->save($alert);
+        }
+    }
+
     public function find(string $key): ?Alert
     {
         return $this->alerts->findOneByKey($key);
+    }
+
+    /**
+     * @param array<string, scalar|null> $params
+     */
+    private function deliver(Alert $alert, NotificationType $notification, array $params, ?RoomId $room): void
+    {
+        if (null === $alert->getNotifiedAt() && $this->notifications->notify($notification, $params, $room)) {
+            $alert->markNotified($this->clock->now());
+        }
+
+        if (null === $alert->getPersistentNotificationId() && $this->wantsPersistentNotification($notification)) {
+            $id = PersistentNotifier::idFor($alert->getKey());
+            if ($this->persistent->create($id, $notification, $params, $room)) {
+                $alert->attachPersistentNotification($id);
+            }
+        }
     }
 
     private function wantsPersistentNotification(NotificationType $type): bool

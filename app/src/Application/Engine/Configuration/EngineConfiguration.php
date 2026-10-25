@@ -16,6 +16,8 @@ use App\Domain\Schedule\WeeklySchedule;
 
 /**
  * Immutable picture of everything the engine reads from the database, expressed with domain objects.
+ *
+ * While `paused`, HA Climate observes and decides as usual but sends nothing to Home Assistant.
  */
 final readonly class EngineConfiguration
 {
@@ -34,6 +36,7 @@ final readonly class EngineConfiguration
         public ?EntityId $weatherEntity,
         public int $auditRetentionDays,
         public int $manualOverrideMinutes,
+        public bool $paused = false,
     ) {
     }
 

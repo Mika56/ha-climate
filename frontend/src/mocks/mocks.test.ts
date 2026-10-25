@@ -31,11 +31,17 @@ describe('mock database', () => {
     mockDb.settings.season = 'summer'
     const summer = allStatuses()
     expect(summer[0].decision).toMatchObject({ mode: 'cool', target: 24 })
-    mockDb.settings.season = 'off'
-    const off = allStatuses()
-    expect(off.every((s) => s.decision.mode === 'off' && s.override === null)).toBe(true)
-    expect(off[0].decision.reason.code).toBe('reason.season_off')
+    expect(summer.every((s) => !s.paused)).toBe(true)
     expect(rooms).toHaveLength(6)
+  })
+
+  it('flags every status as a simulation while paused, decisions unchanged', () => {
+    const now = Date.now()
+    const before = allStatuses(mockDb, now).map((s) => s.decision)
+    mockDb.settings.paused = true
+    const paused = allStatuses(mockDb, now)
+    expect(paused.every((s) => s.paused)).toBe(true)
+    expect(paused.map((s) => s.decision)).toEqual(before)
   })
 
   it('computes a status for a room created at runtime (default scenario)', () => {
@@ -199,7 +205,7 @@ describe('mock API contract behaviour', () => {
     expect(
       await status(unwrap(api.POST('/api/rooms/{roomId}/boost', { ...path, body: { delta: 1 } }))),
     ).toBe(422)
-    mockDb.settings.season = 'off'
+    mockDb.settings.paused = true
     expect(
       await status(
         unwrap(
@@ -210,9 +216,13 @@ describe('mock API contract behaviour', () => {
         ),
       ),
     ).toBe(409)
+    expect(await status(unwrap(api.DELETE('/api/rooms/{roomId}/override', path)))).toBe(409)
     expect(
       await status(unwrap(api.PUT('/api/season', { body: { season: 'spring' as never } }))),
     ).toBe(422)
+    expect(await status(unwrap(api.PUT('/api/season', { body: { season: 'off' as never } })))).toBe(
+      422,
+    )
     expect(await status(unwrap(api.GET('/api/audit', { params: { query: { limit: 500 } } })))).toBe(
       422,
     )
@@ -316,6 +326,41 @@ describe('mock API contract behaviour', () => {
     expect(await unwrap(api.GET('/api/alerts'))).toHaveLength(2)
     expect(await unwrap(api.GET('/api/health'))).toEqual({ status: 'ok' })
     expect(await unwrap(api.GET('/api/settings'))).toMatchObject({ season: 'winter' })
+  })
+
+  it('pauses and resumes, and validates the request', async () => {
+    expect(await unwrap(api.PUT('/api/pause', { body: { paused: true } }))).toEqual({
+      paused: true,
+    })
+    expect(mockDb.settings.paused).toBe(true)
+    expect((await unwrap(api.GET('/api/overview'))).paused).toBe(true)
+    expect((await unwrap(api.GET('/api/status'))).every((s) => s.paused)).toBe(true)
+    expect(await unwrap(api.PUT('/api/pause', { body: { paused: false } }))).toEqual({
+      paused: false,
+    })
+    expect(await status(unwrap(api.PUT('/api/pause', { body: { paused: 'yes' as never } })))).toBe(
+      422,
+    )
+  })
+
+  it('reads a version 1 backup: the season off becomes winter and paused', async () => {
+    const backup = await unwrap(api.GET('/api/backup'))
+    expect(backup.version).toBe(2)
+    const settings = { ...backup.settings }
+    delete settings.paused
+    await unwrap(
+      api.POST('/api/backup/restore', {
+        body: { ...backup, version: 1, settings: { ...settings, season: 'off' } },
+      }),
+    )
+    expect(mockDb.settings).toMatchObject({ season: 'winter', paused: true })
+
+    await unwrap(
+      api.POST('/api/backup/restore', {
+        body: { ...backup, version: 1, settings: { ...settings, season: 'summer' } },
+      }),
+    )
+    expect(mockDb.settings).toMatchObject({ season: 'summer', paused: false })
   })
 
   it('restores a backup with schedule references resolved', async () => {

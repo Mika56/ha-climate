@@ -49,7 +49,8 @@
     "network": "Network error: the add-on cannot be reached.",
     "fixFields": "Please fix the following fields:",
     "codes": {
-      "no_active_mode": "Nothing to boost: the season is off.",
+      "no_active_mode": "Nothing to boost: no device of this room works in the current season.",
+      "paused": "HA Climate is paused: resume it to boost a room.",
       "no_enabled_target": "No notification target is enabled.",
       "preset_in_use": "This preset is still used by a schedule or by a system rule.",
       "preset_exists": "A preset with this key already exists.",
@@ -62,7 +63,19 @@
     "leave": "Leave",
     "stay": "Stay"
   },
-  "season": { "winter": "Winter", "summer": "Summer", "off": "Off" },
+  "season": { "winter": "Winter", "summer": "Summer" },
+  "pause": {
+    "switch": "HA Climate active",
+    "stateActive": "Rooms are driven according to their schedules.",
+    "statePaused": "Paused: nothing is sent to your devices.",
+    "explain": "While paused, HA Climate keeps watching your home and deciding (the history shows what it would have done) but sends nothing: no heating or cooling command, no notification. Use your devices freely, then resume.",
+    "banner": "HA Climate is paused: no action is sent, the history carries on.",
+    "resume": "Resume",
+    "simulation": "Simulation",
+    "boostDisabled": "Boosts are unavailable while HA Climate is paused.",
+    "pausedToast": "HA Climate is paused.",
+    "resumedToast": "HA Climate has resumed."
+  },
   "weather": {
     "clear-night": "Clear night",
     "cloudy": "Cloudy",
@@ -84,8 +97,7 @@
     "season": "Season",
     "seasonHelp": {
       "winter": "Only heating devices are driven.",
-      "summer": "Only cooling devices are driven.",
-      "off": "Everything is off: no command is sent."
+      "summer": "Only cooling devices are driven."
     },
     "presence": "Presence",
     "home": "{count} person at home | {count} people at home",
@@ -116,10 +128,10 @@
     "rooms": "Rooms",
     "heatingSummary": "{running} of {total} heating",
     "coolingSummary": "{running} of {total} cooling",
-    "allOff": "{count} rooms · everything is off",
     "noRooms": "No room yet.",
     "current": "Current",
     "target": "Target",
+    "wouldApply": "Would apply",
     "off": "Off",
     "manual": "Manual",
     "configure": "Configure {name}",
@@ -129,8 +141,7 @@
     "activity": {
       "heating": "Heating",
       "cooling": "Cooling",
-      "idle": "Idle",
-      "stopped": "Stopped"
+      "idle": "Idle"
     },
     "recent": "Latest decisions",
     "allHistory": "Full history"
@@ -296,7 +307,7 @@
   },
   "settings": {
     "season": "Season",
-    "seasonHint": "Winter: only heating devices are driven. Summer: only cooling. Off: nothing is sent. A reversible device follows the season.",
+    "seasonHint": "Winter: only heating devices are driven. Summer: only cooling. A reversible device follows the season.",
     "presence": "Global presence",
     "presenceHint": "People discovered in Home Assistant. The house is empty when all tracked people are away.",
     "notTracked": "not tracked",
@@ -370,7 +381,7 @@
       },
       "setpoint_not_applicable": {
         "title": "Target cannot be applied",
-        "desc": "The requested target cannot be applied (window open, season off…).",
+        "desc": "The requested target cannot be applied (window open, no device for the season…).",
         "example": "Bathroom: the 22.0 °C target cannot be applied, the window is open."
       },
       "device_unresponsive": {

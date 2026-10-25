@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: HA Climate API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     JSON API of the HA Climate add-on, consumed by its Vue front end through Home Assistant ingress.
 
@@ -11,6 +11,8 @@ info:
     - Times are RFC 3339 with offset, in the Home Assistant time zone. Temperatures are °C floats (0.1 precision).
     - Decision reasons are i18n codes (`reason.*`) with params, translated by the front end.
       Audit messages are rendered by the server in the request locale (`Accept-Language`).
+    - HA Climate can be *paused* (`Settings.paused`): it keeps observing and deciding but sends nothing to Home Assistant.
+      While paused a room status is a simulation (`RoomStatus.paused`), and boosts are refused (409 `paused`).
     - Live room updates come from `GET /api/live` (Server-Sent Events, served by the engine, proxied by nginx).
 security: []
 servers:
@@ -142,6 +144,35 @@ paths:
                   season: { $ref: '#/components/schemas/Season' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
 
+  /api/pause:
+    put:
+      tags: [overview]
+      operationId: updatePause
+      summary: >-
+        Pauses (true) or resumes (false) HA Climate. While paused it keeps deciding and auditing what it would do
+        but sends nothing to Home Assistant and creates no override. Audited (actor: the ingress user); the engine
+        has been told to reload. Asking for the state it is already in changes nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paused]
+              properties:
+                paused: { type: boolean }
+      responses:
+        '200':
+          description: Pause state stored.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [paused]
+                properties:
+                  paused: { type: boolean }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
   /api/rooms:
     get:
       tags: [rooms]
@@ -232,7 +263,9 @@ paths:
     post:
       tags: [rooms]
       operationId: startBoost
-      summary: Starts a boost (delta raises the target in heat, lowers it in cool). The actor is the ingress user.
+      summary: >-
+        Starts a boost (delta raises the target in heat, lowers it in cool). The actor is the ingress user.
+        409 with code `paused` while HA Climate is paused.
       requestBody:
         required: true
         content:
@@ -255,7 +288,7 @@ paths:
     delete:
       tags: [rooms]
       operationId: cancelOverride
-      summary: Cancels the active boost or manual override of the room.
+      summary: Cancels the active boost or manual override of the room. 409 with code `paused` while HA Climate is paused.
       responses:
         '200':
           description: New room status.
@@ -263,6 +296,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/RoomStatus' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '503': { $ref: '#/components/responses/EngineUnavailable' }
 
   /api/presets:
@@ -642,7 +676,8 @@ components:
       enum: [en, fr]
     Season:
       type: string
-      enum: [winter, summer, off]
+      description: Winter heats, summer cools. Stopping HA Climate is the separate `paused` switch.
+      enum: [winter, summer]
     HvacMode:
       type: string
       enum: [heat, cool, off]
@@ -655,7 +690,7 @@ components:
       properties:
         error:
           type: string
-          description: Stable machine code (not_found, engine_unavailable, preset_in_use, no_active_mode, no_schedule, no_active_override, no_target...).
+          description: Stable machine code (not_found, engine_unavailable, preset_in_use, no_active_mode, no_schedule, no_active_override, paused, no_target...).
         message: { type: string }
     ValidationError:
       type: object
@@ -718,9 +753,10 @@ components:
 
     Overview:
       type: object
-      required: [season, presence, weather, vacation, alerts]
+      required: [season, paused, presence, weather, vacation, alerts]
       properties:
         season: { $ref: '#/components/schemas/Season' }
+        paused: { type: boolean, description: 'true while HA Climate is paused: it decides but sends nothing.' }
         presence:
           type: object
           required: [persons, houseEmptySince, houseEmptyDelaySeconds]
@@ -777,10 +813,12 @@ components:
         code:
           type: string
           description: |
-            reason.schedule {preset, until}, reason.preheat {preset, at}, reason.season_off, reason.no_device,
+            reason.schedule {preset, until}, reason.preheat {preset, at}, reason.no_device,
             reason.no_schedule, reason.no_rule, reason.vacation {returnAt}, reason.house_empty {since},
             reason.opening_open {since}, reason.boost {delta, until}, reason.manual_override {until},
             reason.room_vacant {preset, since}, reason.anti_cycling_min_off, reason.anti_cycling_min_on.
+            `reason.season_off` is no longer produced (there is no "off" season any more) but may still appear in
+            the audit history written by earlier versions.
             Param conventions: instants (until, at, since, returnAt) are RFC 3339 in the HA time zone;
             preset is a preset key; delta is the positive magnitude (its sign follows decision.mode).
         params:
@@ -790,10 +828,13 @@ components:
 
     RoomStatus:
       type: object
-      required: [roomId, name, currentTemperature, decision, override, devices, facts, alerts, updatedAt]
+      required: [roomId, name, currentTemperature, decision, override, devices, facts, alerts, paused, updatedAt]
       properties:
         roomId: { $ref: '#/components/schemas/Id' }
         name: { type: string }
+        paused:
+          type: boolean
+          description: 'true while HA Climate is paused: the decision is what would be applied, nothing is sent.'
         currentTemperature: { type: ['number', 'null'] }
         decision:
           type: object
@@ -999,9 +1040,14 @@ components:
 
     Settings:
       type: object
-      required: [season, trackedPersons, houseEmptyDelaySeconds, manualOverrideMinutes, vacation, weatherEntity, uiLocale, notificationLocale, auditRetentionDays]
+      required: [season, paused, trackedPersons, houseEmptyDelaySeconds, manualOverrideMinutes, vacation, weatherEntity, uiLocale, notificationLocale, auditRetentionDays]
       properties:
         season: { $ref: '#/components/schemas/Season' }
+        paused:
+          type: boolean
+          description: >-
+            While true HA Climate observes and decides but sends nothing to Home Assistant. A PUT that leaves it out
+            keeps the current state.
         trackedPersons:
           type: array
           items: { $ref: '#/components/schemas/EntityId' }
@@ -1017,6 +1063,29 @@ components:
           oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Locale' }]
         auditRetentionDays: { type: integer, minimum: 1, maximum: 3650 }
         auditEntryCount: { type: integer, readOnly: true }
+
+    BackupSettings:
+      type: object
+      description: >-
+        The settings of a backup. Same as `Settings`, except that a version 1 backup may carry the season `off` (read as
+        winter + paused) and no `paused`.
+      required: [season, trackedPersons, houseEmptyDelaySeconds, manualOverrideMinutes, vacation, weatherEntity, uiLocale, notificationLocale, auditRetentionDays]
+      properties:
+        season:
+          type: string
+          enum: [winter, summer, off]
+          description: '`off` only in version 1 backups.'
+        paused: { type: boolean }
+        trackedPersons:
+          type: array
+          items: { $ref: '#/components/schemas/EntityId' }
+        houseEmptyDelaySeconds: { type: integer, minimum: 0, maximum: 86400 }
+        manualOverrideMinutes: { type: integer, minimum: 1, maximum: 1440 }
+        vacation: { $ref: '#/components/schemas/Vacation' }
+        weatherEntity: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/EntityId' }] }
+        uiLocale: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Locale' }] }
+        notificationLocale: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/Locale' }] }
+        auditRetentionDays: { type: integer, minimum: 1, maximum: 3650 }
 
     NotificationSettings:
       type: object
@@ -1118,9 +1187,12 @@ components:
       required: [format, version, exportedAt, settings, presets, schedules, rooms, notifications]
       properties:
         format: { const: ha-climate-backup }
-        version: { type: integer, const: 1 }
+        version:
+          type: integer
+          enum: [1, 2]
+          description: Exports are version 2. Version 1 (season `off`, no `paused`) is still accepted by the restore.
         exportedAt: { type: string, format: date-time }
-        settings: { $ref: '#/components/schemas/Settings' }
+        settings: { $ref: '#/components/schemas/BackupSettings' }
         presets: { type: array, items: { $ref: '#/components/schemas/Preset' } }
         schedules:
           type: array

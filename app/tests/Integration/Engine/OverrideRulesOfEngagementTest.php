@@ -43,17 +43,27 @@ final class OverrideRulesOfEngagementTest extends EngineTestCase
         }
     }
 
-    public function testNothingCanBeBoostedWhenTheSeasonIsOffOrTheRoomHasNoDeviceForIt(): void
+    public function testNothingCanBeBoostedWhenTheRoomHasNoDeviceForTheSeason(): void
     {
-        $this->setSeason(Season::Off);
+        $this->setSeason(Season::Summer);
         $room = new RoomId($this->createRoom()->getId()->toRfc4122());
         $this->seedDevice();
         $this->startEngine();
-        $this->assertRejected(OverrideRejectedException::NO_ACTIVE_MODE, fn () => $this->manager()->startBoost($room, new TemperatureDelta(1.0), 30, false, 'alice'));
 
-        $this->setSeason(Season::Summer);
-        $this->service(\App\Application\Engine\Lifecycle\ConfigurationReloader::class)->reload();
         $this->assertRejected(OverrideRejectedException::NO_ACTIVE_MODE, fn () => $this->manager()->startBoost($room, new TemperatureDelta(1.0), 30, false, 'alice'));
+    }
+
+    public function testNothingCanBeBoostedNorCancelledWhilePaused(): void
+    {
+        $this->setSeason(Season::Winter);
+        $room = new RoomId($this->createRoom()->getId()->toRfc4122());
+        $this->seedDevice();
+        $this->setPaused(true);
+        $this->startEngine();
+
+        $this->assertRejected(OverrideRejectedException::PAUSED, fn () => $this->manager()->startBoost($room, new TemperatureDelta(1.0), 30, false, 'alice'));
+        $this->assertRejected(OverrideRejectedException::PAUSED, fn () => $this->manager()->cancel($room, 'alice'));
+        self::assertSame([], $this->service(RoomOverrideRepository::class)->findAll());
     }
 
     public function testABoostNeedsAnEnd(): void
@@ -140,7 +150,6 @@ final class OverrideRulesOfEngagementTest extends EngineTestCase
         yield 'a mode the engine does not drive' => [['newMode' => 'heat_cool', 'newTemperature' => 21.0], Season::Winter];
         yield 'no target reported' => [['newMode' => 'heat', 'newTemperature' => null], Season::Winter];
         yield 'an impossible target' => [['newMode' => 'heat', 'newTemperature' => 80.0], Season::Winter];
-        yield 'season off' => [['newMode' => 'heat', 'newTemperature' => 22.0], Season::Off];
     }
 
     public function testAChangeOnARoomThatVanishedIsIgnored(): void

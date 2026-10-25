@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Decision\Rule;
 
-use App\Domain\Climate\HvacMode;
 use App\Domain\Decision\Decision;
 use App\Domain\Decision\Reason;
 use App\Domain\Decision\RoomEvaluationContext;
@@ -24,7 +23,7 @@ final readonly class NoDeviceForModeRule implements RoomRuleInterface
     {
         $mode = $context->mode();
 
-        if (HvacMode::Off !== $mode && !$context->room->hasDeviceFor($mode)) {
+        if (!$context->room->hasDeviceFor($mode)) {
             return Decision::off(new Reason('reason.no_device', ['mode' => $mode->value]));
         }
 

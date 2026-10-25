@@ -14,8 +14,9 @@ interface RoomRuleInterface
      * Position in the chain: rules with a higher priority run first. Wired automatically through the
      * `app.room_rule` service tag (see config/services.yaml), so a new rule only needs a new file.
      *
-     * Taken so far: season off 1000, no device for mode 900, schedule -1000. Reserved for the next features:
-     * vacation 800, house empty 700, opening 600, override 500, room vacancy 400.
+     * Taken: no device for mode 900, vacation 800, house empty 700, opening 600, override 500, room vacancy 400,
+     * pre-heating -900, schedule -1000. The pause is not a rule: decisions are computed as usual and the engine
+     * simply sends nothing while paused.
      */
     public static function priority(): int;
 

@@ -36,7 +36,7 @@ final readonly class RoomVacancyRule implements RoomRuleInterface
         }
 
         $mode = $context->mode();
-        if (HvacMode::Off === $mode || null === $decision->target) {
+        if (null === $decision->target) {
             return $decision;
         }
 

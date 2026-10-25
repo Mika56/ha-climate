@@ -223,7 +223,7 @@ final class CommandExecutorTest extends EngineTestCase
         $snapshot = $this->service(EngineSnapshotFactory::class)->create();
         $configuration = $snapshot->configuration->room(new RoomId($room->getId()->toRfc4122())) ?? throw new \LogicException('Room not loaded.');
 
-        $executor->execute($configuration, Decision::off(new Reason('reason.season_off')), $snapshot);
+        $executor->execute($configuration, Decision::off(new Reason('reason.no_rule')), $snapshot);
 
         self::assertSame([], $this->homeAssistant()->serviceCalls());
         $timer = $this->service(TimerRepository::class)->findOneByKey('command.deferred.'.self::DEVICE);

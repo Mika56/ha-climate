@@ -21,7 +21,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Creates and cancels the boost / manual override of a room, and audits it. A room has at most one override:
- * a new one replaces the previous one.
+ * a new one replaces the previous one. While HA Climate is paused a boost cannot be started nor cancelled.
  *
  * The end of an override is always resolved to a concrete instant here. "Until the next slot" becomes the
  * start of the next schedule slot as it is known now, so that restarting the engine, or the schedule
@@ -55,8 +55,12 @@ final readonly class OverrideManager
             throw new OverrideRejectedException(OverrideRejectedException::ROOM_NOT_FOUND, 'The room does not exist.');
         }
 
+        if ($configuration->paused) {
+            throw new OverrideRejectedException(OverrideRejectedException::PAUSED, 'HA Climate is paused: nothing can be boosted.');
+        }
+
         $mode = $configuration->season->activeHvacMode();
-        if (HvacMode::Off === $mode || !$room->hasDeviceFor($mode)) {
+        if (!$room->hasDeviceFor($mode)) {
             throw new OverrideRejectedException(OverrideRejectedException::NO_ACTIVE_MODE, 'The room has nothing to boost in the current season.');
         }
 
@@ -127,7 +131,12 @@ final readonly class OverrideManager
             throw new OverrideRejectedException(OverrideRejectedException::ROOM_NOT_FOUND, 'The room does not exist.');
         }
 
-        $now = $this->snapshots->create()->now;
+        $snapshot = $this->snapshots->create();
+        if ($snapshot->configuration->paused) {
+            throw new OverrideRejectedException(OverrideRejectedException::PAUSED, 'HA Climate is paused: nothing can be cancelled.');
+        }
+
+        $now = $snapshot->now;
         $removed = $this->overrides->clearRoom($entity);
         $active = null;
         foreach ($removed as $override) {

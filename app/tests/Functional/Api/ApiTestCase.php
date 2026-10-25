@@ -210,11 +210,12 @@ abstract class ApiTestCase extends WebTestCase
             'roomId' => $roomId,
             'name' => $name,
             'currentTemperature' => 19.5,
-            'decision' => ['mode' => 'heat', 'target' => 21.0, 'reason' => ['code' => 'reason.season_off', 'params' => []]],
+            'decision' => ['mode' => 'heat', 'target' => 21.0, 'reason' => ['code' => 'reason.no_rule', 'params' => []]],
             'override' => null,
             'devices' => [['entityId' => 'climate.living', 'role' => 'reversible', 'state' => 'heat', 'targetTemperature' => 21.0, 'currentTemperature' => 19.5, 'running' => true]],
             'facts' => ['openingOpenSince' => null, 'roomVacantSince' => null, 'houseEmptySince' => null, 'heatingRatePerHour' => 1.5],
             'alerts' => [],
+            'paused' => false,
             'updatedAt' => '2026-10-26T08:00:00+01:00',
             ...$overrides,
         ];

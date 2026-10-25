@@ -6,6 +6,7 @@ import type { Discovery, Locale, Season, Settings, ThemeChoice } from '@/api/typ
 import BackupPanel from '@/components/BackupPanel.vue'
 import ErrorSummary from '@/components/ErrorSummary.vue'
 import FormField from '@/components/FormField.vue'
+import PauseSwitch from '@/components/PauseSwitch.vue'
 import PresetManager from '@/components/PresetManager.vue'
 import SegmentedControl, { type SegmentOption } from '@/components/SegmentedControl.vue'
 import ToggleSwitch from '@/components/ToggleSwitch.vue'
@@ -14,6 +15,7 @@ import { useDirtyGuard } from '@/composables/useDirtyGuard'
 import { useEditableForm } from '@/composables/useEditableForm'
 import { useErrorReporter } from '@/composables/useErrorReporter'
 import { useFormatter } from '@/composables/useFormatter'
+import { usePause } from '@/composables/usePause'
 import { safeTimeZone } from '@/lib/format'
 import { fromSettingsForm, toSettingsForm, type SettingsForm } from '@/lib/settings'
 import { usePreferencesStore } from '@/stores/preferences'
@@ -26,12 +28,14 @@ const presets = usePresetStore()
 const toasts = useToastStore()
 const report = useErrorReporter()
 const fmt = useFormatter()
+const pause = usePause()
 
 const { form, errors, saving, dirty, reset, save } = useEditableForm<SettingsForm>()
 useDirtyGuard(dirty)
 
 const discovery = ref<Discovery | null>(null)
 const entryCount = ref(0)
+const paused = ref(false)
 let initial: SettingsForm | null = null
 
 const zone = computed(() => safeTimeZone(prefs.timeZone))
@@ -39,13 +43,13 @@ const zone = computed(() => safeTimeZone(prefs.timeZone))
 const seasonOptions = computed<SegmentOption<Season>[]>(() => [
   { value: 'winter', label: t('season.winter') },
   { value: 'summer', label: t('season.summer') },
-  { value: 'off', label: t('season.off') },
 ])
 
 async function load(): Promise<void> {
   try {
     const settings: Settings = await unwrap(api.GET('/api/settings'))
     entryCount.value = settings.auditEntryCount ?? 0
+    paused.value = settings.paused
     initial = toSettingsForm(settings, zone.value)
     reset(initial)
   } catch (error) {
@@ -90,9 +94,20 @@ function onTheme(event: Event): void {
 
 async function submit(): Promise<void> {
   const ok = await save(async (value) => {
-    await unwrap(api.PUT('/api/settings', { body: fromSettingsForm(value, zone.value) }))
+    await unwrap(
+      api.PUT('/api/settings', {
+        body: { ...fromSettingsForm(value, zone.value), paused: paused.value },
+      }),
+    )
   })
   if (ok) toasts.success('settings.saved')
+}
+
+/** The pause applies at once, it is not part of the form that is saved with the button. */
+async function setPaused(value: boolean): Promise<void> {
+  const previous = paused.value
+  paused.value = value
+  if (!(await pause.setPaused(value))) paused.value = previous
 }
 
 function cancel(): void {
@@ -107,6 +122,12 @@ async function onRestored(): Promise<void> {
 <template>
   <form v-if="form" class="settings" novalidate @submit.prevent="submit">
     <ErrorSummary class="full" :errors="errors" />
+
+    <section class="card panel">
+      <h2>{{ t('app.title') }}</h2>
+      <PauseSwitch :paused="paused" :busy="pause.busy.value" @update:paused="setPaused" />
+      <p class="hint">{{ t('pause.explain') }}</p>
+    </section>
 
     <section class="card panel">
       <h2>{{ t('settings.season') }}</h2>

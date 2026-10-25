@@ -5,6 +5,8 @@ audit:
             Engine started: {rooms, plural, =0 {no room} one {# room} other {# rooms}} driven,
             {timers, plural, =0 {no timer} one {# timer} other {# timers}} and
             {overrides, plural, =0 {no override} one {# override} other {# overrides}} restored.
+        paused: 'HA Climate paused: nothing is sent to your devices until it resumes.'
+        resumed: 'HA Climate resumed.'
     decision:
         changed: >-
             {mode, select,
@@ -12,6 +14,26 @@ audit:
             heat {Heating set to {target, number} °C}
             cool {Cooling set to {target, number} °C}
             other {Mode changed to {mode}}}
+        simulated: >-
+            Paused: HA Climate would have {mode, select,
+            off {{season, select, summer {turned the cooling off} other {turned the heating off}}}
+            heat {set the heating to {target, number} °C}
+            cool {set the cooling to {target, number} °C}
+            other {changed to {mode}}}
+            ({reason, select,
+            schedule {{preset} schedule}
+            preheat {preheating for {preset} at {at}}
+            no_device {no device for this mode}
+            no_schedule {no schedule}
+            no_rule {no rule applies}
+            vacation {vacation until {returnAt}}
+            house_empty {nobody home}
+            opening_open {window open}
+            boost {boost until {until}}
+            manual_override {manual setting until {until}}
+            room_vacant {room empty}
+            season_off {season off}
+            other {{reason}}}). Nothing was sent.
     command:
         sent: >-
             {mode, select,

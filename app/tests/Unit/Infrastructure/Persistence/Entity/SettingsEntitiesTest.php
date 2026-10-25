@@ -28,11 +28,28 @@ final class SettingsEntitiesTest extends TestCase
         $settings = new GlobalSettings();
 
         self::assertSame(1, $settings->getId());
-        self::assertSame(Season::Off, $settings->getSeason());
+        self::assertSame(Season::Winter, $settings->getSeason());
+        self::assertFalse($settings->isPaused());
         self::assertFalse($settings->isVacationEnabled());
         self::assertNull($settings->getVacationStartAt());
         self::assertNull($settings->getUiLocale());
         self::assertSame(GlobalSettings::CURRENT_SCHEMA_VERSION, $settings->getSchemaVersion());
+    }
+
+    public function testTheSeasonAndThePauseAreIndependent(): void
+    {
+        $settings = new GlobalSettings();
+
+        $settings->changePaused(true);
+        $settings->changeSeason(Season::Summer);
+
+        self::assertTrue($settings->isPaused());
+        self::assertSame(Season::Summer, $settings->getSeason());
+
+        $settings->changePaused(false);
+
+        self::assertFalse($settings->isPaused());
+        self::assertSame(Season::Summer, $settings->getSeason());
     }
 
     public function testTrackedPersonsAreDeduplicated(): void

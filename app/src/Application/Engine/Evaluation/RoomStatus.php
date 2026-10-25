@@ -19,6 +19,7 @@ final readonly class RoomStatus implements \JsonSerializable
     /**
      * @param list<DeviceStatus> $devices
      * @param list<AlertView>    $alerts  the active alerts concerning the room
+     * @param bool               $paused  whether HA Climate is paused: the decision is a simulation, nothing is sent
      */
     public function __construct(
         public RoomId $roomId,
@@ -30,6 +31,7 @@ final readonly class RoomStatus implements \JsonSerializable
         public \DateTimeImmutable $updatedAt,
         public RoomFacts $facts = new RoomFacts(),
         public array $alerts = [],
+        public bool $paused = false,
     ) {
     }
 
@@ -84,6 +86,7 @@ final readonly class RoomStatus implements \JsonSerializable
                 'heatingRatePerHour' => null === $this->facts->heatingRatePerHour ? null : round($this->facts->heatingRatePerHour, 2),
             ],
             'alerts' => array_map(static fn (AlertView $alert): array => $alert->jsonSerialize(), $this->alerts),
+            'paused' => $this->paused,
         ];
     }
 

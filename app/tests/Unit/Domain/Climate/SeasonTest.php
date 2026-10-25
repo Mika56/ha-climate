@@ -26,6 +26,5 @@ final class SeasonTest extends TestCase
     {
         yield 'winter heats' => [Season::Winter, HvacMode::Heat];
         yield 'summer cools' => [Season::Summer, HvacMode::Cool];
-        yield 'off stays off' => [Season::Off, HvacMode::Off];
     }
 }

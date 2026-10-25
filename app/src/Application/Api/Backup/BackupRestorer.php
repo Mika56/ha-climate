@@ -92,10 +92,15 @@ final readonly class BackupRestorer
                 $this->entityManager->persist($room);
             }
 
-            $this->settingsApplier->apply($this->settings->get(), $backup->settings);
+            $settings = $this->settings->get();
+            $wasPaused = $settings->isPaused();
+            $this->settingsApplier->apply($settings, $backup->settings->toSettingsRequest());
             $this->notificationsApplier->apply($backup->notifications);
 
             $this->audit->record($user, 'restored', $this->counts($backup), null, $this->counts($backup));
+            if ($wasPaused !== $settings->isPaused()) {
+                $this->audit->recordPause($user, $settings->isPaused());
+            }
             $this->entityManager->flush();
         });
 

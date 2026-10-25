@@ -103,7 +103,8 @@ final class BackupApiTest extends ApiTestCase
 
         self::assertStringContainsString('attachment', (string) $response->header('Content-Disposition'));
         self::assertSame('ha-climate-backup', $backup->at('format')->value());
-        self::assertSame(1, $backup->at('version')->value());
+        self::assertSame(2, $backup->at('version')->value());
+        self::assertFalse($backup->at('settings.paused')->value());
         self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+0[12]:00$/', $backup->at('exportedAt')->text());
         self::assertArrayNotHasKey('auditEntryCount', $backup->at('settings')->map());
         self::assertSame(['schedule-1', 'schedule-2'], $backup->at('schedules')->column('ref'));
@@ -201,8 +202,48 @@ final class BackupApiTest extends ApiTestCase
         $backup = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
 
         $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'format' => 'something-else'])->assertViolation('format');
-        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 2])->assertViolation('version');
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 3])->assertViolation('version');
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 0])->assertViolation('version');
         $this->call('restoreConfiguration', 'POST', '/api/backup/restore', ['format' => 'ha-climate-backup', 'version' => 1])->assertStatus(422);
+    }
+
+    public function testAVersionOneBackupWithTheSeasonOffRestoresAsWinterPaused(): void
+    {
+        $backup = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
+        $settings = (new Json($backup))->at('settings')->map();
+        unset($settings['paused']);
+        $legacy = [...$backup, 'version' => 1, 'settings' => [...$settings, 'season' => 'off']];
+
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', $legacy, self::asUser())->assertStatus(200);
+
+        $restored = $this->call('getSettings', 'GET', '/api/settings')->json();
+        self::assertSame('winter', $restored['season']);
+        self::assertTrue($restored['paused']);
+        self::assertSame('Alice', $this->auditEntries('audit.engine.paused')[0]->getActorName());
+        self::assertSame(2, $this->call('exportConfiguration', 'GET', '/api/backup')->json()['version'], 'Exports are always the current version.');
+    }
+
+    public function testAVersionOneBackupWithoutPausedIsNotPaused(): void
+    {
+        $this->call('updatePause', 'PUT', '/api/pause', ['paused' => true])->assertStatus(200);
+        $backup = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
+        $settings = (new Json($backup))->at('settings')->map();
+        unset($settings['paused']);
+
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 1, 'settings' => [...$settings, 'season' => 'summer']])->assertStatus(200);
+
+        $restored = $this->call('getSettings', 'GET', '/api/settings')->json();
+        self::assertSame('summer', $restored['season']);
+        self::assertFalse($restored['paused']);
+        self::assertCount(1, $this->auditEntries('audit.engine.resumed'));
+    }
+
+    public function testTheSeasonOffIsOnlyKnownToOldBackups(): void
+    {
+        $backup = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
+        $settings = (new Json($backup))->at('settings')->map();
+
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'settings' => [...$settings, 'season' => 'spring']])->assertViolation('settings.season');
     }
 
     public function testTheEssentialPresetsCannotBeDroppedByARestore(): void

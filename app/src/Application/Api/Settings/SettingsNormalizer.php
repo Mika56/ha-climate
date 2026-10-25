@@ -28,6 +28,7 @@ final readonly class SettingsNormalizer
     {
         $normalized = [
             'season' => $settings->getSeason()->value,
+            'paused' => $settings->isPaused(),
             'trackedPersons' => $settings->getTrackedPersons(),
             'houseEmptyDelaySeconds' => $settings->getHouseEmptyDelaySeconds(),
             'manualOverrideMinutes' => $settings->getManualOverrideMinutes(),

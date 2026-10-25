@@ -25,7 +25,7 @@ final readonly class ScheduleRule implements RoomRuleInterface
         $mode = $context->mode();
         $schedule = $context->schedule;
 
-        if (HvacMode::Off === $mode || null === $schedule || $schedule->mode !== $mode) {
+        if (null === $schedule || $schedule->mode !== $mode) {
             return Decision::off(new Reason('reason.no_schedule'));
         }
 

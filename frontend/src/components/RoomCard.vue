@@ -6,7 +6,7 @@ import type { BoostInput, RoomStatus, Season } from '@/api/types'
 import { useErrorReporter } from '@/composables/useErrorReporter'
 import { useFormatter } from '@/composables/useFormatter'
 import { useReason } from '@/composables/useReason'
-import { mdiFire, mdiFlash, mdiPencil, mdiPower, mdiSnowflake } from '@/lib/icons'
+import { mdiFire, mdiFlash, mdiPencil, mdiSnowflake } from '@/lib/icons'
 import { useLiveStore } from '@/stores/live'
 import { usePresetStore } from '@/stores/presets'
 import BoostPanel from './BoostPanel.vue'
@@ -29,19 +29,14 @@ interface Badge {
   label: string
 }
 
-const mode = computed(() =>
-  props.season === 'winter' ? 'heat' : props.season === 'summer' ? 'cool' : 'off',
-)
+const mode = computed(() => (props.season === 'winter' ? 'heat' : 'cool'))
 const running = computed(() => props.status.devices.some((d) => d.running === true))
-const icon = computed(() =>
-  mode.value === 'heat' ? mdiFire : mode.value === 'cool' ? mdiSnowflake : mdiPower,
-)
+const icon = computed(() => (mode.value === 'heat' ? mdiFire : mdiSnowflake))
 const iconTone = computed(() => {
   if (!running.value) return 'tone-neutral'
   return mode.value === 'heat' ? 'tone-heat' : 'tone-cool'
 })
 const activity = computed(() => {
-  if (mode.value === 'off') return t('overview.activity.stopped')
   if (!running.value) return t('overview.activity.idle')
   return mode.value === 'heat' ? t('overview.activity.heating') : t('overview.activity.cooling')
 })
@@ -59,13 +54,13 @@ const targetTone = computed(() => {
   return mode.value === 'cool' ? 'tone-cool' : 'tone-heat'
 })
 
-const canBoost = computed(
-  () => mode.value !== 'off' && props.status.decision.mode !== 'off' && !props.status.override,
-)
+const canBoost = computed(() => props.status.decision.mode !== 'off' && !props.status.override)
+const pausedHint = computed(() => (props.status.paused ? t('pause.boostDisabled') : undefined))
 
 const badges = computed<Badge[]>(() => {
   const out: Badge[] = []
   const { decision, facts, override, alerts } = props.status
+  if (props.status.paused) out.push({ tone: 'tone-info', label: t('pause.simulation') })
   const code = decision.reason.code.replace(/^reason\./, '')
   if (facts.openingOpenSince && code === 'opening_open') {
     out.push({
@@ -172,7 +167,8 @@ async function cancelOverride(): Promise<void> {
       </div>
       <div class="stack">
         <span class="muted small">
-          {{ t('overview.target') }}<template v-if="presetLabel"> · {{ presetLabel }}</template>
+          {{ status.paused ? t('overview.wouldApply') : t('overview.target')
+          }}<template v-if="presetLabel"> · {{ presetLabel }}</template>
         </span>
         <span class="target" :class="targetTone" data-test="target">
           {{
@@ -199,6 +195,8 @@ async function cancelOverride(): Promise<void> {
         type="button"
         class="btn text"
         data-test="cancel-override"
+        :disabled="status.paused"
+        :title="pausedHint"
         @click="cancelOverride"
       >
         {{
@@ -210,13 +208,15 @@ async function cancelOverride(): Promise<void> {
         type="button"
         class="btn"
         data-test="boost-open"
+        :disabled="status.paused"
+        :title="pausedHint"
         @click="boostOpen = true"
       >
         <HaIcon :path="mdiFlash" :size="18" />{{ t('overview.boost') }}
       </button>
     </div>
     <BoostPanel
-      v-if="boostOpen && mode !== 'off'"
+      v-if="boostOpen && !status.paused"
       :mode="mode"
       :busy="busy"
       @confirm="startBoost"

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\Engine\Audit;
 
+use App\Domain\Climate\Season;
 use App\Domain\Decision\Decision;
 use App\Domain\Room\RoomId;
 use App\Infrastructure\Persistence\Entity\AuditEntry;
 use App\Infrastructure\Persistence\Enum\ActorType;
 use App\Infrastructure\Persistence\Repository\AuditEntryRepository;
+use App\Infrastructure\Persistence\Repository\PresetRepository;
 use App\Infrastructure\Persistence\Repository\RoomRepository;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
@@ -31,6 +33,7 @@ final class AuditLogger
         private readonly AuditEntryRepository $entries,
         private readonly RoomRepository $rooms,
         private readonly ClockInterface $clock,
+        private readonly PresetRepository $presets,
     ) {
     }
 
@@ -63,8 +66,11 @@ final class AuditLogger
     /**
      * Records the decision if it differs from the previous one of the room. The very first decision seen
      * for a room (after a start) is remembered but not recorded: nothing changed from the user's viewpoint.
+     *
+     * While HA Climate is paused ($pausedIn is the season it would be driving) the change is recorded as what it
+     * would have done, flagged as not applied (`audit.decision.simulated`).
      */
-    public function logDecisionChange(RoomId $room, Decision $decision, string $cause): void
+    public function logDecisionChange(RoomId $room, Decision $decision, string $cause, ?Season $pausedIn = null): void
     {
         $previous = $this->lastDecisions[(string) $room] ?? null;
         $this->lastDecisions[(string) $room] = $decision;
@@ -78,9 +84,13 @@ final class AuditLogger
         if (null !== $decision->target) {
             $params['target'] = $decision->target->toFloat();
         }
+        if (null !== $pausedIn) {
+            $params = $this->simulatedParams($decision, $params, $pausedIn);
+        }
 
-        $this->log(ActorType::Automation, 'decision', 'audit.decision.changed', $params, $room, [
+        $this->log(ActorType::Automation, 'decision', null === $pausedIn ? 'audit.decision.changed' : 'audit.decision.simulated', $params, $room, [
             'cause' => $cause,
+            'simulated' => null !== $pausedIn,
             'reason' => ['code' => $decision->reason->code, 'params' => $decision->reason->params],
             'previous' => [
                 'mode' => $previous->mode->value,
@@ -109,6 +119,25 @@ final class AuditLogger
     public function forget(RoomId $room): void
     {
         unset($this->lastDecisions[(string) $room], $this->lastFailures[(string) $room]);
+    }
+
+    /**
+     * The values the "paused" wording needs: what would be applied (mode, target, season) and why (the reason
+     * code with its own parameters, the preset shown by its label).
+     *
+     * @param array<string, scalar|null> $params
+     *
+     * @return array<string, scalar|null>
+     */
+    private function simulatedParams(Decision $decision, array $params, Season $season): array
+    {
+        $reason = $decision->reason->params;
+        $preset = $reason['preset'] ?? null;
+        if (\is_string($preset)) {
+            $reason['preset'] = $this->presets->findOneByKey($preset)?->getLabel() ?? $preset;
+        }
+
+        return [...$reason, ...$params, 'season' => $season->value, 'reason' => preg_replace('/^reason\./', '', $decision->reason->code) ?? $decision->reason->code];
     }
 
     private static function isSame(Decision $a, Decision $b): bool

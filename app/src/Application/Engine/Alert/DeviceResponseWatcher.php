@@ -7,6 +7,7 @@ namespace App\Application\Engine\Alert;
 use App\Application\Engine\Command\DeviceCommandSent;
 use App\Application\Engine\Command\OwnCommandRegistry;
 use App\Application\Engine\Configuration\ConfigurationRepository;
+use App\Application\Engine\Lifecycle\EnginePauseChanged;
 use App\Application\Engine\State\EntityStateChanged;
 use App\Application\Engine\Timer\TimerScheduler;
 use App\Domain\Exception\DomainExceptionInterface;
@@ -19,9 +20,13 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
  * Checks that devices do what they are told: every command arms a persisted timer (the `device_unresponsive`
  * delay, 5 minutes by default) at which {@see DeviceUnresponsiveHandler} looks at the device; a device that
  * reaches the commanded state first disarms it and clears the alert it may have raised.
+ *
+ * Nothing is armed while HA Climate is paused, and pausing disarms the timers that were running: with nothing
+ * commanded, an unresponsive device means nothing.
  */
 #[AsEventListener(event: DeviceCommandSent::class, method: 'onCommandSent')]
 #[AsEventListener(event: EntityStateChanged::class, method: 'onStateChanged')]
+#[AsEventListener(event: EnginePauseChanged::class, method: 'onPauseChanged')]
 final readonly class DeviceResponseWatcher
 {
     public const string TIMER_TYPE = 'device_unresponsive';
@@ -41,6 +46,10 @@ final readonly class DeviceResponseWatcher
 
     public function onCommandSent(DeviceCommandSent $event): void
     {
+        if ($this->configuration->isPaused()) {
+            return;
+        }
+
         $delay = $this->types->findOneByType(NotificationType::DeviceUnresponsive)?->getDelaySeconds() ?? self::DEFAULT_DELAY_SECONDS;
         $device = (string) $event->device;
 
@@ -51,6 +60,13 @@ final readonly class DeviceResponseWatcher
             $event->roomId,
             ['device' => $device, 'mode' => $event->mode->value, 'temperature' => $event->temperature, 'delay' => $delay],
         );
+    }
+
+    public function onPauseChanged(EnginePauseChanged $event): void
+    {
+        if ($event->paused) {
+            $this->timers->cancelOfType(self::TIMER_TYPE);
+        }
     }
 
     public function onStateChanged(EntityStateChanged $event): void

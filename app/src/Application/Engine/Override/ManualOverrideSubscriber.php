@@ -20,7 +20,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
  *   season. Modes the engine does not drive (`auto`, `heat_cool`, `dry`...) and devices reporting no target
  *   create nothing.
  * - A device that merely comes back from `unavailable` / `unknown` was not touched by anybody: nothing is created.
- * - Season off: nothing is created, the season rule beats any override anyway.
+ * - While HA Climate is paused nothing is created: the user is in charge of the devices.
  * - A mode that differs from the season's (heat set in summer) is recorded but ignored while it lasts: the
  *   decision follows the season, so the engine puts the device back on the cooling schedule.
  * - A new manual change replaces the previous override (boost included) and restarts the countdown.
@@ -44,7 +44,7 @@ final readonly class ManualOverrideSubscriber
         $minutes = $configuration->manualOverrideMinutes;
         $seasonMode = $configuration->season->activeHvacMode();
         $mode = HvacMode::tryFrom($event->newMode);
-        if ($minutes < 1 || null === $mode || HvacMode::Off === $seasonMode || \in_array($event->oldMode, ['unavailable', 'unknown'], true)) {
+        if ($configuration->paused || $minutes < 1 || null === $mode || \in_array($event->oldMode, ['unavailable', 'unknown'], true)) {
             return;
         }
 

@@ -292,6 +292,7 @@ export function buildSchedules(): Schedule[] {
 export function buildSettings(): Settings {
   return {
     season: 'winter',
+    paused: false,
     trackedPersons: ['person.alex', 'person.sam'],
     houseEmptyDelaySeconds: 900,
     manualOverrideMinutes: 120,

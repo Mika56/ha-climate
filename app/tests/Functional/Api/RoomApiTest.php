@@ -297,6 +297,16 @@ final class RoomApiTest extends ApiTestCase
         $this->call('startBoost', 'POST', '/api/rooms/'.$id.'/boost', ['delta' => 1, 'durationMinutes' => 5])->assertError(503, 'engine_unavailable');
     }
 
+    public function testBoostAndCancelAreRefusedWhileHaClimateIsPaused(): void
+    {
+        $id = $this->createRoom();
+        $this->engine()->answer('POST', '/internal/rooms/'.$id.'/boost', ['error' => 'paused', 'message' => 'HA Climate is paused.'], 409);
+        $this->engine()->answer('DELETE', '/internal/rooms/'.$id.'/override', ['error' => 'paused', 'message' => 'HA Climate is paused.'], 409);
+
+        $this->call('startBoost', 'POST', '/api/rooms/'.$id.'/boost', ['delta' => 1, 'durationMinutes' => 5])->assertError(409, 'paused');
+        $this->call('cancelOverride', 'DELETE', '/api/rooms/'.$id.'/override')->assertError(409, 'paused');
+    }
+
     public function testAnOverrideIsCancelledThroughTheEngine(): void
     {
         $id = $this->createRoom();
