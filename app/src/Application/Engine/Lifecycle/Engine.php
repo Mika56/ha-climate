@@ -98,6 +98,10 @@ final class Engine
         ], null, ['timezone' => $homeAssistant->timeZone, 'language' => $homeAssistant->language, 'haVersion' => $homeAssistant->version]);
 
         $this->evaluator->evaluate($configuration->roomIds(), 'startup');
+        if ($configuration->paused) {
+            // Paused while the engine was not running: clean up what a pause removes.
+            $this->dispatcher->dispatch(new EnginePauseChanged(true));
+        }
         $this->dispatcher->dispatch(new EngineStateSynchronized(EngineStateSynchronized::STARTUP));
         $this->server->start();
     }

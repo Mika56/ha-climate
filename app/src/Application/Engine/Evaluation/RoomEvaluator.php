@@ -104,7 +104,7 @@ final class RoomEvaluator
             $snapshot->configuration->policy,
         ));
 
-        $this->audit->logDecisionChange($room->id, $decision, $cause);
+        $this->audit->logDecisionChange($room->id, $decision, $cause, $snapshot->configuration->paused ? $season : null);
         $this->executor->execute($room, $decision, $snapshot);
         $this->publisher->publish($this->statusFactory->create($room, $decision, $facts, $snapshot, $this->alerts->forRoom($room->id, $snapshot->now->getTimezone())));
         $this->armNextBoundary($room, $schedule, $decision, $snapshot);

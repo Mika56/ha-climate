@@ -73,9 +73,6 @@ final class HeatingRateLearner
     {
         $active = $snapshot->configuration->season->activeHvacMode();
         $this->forgetOtherModes($room, $active);
-        if (HvacMode::Off === $active) {
-            return;
-        }
 
         $key = self::key($room, $active);
         $setpoint = $this->setpoint($room, $active, $snapshot);

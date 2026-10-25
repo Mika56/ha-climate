@@ -131,7 +131,7 @@ final class InternalHttpServerTest extends EngineTestCase
         $this->seedDevice(mode: 'heat', target: 21.0);
         $this->startEngine();
         $port = $this->startContainerServer();
-        $this->setSeason(Season::Off);
+        $this->setSeason(Season::Summer); // Nothing cools the room: its heater goes off.
         self::assertSame([], $this->homeAssistant()->serviceCalls());
 
         $response = $this->request($port, 'POST', '/internal/reload', $this->token());

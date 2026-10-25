@@ -25,7 +25,13 @@ final class GlobalSettings
     private int $id = self::SINGLETON_ID;
 
     #[ORM\Column(type: 'string', length: 8, enumType: Season::class)]
-    private Season $season = Season::Off;
+    private Season $season = Season::Winter;
+
+    /**
+     * While paused HA Climate observes and decides but sends nothing to Home Assistant.
+     */
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $paused = false;
 
     #[ORM\Column(type: 'integer')]
     private int $houseEmptyDelaySeconds = 3600;
@@ -79,6 +85,16 @@ final class GlobalSettings
     public function changeSeason(Season $season): void
     {
         $this->season = $season;
+    }
+
+    public function isPaused(): bool
+    {
+        return $this->paused;
+    }
+
+    public function changePaused(bool $paused): void
+    {
+        $this->paused = $paused;
     }
 
     public function getHouseEmptyDelaySeconds(): int

@@ -5,6 +5,8 @@ audit:
             Moteur démarré : {rooms, plural, =0 {aucune pièce} one {# pièce} other {# pièces}} pilotée(s),
             {timers, plural, =0 {aucun minuteur} one {# minuteur} other {# minuteurs}} et
             {overrides, plural, =0 {aucune dérogation} one {# dérogation} other {# dérogations}} restauré(s).
+        paused: 'HA Climate est en pause : plus rien n’est envoyé à vos appareils jusqu’à la reprise.'
+        resumed: 'HA Climate a repris.'
     decision:
         changed: >-
             {mode, select,
@@ -12,6 +14,26 @@ audit:
             heat {Chauffage réglé à {target, number} °C}
             cool {Climatisation réglée à {target, number} °C}
             other {Mode changé en {mode}}}
+        simulated: >-
+            En pause : HA Climate aurait {mode, select,
+            off {{season, select, summer {coupé la climatisation} other {coupé le chauffage}}}
+            heat {réglé le chauffage sur {target, number} °C}
+            cool {réglé la climatisation sur {target, number} °C}
+            other {changé de mode ({mode})}}
+            ({reason, select,
+            schedule {planning {preset}}
+            preheat {préchauffage pour {preset} à {at}}
+            no_device {aucun appareil pour ce mode}
+            no_schedule {aucun planning}
+            no_rule {aucune règle ne s’applique}
+            vacation {vacances jusqu’au {returnAt}}
+            house_empty {personne à la maison}
+            opening_open {fenêtre ouverte}
+            boost {boost jusqu’à {until}}
+            manual_override {réglage manuel jusqu’à {until}}
+            room_vacant {pièce inoccupée}
+            season_off {saison coupée}
+            other {{reason}}}). Rien n’a été envoyé.
     command:
         sent: >-
             {mode, select,

@@ -25,6 +25,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * the command or postpone it with a timer. Every command is logged with the context id Home Assistant
  * returned, so that the device's resulting state change is recognised as ours, and announced with a
  * {@see DeviceCommandSent} event.
+ *
+ * While HA Climate is paused nothing is planned, deferred or sent: the user drives the devices, and the
+ * postponements armed before the pause are dropped.
  */
 final class CommandExecutor
 {
@@ -50,6 +53,14 @@ final class CommandExecutor
 
     public function execute(RoomConfiguration $room, Decision $decision, EngineSnapshot $snapshot): void
     {
+        if ($snapshot->configuration->paused) {
+            foreach ($room->devices as $device) {
+                $this->clearDeferral((string) $device->entityId);
+            }
+
+            return;
+        }
+
         foreach ($room->devices as $device) {
             $current = $snapshot->states->get($device->entityId);
             if (null === $current || \in_array($current->state, ['unavailable', 'unknown'], true)) {

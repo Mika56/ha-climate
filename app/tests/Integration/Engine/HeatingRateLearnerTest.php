@@ -198,13 +198,13 @@ final class HeatingRateLearnerTest extends EngineTestCase
         self::assertNull($learner->rate($room, HvacMode::Heat));
     }
 
-    public function testNothingIsLearnedWhenTheSeasonIsOffOrChangesMidEpisode(): void
+    public function testNothingIsLearnedWhenTheSeasonChangesMidEpisode(): void
     {
         $room = $this->heatedRoom(Season::Winter);
         $learner = $this->service(HeatingRateLearner::class);
         $learner->observe($room, $this->snapshot($room, 0, 'heat', 21.0, '19.0'));
 
-        $learner->observe($room, $this->snapshot($room, 30, 'heat', 21.0, '20.0', Season::Off));
+        $learner->observe($room, $this->snapshot($room, 30, 'cool', 24.0, '20.0', Season::Summer));
         $learner->observe($room, $this->snapshot($room, 60, 'heat', 21.0, '21.0'));
 
         self::assertNull($learner->rate($room, HvacMode::Heat));
@@ -243,11 +243,9 @@ final class HeatingRateLearnerTest extends EngineTestCase
 
         $first = $contributor->contribute($room, RoomFacts::none(), $this->snapshot($room, 0, 'heat', 21.0, '19.0'));
         $second = $contributor->contribute($room, RoomFacts::none(), $this->snapshot($room, 60, 'heat', 21.0, '21.0'));
-        $off = $contributor->contribute($room, RoomFacts::none(), $this->snapshot($room, 61, 'heat', 21.0, '21.0', Season::Off));
 
         self::assertNull($first->heatingRatePerHour);
         self::assertEqualsWithDelta(2.0, $second->heatingRatePerHour, 0.0001);
-        self::assertNull($off->heatingRatePerHour);
     }
 
     private function heatedRoom(Season $season, DeviceRole $role = DeviceRole::Heating): RoomConfiguration

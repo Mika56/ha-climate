@@ -79,6 +79,24 @@ final class EngineEntitiesTest extends TestCase
         self::assertNotEmpty($alert->getId()->toRfc4122());
     }
 
+    public function testAnAlertRemembersWhatItNotifiesWithUntilItIsReopened(): void
+    {
+        $alert = new Alert('k', 't', self::at('2026-01-01 10:00'));
+        self::assertNull($alert->getNotificationType());
+        self::assertSame([], $alert->getNotificationParams());
+
+        $alert->rememberNotification('sensor_unavailable', ['entity' => 'sensor.x']);
+
+        self::assertSame('sensor_unavailable', $alert->getNotificationType());
+        self::assertSame(['entity' => 'sensor.x'], $alert->getNotificationParams());
+
+        $alert->resolve(self::at('2026-01-01 11:00'));
+        $alert->reopen(self::at('2026-01-01 12:00'));
+
+        self::assertNull($alert->getNotificationType());
+        self::assertSame([], $alert->getNotificationParams());
+    }
+
     public function testHeatingRateMustBePositive(): void
     {
         $rate = new HeatingRate(new Room('A'), HvacMode::Heat, 1.0, self::at('2026-01-01 10:00'));

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Engine\Notification;
 
 use App\Application\Engine\Audit\AuditLogger;
+use App\Application\Engine\Configuration\ConfigurationRepository;
 use App\Application\Port\HomeAssistant\HomeAssistantException;
 use App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface;
 use App\Domain\Room\RoomId;
@@ -15,6 +16,9 @@ use Psr\Log\LoggerInterface;
 /**
  * Creates and dismisses Home Assistant persistent notifications (the ones shown in the sidebar). The
  * notification id is stable for an alert, so creating twice replaces and dismissing twice is harmless.
+ *
+ * Nothing is created while HA Climate is paused. Dismissing stays possible: pausing dismisses the notifications
+ * HA Climate created.
  */
 final readonly class PersistentNotifier
 {
@@ -23,6 +27,7 @@ final readonly class PersistentNotifier
         private NotificationTexts $texts,
         private AuditLogger $audit,
         private LoggerInterface $logger,
+        private ConfigurationRepository $configuration,
     ) {
     }
 
@@ -41,6 +46,10 @@ final readonly class PersistentNotifier
      */
     public function create(string $notificationId, NotificationType $type, array $params, ?RoomId $room = null): bool
     {
+        if ($this->configuration->isPaused()) {
+            return false;
+        }
+
         try {
             $this->gateway->callService('persistent_notification', 'create', [
                 'notification_id' => $notificationId,

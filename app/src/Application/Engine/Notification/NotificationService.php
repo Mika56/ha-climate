@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Engine\Notification;
 
 use App\Application\Engine\Audit\AuditLogger;
+use App\Application\Engine\Configuration\ConfigurationRepository;
 use App\Application\Port\HomeAssistant\HomeAssistantException;
 use App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface;
 use App\Domain\Room\RoomId;
@@ -19,6 +20,9 @@ use Psr\Log\LoggerInterface;
  * Sends a notification to every enabled destination (a Home Assistant `notify.*` service), provided its type
  * is enabled. A type with no setting row counts as enabled. A destination that fails is logged and audited,
  * and never prevents the others from being served nor the engine from carrying on.
+ *
+ * Nothing is sent while HA Climate is paused (the caller keeps the notification pending). The test
+ * notification is an explicit request of the user and is still sent.
  */
 final readonly class NotificationService
 {
@@ -31,6 +35,7 @@ final readonly class NotificationService
         private NotificationTexts $texts,
         private AuditLogger $audit,
         private LoggerInterface $logger,
+        private ConfigurationRepository $configuration,
     ) {
     }
 
@@ -41,6 +46,10 @@ final readonly class NotificationService
      */
     public function notify(NotificationType $type, array $params, ?RoomId $room = null): bool
     {
+        if ($this->configuration->isPaused()) {
+            return false;
+        }
+
         $setting = $this->types->findOneByType($type);
         if (null !== $setting && !$setting->isEnabled()) {
             return false;

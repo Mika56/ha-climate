@@ -45,6 +45,19 @@ final class Alert
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $persistentNotificationId = null;
 
+    /**
+     * What the alert notifies with (a notification type value), kept so that a notification held back while
+     * HA Climate is paused can be sent when it resumes.
+     */
+    #[ORM\Column(type: 'string', length: 32, nullable: true)]
+    private ?string $notificationType = null;
+
+    /**
+     * @var array<string, scalar|null>|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $notificationParams = null;
+
     public function __construct(string $key, string $type, \DateTimeImmutable $openedAt, ?string $entityId = null, ?Room $room = null)
     {
         $this->id = Uuid::v7();
@@ -100,6 +113,28 @@ final class Alert
         return $this->persistentNotificationId;
     }
 
+    public function getNotificationType(): ?string
+    {
+        return $this->notificationType;
+    }
+
+    /**
+     * @return array<string, scalar|null>
+     */
+    public function getNotificationParams(): array
+    {
+        return $this->notificationParams ?? [];
+    }
+
+    /**
+     * @param array<string, scalar|null> $params
+     */
+    public function rememberNotification(string $type, array $params): void
+    {
+        $this->notificationType = Guard::notBlank($type, 'notificationType');
+        $this->notificationParams = $params;
+    }
+
     public function isActive(): bool
     {
         return null === $this->resolvedAt;
@@ -122,6 +157,8 @@ final class Alert
         $this->resolvedAt = null;
         $this->notifiedAt = null;
         $this->persistentNotificationId = null;
+        $this->notificationType = null;
+        $this->notificationParams = null;
     }
 
     public function markNotified(\DateTimeImmutable $notifiedAt): void

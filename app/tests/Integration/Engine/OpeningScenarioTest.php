@@ -191,7 +191,7 @@ final class OpeningScenarioTest extends NotificationTestCase
 
     public function testNoSetpointNotificationWhenTheRoomWouldBeOffAnyway(): void
     {
-        $this->setSeason(Season::Off);
+        $this->setSeason(Season::Summer); // Nothing cools the room: it would be off anyway.
         $this->startWithClosedWindow();
 
         $this->homeAssistant()->pushStateChange(self::WINDOW, 'on');

@@ -48,7 +48,8 @@ final class DefaultDataSeederTest extends PersistenceTestCase
             array_map(static fn (Preset $p): string => $p->getKey(), $this->service(PresetRepository::class)->findAllOrdered()),
         );
         self::assertSame('Comfort', $this->service(PresetRepository::class)->findOneByKey('comfort')?->getLabel());
-        self::assertSame(Season::Off, $this->service(GlobalSettingsRepository::class)->get()->getSeason());
+        self::assertSame(Season::Winter, $this->service(GlobalSettingsRepository::class)->get()->getSeason());
+        self::assertFalse($this->service(GlobalSettingsRepository::class)->get()->isPaused());
         self::assertSame(4, $this->em()->getRepository(NotificationTypeSetting::class)->count([]));
         foreach (NotificationType::cases() as $type) {
             self::assertNotNull($this->service(NotificationTypeSettingRepository::class)->findOneByType($type), $type->value);

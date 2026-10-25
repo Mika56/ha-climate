@@ -25,7 +25,6 @@ use App\Domain\Decision\Rule\OverrideRule;
 use App\Domain\Decision\Rule\PreheatRule;
 use App\Domain\Decision\Rule\RoomVacancyRule;
 use App\Domain\Decision\Rule\ScheduleRule;
-use App\Domain\Decision\Rule\SeasonOffRule;
 use App\Domain\Decision\Rule\VacationRule;
 use App\Domain\Decision\TargetResolver;
 use App\Infrastructure\Engine\Http\InternalRouter;
@@ -55,7 +54,6 @@ final class ExtensionPointsWiringTest extends KernelTestCase
 
         self::assertSame(
             [
-                SeasonOffRule::class,
                 NoDeviceForModeRule::class,
                 VacationRule::class,
                 HouseEmptyRule::class,

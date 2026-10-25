@@ -153,18 +153,32 @@ final class OverrideRoutesTest extends EngineTestCase
         self::assertSame(200, $this->send('POST', $this->boostPath(), '{"delta":5,"durationMinutes":1440}')->getStatus());
     }
 
-    public function testAnUnknownRoomIs404AndAnInactiveSeasonIs409(): void
+    public function testAnUnknownRoomIs404AndASeasonWithoutDeviceIs409(): void
     {
         $unknown = $this->send('POST', '/internal/rooms/ghost/boost', '{"delta":1,"durationMinutes":30}');
         self::assertSame(404, $unknown->getStatus());
         self::assertSame('room_not_found', $this->json($unknown)['error']);
         self::assertSame(404, $this->send('DELETE', '/internal/rooms/ghost/override')->getStatus());
 
-        $this->setSeason(Season::Off);
+        $this->setSeason(Season::Summer);
         $this->service(\App\Application\Engine\Lifecycle\ConfigurationReloader::class)->reload();
-        $off = $this->send('POST', $this->boostPath(), '{"delta":1,"durationMinutes":30}');
-        self::assertSame(409, $off->getStatus());
-        self::assertSame('no_active_mode', $this->json($off)['error']);
+        $summer = $this->send('POST', $this->boostPath(), '{"delta":1,"durationMinutes":30}');
+        self::assertSame(409, $summer->getStatus());
+        self::assertSame('no_active_mode', $this->json($summer)['error']);
+    }
+
+    public function testBoostAndCancelAreRefusedWith409WhilePaused(): void
+    {
+        $this->setPaused(true);
+        $this->service(\App\Application\Engine\Lifecycle\ConfigurationReloader::class)->reload();
+
+        $boost = $this->send('POST', $this->boostPath(), '{"delta":1,"durationMinutes":30}');
+        $cancel = $this->send('DELETE', $this->overridePath());
+
+        self::assertSame(409, $boost->getStatus());
+        self::assertSame('paused', $this->json($boost)['error']);
+        self::assertSame(409, $cancel->getStatus());
+        self::assertSame('paused', $this->json($cancel)['error']);
     }
 
     public function testABlankRoomIdAndABadActorQueryAreRefused(): void

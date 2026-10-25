@@ -34,6 +34,10 @@ final readonly class DeviceUnresponsiveHandler implements TimerHandlerInterface
 
     public function handle(Timer $timer): void
     {
+        if ($this->configuration->isPaused()) {
+            return; // Nothing is commanded while paused, so no device can be unresponsive.
+        }
+
         $payload = $timer->getPayload();
         $device = $payload['device'] ?? null;
         $mode = HvacMode::tryFrom(\is_string($payload['mode'] ?? null) ? $payload['mode'] : '');

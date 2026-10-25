@@ -19,7 +19,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Applies a configuration change made on the web side to the running engine: re-reads the database,
- * rebuilds the entity index, moves the subscription to the new entity set and re-evaluates every room.
+ * rebuilds the entity index, moves the subscription to the new entity set and re-evaluates every room. When the
+ * change paused or resumed HA Climate, {@see EnginePauseChanged} follows the evaluation: resuming therefore
+ * sends the commands first, then catches up with the notifications held back.
  */
 final readonly class ConfigurationReloader
 {
@@ -38,7 +40,8 @@ final readonly class ConfigurationReloader
 
     public function reload(): void
     {
-        $before = array_map(strval(...), $this->configuration->snapshot()->roomIds());
+        $previous = $this->configuration->snapshot();
+        $before = array_map(strval(...), $previous->roomIds());
         $configuration = $this->configuration->reload();
 
         $this->index->rebuild($configuration);
@@ -58,6 +61,10 @@ final readonly class ConfigurationReloader
 
         $this->audit->log(ActorType::System, 'engine', 'audit.configuration.reloaded', ['rooms' => \count($after), 'entities' => \count($this->index->entityIds())]);
         $this->evaluator->evaluate($configuration->roomIds(), 'reload');
+        if ($previous->paused !== $configuration->paused) {
+            $this->logger->info($configuration->paused ? 'HA Climate paused: nothing is sent to Home Assistant any more.' : 'HA Climate resumed.');
+            $this->dispatcher->dispatch(new EnginePauseChanged($configuration->paused));
+        }
         $this->dispatcher->dispatch(new EngineStateSynchronized(EngineStateSynchronized::RELOAD));
     }
 }

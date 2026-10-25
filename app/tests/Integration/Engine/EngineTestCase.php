@@ -103,6 +103,12 @@ abstract class EngineTestCase extends KernelTestCase
         $this->em()->flush();
     }
 
+    protected function setPaused(bool $paused): void
+    {
+        $this->settings()->changePaused($paused);
+        $this->em()->flush();
+    }
+
     /**
      * A room with one device, the temperature sensor, a presence entity and one opening. Presets:
      * heat comfort 21 / eco 18 / night 17 / away 15, cool comfort 24 / eco 27 / night 26 / away 30. The

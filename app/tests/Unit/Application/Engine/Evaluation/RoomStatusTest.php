@@ -68,6 +68,7 @@ final class RoomStatusTest extends TestCase
             'facts' => ['openingOpenSince' => null, 'roomVacantSince' => null, 'houseEmptySince' => null, 'heatingRatePerHour' => null],
             'alerts' => [],
             'updatedAt' => '2026-10-26T08:00:00+01:00',
+            'paused' => false,
         ], $status->jsonSerialize());
         self::assertJson(json_encode($status, \JSON_THROW_ON_ERROR));
     }
@@ -80,12 +81,12 @@ final class RoomStatusTest extends TestCase
             new StateStore(),
         );
 
-        $status = (new RoomStatusFactory())->create(Fixtures::room(), Decision::off(new Reason('reason.season_off')), RoomFacts::none(), $snapshot);
+        $status = (new RoomStatusFactory())->create(Fixtures::room(), Decision::off(new Reason('reason.no_rule')), RoomFacts::none(), $snapshot);
 
         self::assertEquals([new DeviceStatus('climate.living', 'reversible', null, null, null)], $status->devices);
         self::assertSame(['entityId' => 'climate.living', 'role' => 'reversible', 'state' => null, 'targetTemperature' => null, 'currentTemperature' => null, 'running' => null], $status->devices[0]->jsonSerialize());
         self::assertNull($status->jsonSerialize()['override']);
-        self::assertStringContainsString('"reason":{"code":"reason.season_off","params":{}}', json_encode($status, \JSON_THROW_ON_ERROR), 'No parameter is an empty object, not an empty list.');
+        self::assertStringContainsString('"reason":{"code":"reason.no_rule","params":{}}', json_encode($status, \JSON_THROW_ON_ERROR), 'No parameter is an empty object, not an empty list.');
     }
 
     /**
@@ -102,7 +103,7 @@ final class RoomStatusTest extends TestCase
             $store,
         );
 
-        $status = (new RoomStatusFactory())->create(Fixtures::room(), Decision::off(new Reason('reason.season_off')), RoomFacts::none(), $snapshot);
+        $status = (new RoomStatusFactory())->create(Fixtures::room(), Decision::off(new Reason('reason.no_rule')), RoomFacts::none(), $snapshot);
 
         self::assertSame($running, $status->devices[0]->running);
     }
