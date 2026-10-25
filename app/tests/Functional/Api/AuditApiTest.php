@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Api;
 
+use App\Application\Api\ApiTime;
 use App\Application\Api\Audit\AuditEntryNormalizer;
 use App\Application\Api\Audit\AuditMessageRenderer;
 use App\Application\Api\Audit\AuditService;
+use App\Application\Api\Exception\ValidationException;
 use App\Application\Api\Input\AuditQuery;
 use App\Infrastructure\Persistence\Entity\AuditEntry;
 use App\Infrastructure\Persistence\Entity\Room;
 use App\Infrastructure\Persistence\Enum\ActorType;
 use App\Infrastructure\Persistence\Repository\AuditEntryRepository;
+use App\UI\Http\Api\ApiExceptionListener;
+use App\UI\Http\Api\ApiJsonResponse;
 use App\UI\Http\Api\AuditController;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
@@ -22,6 +26,10 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(AuditMessageRenderer::class)]
 #[CoversClass(AuditQuery::class)]
 #[CoversClass(AuditEntryRepository::class)]
+#[CoversClass(ApiTime::class)]
+#[CoversClass(ApiExceptionListener::class)]
+#[CoversClass(ApiJsonResponse::class)]
+#[CoversClass(ValidationException::class)]
 #[UsesNamespace('App\Application')]
 #[UsesNamespace('App\UI')]
 #[UsesNamespace('App\Infrastructure')]

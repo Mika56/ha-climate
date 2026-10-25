@@ -4,14 +4,22 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Api;
 
+use App\Application\Api\ApiTime;
+use App\Application\Api\Audit\AuditEntryNormalizer;
+use App\Application\Api\Audit\AuditMessageRenderer;
+use App\Application\Api\Exception\NotFoundException;
 use App\Application\Api\Overview\OverviewService;
+use App\Application\Api\Settings\SettingsNormalizer;
 use App\Application\Api\Status\StatusService;
 use App\Application\Engine\Alert\AlertView;
+use App\Infrastructure\Engine\EngineClient;
 use App\Infrastructure\Persistence\Entity\Alert;
 use App\Infrastructure\Persistence\Entity\AuditEntry;
 use App\Infrastructure\Persistence\Entity\GlobalSettings;
 use App\Infrastructure\Persistence\Entity\Room;
 use App\Infrastructure\Persistence\Enum\ActorType;
+use App\UI\Http\Api\ApiExceptionListener;
+use App\UI\Http\Api\ApiJsonResponse;
 use App\UI\Http\Api\OverviewController;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
@@ -20,6 +28,14 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(OverviewService::class)]
 #[CoversClass(StatusService::class)]
 #[CoversClass(AlertView::class)]
+#[CoversClass(ApiTime::class)]
+#[CoversClass(ApiExceptionListener::class)]
+#[CoversClass(ApiJsonResponse::class)]
+#[CoversClass(AuditEntryNormalizer::class)]
+#[CoversClass(AuditMessageRenderer::class)]
+#[CoversClass(SettingsNormalizer::class)]
+#[CoversClass(EngineClient::class)]
+#[CoversClass(NotFoundException::class)]
 #[UsesNamespace('App\Application')]
 #[UsesNamespace('App\UI')]
 #[UsesNamespace('App\Infrastructure')]

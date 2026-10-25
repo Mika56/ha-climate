@@ -6,13 +6,31 @@ namespace App\Tests\Functional\Api;
 
 use App\Application\Api\Backup\BackupExporter;
 use App\Application\Api\Backup\BackupRestorer;
+use App\Application\Api\ConfigurationAudit;
+use App\Application\Api\EngineNotifier;
+use App\Application\Api\Exception\ValidationException;
+use App\Application\Api\Exception\Violations;
 use App\Application\Api\Input\BackupRequest;
+use App\Application\Api\Input\RoomRequest;
+use App\Application\Api\Input\ScheduleRequest;
+use App\Application\Api\Input\SettingsRequest;
+use App\Application\Api\Preset\PresetService;
+use App\Application\Api\Room\RoomApplier;
+use App\Application\Api\Room\RoomNormalizer;
+use App\Application\Api\Schedule\ScheduleBuilder;
+use App\Application\Api\Schedule\ScheduleNormalizer;
+use App\Application\Api\Settings\NotificationSettingsApplier;
+use App\Application\Api\Settings\NotificationSettingsService;
+use App\Application\Api\Settings\SettingsApplier;
+use App\Application\Api\Settings\SettingsNormalizer;
 use App\Domain\Climate\HvacMode;
 use App\Infrastructure\Persistence\Entity\AuditEntry;
 use App\Infrastructure\Persistence\Entity\HeatingRate;
 use App\Infrastructure\Persistence\Entity\Room;
 use App\Infrastructure\Persistence\Entity\Timer;
 use App\Infrastructure\Persistence\Enum\ActorType;
+use App\UI\Http\Api\ApiExceptionListener;
+use App\UI\Http\Api\ApiJsonResponse;
 use App\UI\Http\Api\BackupController;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
@@ -21,6 +39,24 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(BackupExporter::class)]
 #[CoversClass(BackupRestorer::class)]
 #[CoversClass(BackupRequest::class)]
+#[CoversClass(ValidationException::class)]
+#[CoversClass(Violations::class)]
+#[CoversClass(ApiExceptionListener::class)]
+#[CoversClass(ApiJsonResponse::class)]
+#[CoversClass(ConfigurationAudit::class)]
+#[CoversClass(EngineNotifier::class)]
+#[CoversClass(RoomApplier::class)]
+#[CoversClass(RoomNormalizer::class)]
+#[CoversClass(ScheduleBuilder::class)]
+#[CoversClass(ScheduleNormalizer::class)]
+#[CoversClass(SettingsApplier::class)]
+#[CoversClass(SettingsNormalizer::class)]
+#[CoversClass(NotificationSettingsApplier::class)]
+#[CoversClass(NotificationSettingsService::class)]
+#[CoversClass(PresetService::class)]
+#[CoversClass(ScheduleRequest::class)]
+#[CoversClass(RoomRequest::class)]
+#[CoversClass(SettingsRequest::class)]
 #[UsesNamespace('App\Application')]
 #[UsesNamespace('App\UI')]
 #[UsesNamespace('App\Infrastructure')]

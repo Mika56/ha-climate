@@ -121,7 +121,7 @@ final class InternalHttpServerTest extends EngineTestCase
         self::assertCount(1, $payload['rooms']);
         self::assertSame('Living room', $payload['rooms'][0]['name']);
         self::assertSame(19.5, $payload['rooms'][0]['currentTemperature']);
-        self::assertEquals(['mode' => 'heat', 'target' => 21.0, 'reason' => ['code' => 'reason.schedule', 'params' => ['preset' => 'comfort', 'until' => '22:30']]], $payload['rooms'][0]['decision']);
+        self::assertEquals(['mode' => 'heat', 'target' => 21.0, 'reason' => ['code' => 'reason.schedule', 'params' => ['preset' => 'comfort', 'until' => '2026-10-26T22:30:00+01:00']]], $payload['rooms'][0]['decision']);
     }
 
     public function testReloadAppliesTheConfigurationChange(): void

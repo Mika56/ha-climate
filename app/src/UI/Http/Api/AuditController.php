@@ -31,12 +31,7 @@ final readonly class AuditController
     {
         $locale = $request->getLocale();
         $response = new StreamedResponse(function () use ($query, $locale): void {
-            $output = fopen('php://output', 'wb');
-            if (false === $output) {
-                throw new \RuntimeException('Cannot write the export.');
-            }
-            $this->audit->exportCsv($query, $locale, $output);
-            fclose($output);
+            $this->audit->exportCsv($query, $locale, new \SplFileObject('php://output', 'wb'));
         });
         $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
         $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, 'ha-climate-audit.csv'));

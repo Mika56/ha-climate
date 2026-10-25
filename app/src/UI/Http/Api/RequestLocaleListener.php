@@ -26,7 +26,9 @@ final readonly class RequestLocaleListener
     public function __invoke(RequestEvent $event): void
     {
         $request = $event->getRequest();
-        if (!$event->isMainRequest() || !str_starts_with($request->getPathInfo(), '/api')) {
+        $path = $request->getPathInfo();
+        // The health check must not depend on the database.
+        if (!$event->isMainRequest() || !str_starts_with($path, '/api') || '/api/health' === $path) {
             return;
         }
 

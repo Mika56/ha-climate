@@ -52,19 +52,17 @@ final readonly class AuditService
     /**
      * Writes the matching entries, newest first, as CSV with their message rendered, page by page so a long
      * trail never sits in memory at once.
-     *
-     * @param resource $output
      */
-    public function exportCsv(AuditQuery $query, string $locale, $output): void
+    public function exportCsv(AuditQuery $query, string $locale, \SplFileObject $output): void
     {
-        fputcsv($output, self::CSV_HEADER, ',', '"', '');
+        $output->fputcsv(self::CSV_HEADER, ',', '"', '');
 
         for ($offset = 0;; $offset += self::EXPORT_PAGE) {
             $criteria = $this->criteria($query, self::EXPORT_PAGE, $offset);
             $page = null === $criteria ? [] : $this->entries->search($criteria);
 
             foreach ($page as $entry) {
-                fputcsv($output, array_map(self::safeCell(...), [
+                $output->fputcsv(array_map(self::safeCell(...), [
                     (string) $this->time->format($entry->getOccurredAt()),
                     $entry->getActorType()->value,
                     $entry->getActorName() ?? $entry->getActorId() ?? '',

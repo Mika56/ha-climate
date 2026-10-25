@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Api;
 
 use App\Application\Api\ApiTime;
+use App\Application\Api\ConfigurationAudit;
+use App\Application\Api\EngineNotifier;
+use App\Application\Api\Exception\ValidationException;
 use App\Application\Api\HaTimeZone;
 use App\Application\Api\Input\NotificationSettingsRequest;
 use App\Application\Api\Input\NotificationTargetRequest;
@@ -17,7 +20,10 @@ use App\Application\Api\Settings\NotificationSettingsService;
 use App\Application\Api\Settings\SettingsApplier;
 use App\Application\Api\Settings\SettingsNormalizer;
 use App\Application\Api\Settings\SettingsService;
+use App\Infrastructure\Engine\EngineClient;
 use App\Infrastructure\Persistence\Repository\NotificationTargetRepository;
+use App\UI\Http\Api\ApiExceptionListener;
+use App\UI\Http\Api\ApiJsonResponse;
 use App\UI\Http\Api\SettingsController;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
@@ -36,6 +42,12 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(NotificationTypeRequest::class)]
 #[CoversClass(ApiTime::class)]
 #[CoversClass(HaTimeZone::class)]
+#[CoversClass(ApiExceptionListener::class)]
+#[CoversClass(ApiJsonResponse::class)]
+#[CoversClass(ConfigurationAudit::class)]
+#[CoversClass(EngineNotifier::class)]
+#[CoversClass(EngineClient::class)]
+#[CoversClass(ValidationException::class)]
 #[UsesNamespace('App\Application')]
 #[UsesNamespace('App\UI')]
 #[UsesNamespace('App\Infrastructure')]

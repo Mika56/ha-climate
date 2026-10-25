@@ -54,11 +54,11 @@ final class OpenApiContract
     }
 
     /**
-     * @return list<string> every operationId of the contract
+     * @return array<string, array{path: string, method: string}> every operation of the contract by operationId
      */
-    public function operationIds(): array
+    public function operations(): array
     {
-        return array_keys($this->operations);
+        return $this->operations;
     }
 
     /**

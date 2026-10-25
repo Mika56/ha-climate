@@ -4,18 +4,29 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Api;
 
+use App\Application\Api\ApiTime;
 use App\Application\Api\ConfigurationAudit;
 use App\Application\Api\EngineNotifier;
+use App\Application\Api\Exception\NotFoundException;
+use App\Application\Api\Exception\ValidationException;
+use App\Application\Api\Exception\Violations;
+use App\Application\Api\HaTimeZone;
+use App\Application\Api\Input\BoostRequest;
 use App\Application\Api\Input\DeviceRequest;
 use App\Application\Api\Input\PresetTemperatureRequest;
 use App\Application\Api\Input\ReorderRoomsRequest;
 use App\Application\Api\Input\RoomRequest;
+use App\Application\Api\RequestLocale;
 use App\Application\Api\Room\RoomApplier;
 use App\Application\Api\Room\RoomChecker;
 use App\Application\Api\Room\RoomNormalizer;
 use App\Application\Api\Room\RoomService;
+use App\Application\Api\Status\StatusService;
 use App\Infrastructure\Persistence\Entity\HeatingRate;
 use App\Infrastructure\Persistence\Entity\Room;
+use App\UI\Http\Api\ApiExceptionListener;
+use App\UI\Http\Api\ApiJsonResponse;
+use App\UI\Http\Api\RequestLocaleListener;
 use App\UI\Http\Api\RoomController;
 use Monolog\Handler\TestHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -32,6 +43,17 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(ReorderRoomsRequest::class)]
 #[CoversClass(ConfigurationAudit::class)]
 #[CoversClass(EngineNotifier::class)]
+#[CoversClass(StatusService::class)]
+#[CoversClass(BoostRequest::class)]
+#[CoversClass(ApiExceptionListener::class)]
+#[CoversClass(ApiJsonResponse::class)]
+#[CoversClass(ValidationException::class)]
+#[CoversClass(Violations::class)]
+#[CoversClass(NotFoundException::class)]
+#[CoversClass(ApiTime::class)]
+#[CoversClass(HaTimeZone::class)]
+#[CoversClass(RequestLocale::class)]
+#[CoversClass(RequestLocaleListener::class)]
 #[UsesNamespace('App\Application')]
 #[UsesNamespace('App\UI')]
 #[UsesNamespace('App\Infrastructure')]

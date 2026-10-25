@@ -8,6 +8,7 @@ use App\Application\Api\ConfigurationAudit;
 use App\Application\Api\EngineNotifier;
 use App\Application\Api\Exception\ConflictException;
 use App\Application\Api\Exception\NotFoundException;
+use App\Application\Api\Exception\ValidationException;
 use App\Application\Api\Input\PresetRequest;
 use App\Application\Api\Preset\PresetService;
 use App\Infrastructure\Persistence\Repository\ScheduleRepository;
@@ -27,6 +28,7 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(ConfigurationAudit::class)]
 #[CoversClass(EngineNotifier::class)]
 #[CoversClass(ScheduleRepository::class)]
+#[CoversClass(ValidationException::class)]
 #[UsesNamespace('App\Application')]
 #[UsesNamespace('App\UI')]
 #[UsesNamespace('App\Infrastructure')]

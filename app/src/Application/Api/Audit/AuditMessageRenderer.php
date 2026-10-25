@@ -13,7 +13,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Turns an audit entry into a sentence: its message key is an ICU message of the `audit` translation domain and
  * its parameters feed it. Parameters that are instants (ISO 8601) are shown in local time: `H:i` for today, the
- * date and time otherwise. A key nobody translated, or whose parameters do not fit its message, is shown as is.
+ * date and time otherwise. A key nobody translated is shown as is; a parameter the message needs and the entry lacks leaves its
+ * placeholder.
  */
 final readonly class AuditMessageRenderer
 {
@@ -35,11 +36,7 @@ final readonly class AuditMessageRenderer
             return $key;
         }
 
-        try {
-            return $this->translator->trans($key, $this->parameters($entry->getParams(), $locale), 'audit', $locale);
-        } catch (\Throwable) {
-            return $key;
-        }
+        return $this->translator->trans($key, $this->parameters($entry->getParams(), $locale), 'audit', $locale);
     }
 
     /**

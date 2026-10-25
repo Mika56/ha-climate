@@ -17,9 +17,4 @@ final class ValidationException extends ApiException
     {
         parent::__construct(422, 'validation_failed', 'The request cannot be applied.');
     }
-
-    public static function single(string $path, string $message): self
-    {
-        return new self([['path' => $path, 'message' => $message]]);
-    }
 }

@@ -27,11 +27,6 @@ final class Violations
         $this->violations[] = ['path' => $path, 'message' => $this->translator->trans($messageId, $parameters, 'validators')];
     }
 
-    public function isEmpty(): bool
-    {
-        return [] === $this->violations;
-    }
-
     /**
      * @throws ValidationException when something was added
      */

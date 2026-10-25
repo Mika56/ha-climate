@@ -110,6 +110,18 @@ final class SystemApiTest extends ApiTestCase
         self::assertSame(ThemePreference::Light, $stored[0]->getTheme());
     }
 
+    public function testAnUnsetLocaleFallsBackOnTheDefaultOfTheSettings(): void
+    {
+        $settings = $this->em()->find(GlobalSettings::class, GlobalSettings::SINGLETON_ID);
+        self::assertNotNull($settings);
+        $settings->configureLocales('fr', null);
+        $this->em()->flush();
+
+        self::assertSame(['locale' => 'fr', 'theme' => 'auto'], $this->call('getContext', 'GET', '/api/context')->json()['preferences']);
+        $this->call('updateMyPreferences', 'PUT', '/api/me/preferences', ['locale' => 'en', 'theme' => 'auto'], self::asUser('u1'));
+        self::assertSame('en', $this->call('getContext', 'GET', '/api/context', null, self::asUser('u1'))->data()->at('preferences.locale')->value());
+    }
+
     public function testPreferencesNeedAUserAndValidValues(): void
     {
         $this->call('updateMyPreferences', 'PUT', '/api/me/preferences', ['locale' => 'fr', 'theme' => 'dark'])->assertError(409, 'no_user');

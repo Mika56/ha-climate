@@ -10,6 +10,7 @@ use App\Application\Api\RequestLocale;
 use App\Infrastructure\Engine\EngineClient;
 use App\Infrastructure\Engine\EngineUnavailableException;
 use App\Infrastructure\Persistence\Enum\ThemePreference;
+use App\Infrastructure\Persistence\Repository\GlobalSettingsRepository;
 use App\Infrastructure\Persistence\Repository\UserPreferenceRepository;
 
 /**
@@ -22,6 +23,7 @@ final readonly class ContextService
         private EngineClient $engine,
         private HaTimeZone $timeZone,
         private UserPreferenceRepository $preferences,
+        private GlobalSettingsRepository $settings,
     ) {
     }
 
@@ -51,13 +53,16 @@ final readonly class ContextService
     }
 
     /**
+     * The user's own choices; a locale they did not choose falls back on the default of the settings (null =
+     * automatic).
+     *
      * @return array{locale: string|null, theme: string}
      */
     public function userPreferences(?IngressUser $user): array
     {
         $stored = null === $user ? null : $this->preferences->findOneByHaUserId($user->id);
 
-        return ['locale' => $stored?->getLocale(), 'theme' => ($stored?->getTheme() ?? ThemePreference::Auto)->value];
+        return ['locale' => $stored?->getLocale() ?? $this->settings->get()->getUiLocale(), 'theme' => ($stored?->getTheme() ?? ThemePreference::Auto)->value];
     }
 
     private static function text(mixed $value): ?string

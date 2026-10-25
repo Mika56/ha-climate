@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Api;
 
+use App\Application\Api\ConfigurationAudit;
+use App\Application\Api\EngineNotifier;
+use App\Application\Api\Exception\NotFoundException;
+use App\Application\Api\Exception\ValidationException;
 use App\Application\Api\Exception\Violations;
 use App\Application\Api\Input\DuplicateScheduleRequest;
 use App\Application\Api\Input\ScheduleRequest;
@@ -12,6 +16,8 @@ use App\Application\Api\Input\SlotStartRequest;
 use App\Application\Api\Schedule\ScheduleBuilder;
 use App\Application\Api\Schedule\ScheduleNormalizer;
 use App\Application\Api\Schedule\ScheduleService;
+use App\UI\Http\Api\ApiExceptionListener;
+use App\UI\Http\Api\ApiJsonResponse;
 use App\UI\Http\Api\ScheduleController;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
@@ -25,6 +31,12 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(SlotStartRequest::class)]
 #[CoversClass(DuplicateScheduleRequest::class)]
 #[CoversClass(Violations::class)]
+#[CoversClass(ValidationException::class)]
+#[CoversClass(NotFoundException::class)]
+#[CoversClass(ApiExceptionListener::class)]
+#[CoversClass(ApiJsonResponse::class)]
+#[CoversClass(ConfigurationAudit::class)]
+#[CoversClass(EngineNotifier::class)]
 #[UsesNamespace('App\Application')]
 #[UsesNamespace('App\UI')]
 #[UsesNamespace('App\Infrastructure')]
