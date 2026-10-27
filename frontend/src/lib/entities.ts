@@ -27,6 +27,7 @@ export type EntityCategory =
   | 'presence'
   | 'light'
   | 'switch'
+  | 'fan'
   | 'media'
   | 'power'
   | 'roomSensor'
@@ -40,6 +41,7 @@ export const CATEGORY_ORDER: EntityCategory[] = [
   'presence',
   'light',
   'switch',
+  'fan',
   'media',
   'power',
   'roomSensor',
@@ -63,8 +65,9 @@ export function entityCategory(entity: DiscoveredEntity): EntityCategory {
     case 'light':
       return 'light'
     case 'switch':
-    case 'fan':
       return 'switch'
+    case 'fan':
+      return 'fan'
     case 'media_player':
       return 'media'
     case 'sensor':

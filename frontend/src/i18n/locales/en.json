@@ -447,11 +447,11 @@
     "showAll": "Also show entities from other areas ({count})",
     "results": "{count} result | {count} results",
     "empty": "No entity matches.",
-    "searchEverywhere": "Search in every area ({count} more entities)",
     "category": {
       "presence": "Presence sensors",
       "light": "Lights",
       "switch": "Plugs and switches",
+      "fan": "Fans",
       "media": "Media players",
       "power": "Power sensors",
       "roomSensor": "Room sensors",
@@ -469,7 +469,8 @@
       "paused": "Paused",
       "idle": "Idle",
       "standby": "Standby"
-    }
+    },
+    "otherAreas": "Other areas"
   },
   "signals": {
     "title": "Presence signals",

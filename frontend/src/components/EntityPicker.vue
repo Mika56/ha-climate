@@ -73,14 +73,29 @@ const hasOthers = computed(
 )
 const pool = computed(() => (showAll.value || !hasOthers.value ? candidates.value : scoped.value))
 
-const results = computed(() =>
-  pool.value
+const matching = (list: PickerEntity[]): PickerEntity[] =>
+  list
     .filter((e) => matchesQuery(`${e.name} ${e.entityId} ${areaName(e.areaId) ?? ''}`, query.value))
-    .sort((a, b) => a.name.localeCompare(b.name)),
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+const results = computed(() => matching(pool.value))
+/** Matches outside the room's area, which "show all" would add. */
+const otherMatches = computed(() =>
+  hasOthers.value ? matching(candidates.value.filter((e) => e.areaId !== props.areaId)) : [],
 )
+/** Nothing matches in the area: show the other areas' matches straight away, under their own header. */
+const fallback = computed(
+  () =>
+    hasOthers.value &&
+    !showAll.value &&
+    query.value.trim() !== '' &&
+    results.value.length === 0 &&
+    otherMatches.value.length > 0,
+)
+const displayed = computed(() => (fallback.value ? otherMatches.value : results.value))
 const groups = computed(() => {
   const byCategory = new Map<EntityCategory, PickerEntity[]>()
-  for (const entity of results.value) {
+  for (const entity of displayed.value) {
     const category = entityCategory(entity)
     byCategory.set(category, [...(byCategory.get(category) ?? []), entity])
   }
@@ -90,7 +105,7 @@ const groups = computed(() => {
   }))
 })
 const flat = computed(() => groups.value.flatMap((g) => g.items))
-const otherCount = computed(() => candidates.value.length - scoped.value.length)
+const otherCount = computed(() => otherMatches.value.length)
 
 watch([query, showAll], () => {
   active.value = 0
@@ -268,14 +283,21 @@ function onDialogKeydown(event: KeyboardEvent): void {
           />
         </div>
 
-        <label v-if="hasOthers" class="check scope">
+        <label v-if="hasOthers && (otherCount > 0 || showAll)" class="check scope">
           <input v-model="showAll" type="checkbox" data-test="picker-show-all" />{{
             t('picker.showAll', { count: otherCount })
           }}
         </label>
 
         <p class="count" role="status" aria-live="polite">
-          {{ t('picker.results', results.length) }}
+          {{ t('picker.results', displayed.length) }}
+        </p>
+
+        <div v-if="displayed.length === 0" class="empty" data-test="picker-empty">
+          <p>{{ t('picker.empty') }}</p>
+        </div>
+        <p v-if="fallback" class="others" data-test="picker-others">
+          {{ t('picker.otherAreas') }}
         </p>
 
         <ul :id="listId" class="list" role="listbox" :aria-label="label">
@@ -318,18 +340,6 @@ function onDialogKeydown(event: KeyboardEvent): void {
             </ul>
           </li>
         </ul>
-
-        <div v-if="results.length === 0" class="empty" data-test="picker-empty">
-          <p>{{ t('picker.empty') }}</p>
-          <button
-            v-if="hasOthers && !showAll"
-            type="button"
-            class="btn text"
-            @click="showAll = true"
-          >
-            {{ t('picker.searchEverywhere', { count: otherCount }) }}
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -473,6 +483,13 @@ function onDialogKeydown(event: KeyboardEvent): void {
 }
 .empty p {
   margin: 0 0 8px;
+}
+.others {
+  margin: 0;
+  padding: 4px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
 }
 
 @media (max-width: 640px) {
