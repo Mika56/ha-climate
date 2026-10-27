@@ -227,9 +227,7 @@
     "area": "Zone Home Assistant",
     "sensors": "Capteurs",
     "sensorsHint": "Entités découvertes dans Home Assistant, filtrées sur la zone de la pièce.",
-    "showAll": "Afficher les entités de toutes les zones",
     "temperature": "Température",
-    "presence": "Présence dans la pièce (facultatif)",
     "openings": "Fenêtres et portes",
     "openingsHelp": "Capteurs proposés\u00a0: binary_sensor de type Fenêtre, Porte, Ouverture ou Porte de garage, et input_boolean. Un capteur sans type (un groupe, par exemple) n’apparaît pas\u00a0: choisissez son type avec «\u00a0Afficher en tant que\u00a0» dans Home Assistant.",
     "addOpening": "Ajouter un ouvrant",
@@ -441,5 +439,57 @@
     "off": "Éteint",
     "unavailable": "Indisponible",
     "unknown": "Inconnu"
+  },
+  "picker": {
+    "close": "Fermer",
+    "clear": "Effacer la sélection",
+    "search": "Rechercher par nom, entité ou zone",
+    "showAll": "Afficher aussi les entités des autres zones ({count})",
+    "results": "{count} résultat | {count} résultats",
+    "empty": "Aucune entité ne correspond.",
+    "searchEverywhere": "Chercher dans toutes les zones ({count} entités de plus)",
+    "category": {
+      "presence": "Capteurs de présence",
+      "light": "Lumières",
+      "switch": "Prises et interrupteurs",
+      "media": "Lecteurs multimédias",
+      "power": "Capteurs de puissance",
+      "roomSensor": "Capteurs de pièce",
+      "temperature": "Capteurs de température",
+      "opening": "Fenêtres et portes",
+      "climate": "Appareils de climatisation",
+      "other": "Autres"
+    },
+    "state": {
+      "on": "Allumé",
+      "off": "Éteint",
+      "unavailable": "Indisponible",
+      "unknown": "Inconnu",
+      "playing": "Lecture",
+      "paused": "En pause",
+      "idle": "Inactif",
+      "standby": "En veille"
+    }
+  },
+  "signals": {
+    "title": "Signaux de présence",
+    "hint": "Ce qui indique à HA Climate que la pièce est utilisée\u00a0: un détecteur de mouvement, une lumière, une télé, un ordinateur, un téléphone localisé par Bermuda…",
+    "help": "La pièce est occupée tant qu’un signal est actif. Sinon, elle est inoccupée depuis la dernière activité, et le délai d’inoccupation s’applique alors. Une lumière restée allumée garde la pièce occupée. Un signal indisponible est ignoré. Sans aucun signal, la pièce n’est jamais mise en retrait pour inoccupation.",
+    "none": "Aucun signal\u00a0: la pièce n’est jamais mise en retrait pour inoccupation.",
+    "add": "Ajouter un signal",
+    "kind": {
+      "active": "Actif",
+      "above": "Au-dessus",
+      "equals": "Égal à"
+    },
+    "kindOf": "Condition de {entity}",
+    "thresholdOf": "Seuil de {entity}",
+    "valueOf": "Valeur de {entity}",
+    "valuePlaceholder": "Valeur, par exemple un nom de zone",
+    "hints": {
+      "active": "Occupée tant que l’entité est allumée (ou en lecture).",
+      "above": "Occupée tant que la valeur dépasse {threshold}\u00a0{unit}.",
+      "equals": "Occupée tant que l’état est «\u00a0{value}\u00a0»."
+    }
   }
 }

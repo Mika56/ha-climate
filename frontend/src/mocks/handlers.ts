@@ -55,6 +55,15 @@ export function validateRoom(input: RoomInput): Violation[] {
     bound(`devices[${i}].minOffSeconds`, d.minOffSeconds, 0, 7200)
     bound(`devices[${i}].hysteresis`, d.hysteresis, 0, 2)
   })
+  ;(input.presenceSignals ?? []).forEach((signal, i) => {
+    const path = `presenceSignals[${i}]`
+    if (signal.kind === 'above' && (signal.threshold ?? null) === null) {
+      v.push({ path: `${path}.threshold`, message: 'Le seuil est obligatoire.' })
+    }
+    if (signal.kind === 'equals' && (signal.value ?? '').trim() === '') {
+      v.push({ path: `${path}.value`, message: 'La valeur est obligatoire.' })
+    }
+  })
   input.presetTemperatures.forEach((p, i) => {
     if (p.heat !== null) bound(`presetTemperatures[${i}].heat`, p.heat, 5, 35)
     if (p.cool !== null) bound(`presetTemperatures[${i}].cool`, p.cool, 5, 35)
