@@ -1,15 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 - Rooms now have a list of **presence signals** instead of a single presence sensor: a signal is an entity that
   is *active* (motion sensor, light, switch, fan, media player that is on), a numeric sensor *above* a threshold
   (a power sensor) or a sensor *equal* to a value (Bermuda / ESPresense). A room is occupied while one of its
-  signals is active and vacant since the latest change otherwise.
+  signals is active, and vacant since the last one stopped being active otherwise (a power sensor wobbling in
+  standby does not restart the vacancy delay).
 - Unavailable or unknown signals are ignored, and no longer raise an unavailability alert nor take the room out
   of control. A room whose signals are all ignored is not considered vacant.
 - **Migration**: the presence sensor of an existing room becomes one *active* signal (same behaviour as before).
 - Backups are version 3 (`presenceSignals`); version 1 and 2 backups, with a `presenceSensor`, are still restored.
+- Room editor: a new **searchable entity picker** (friendly name, entity id, area, live state, grouped by kind),
+  shown as a bottom sheet on phones, for presence signals, windows and doors, devices and the temperature
+  sensor. It starts with the room's area and falls back to the other areas when nothing matches.
+- Room editor on phones: presence signals, openings and devices are stacked cards, with no horizontal scrolling.
 - Discovery lists `activitySources` (lights, switches, fans, media players, power and room sensors) with the
   kind to use by default.
 
