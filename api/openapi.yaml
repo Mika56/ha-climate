@@ -907,6 +907,28 @@ components:
         minOffSeconds: { type: integer, minimum: 0, maximum: 7200 }
         hysteresis: { type: number, minimum: 0, maximum: 2 }
 
+    PresenceSignalKind:
+      description: >
+        active: occupied while the entity is in an active state (`on`; `playing`/`paused`/`on` for media_player;
+        domains binary_sensor, light, switch, input_boolean, fan, media_player).
+        above: occupied while the numeric state is strictly above `threshold` (power sensor in W...).
+        equals: occupied while the state equals `value` (room-presence sensor such as Bermuda/ESPresense).
+      type: string
+      enum: [active, above, equals]
+
+    PresenceSignal:
+      type: object
+      required: [entityId, kind]
+      properties:
+        entityId: { $ref: '#/components/schemas/EntityId' }
+        kind: { $ref: '#/components/schemas/PresenceSignalKind' }
+        threshold:
+          description: Required for `above`, must be null otherwise.
+          type: ['number', 'null']
+        value:
+          description: Required (non-blank, max 255) for `equals`, must be null otherwise.
+          type: ['string', 'null']
+
     PresetTemperature:
       type: object
       required: [preset, heat, cool]
@@ -922,7 +944,14 @@ components:
         name: { type: string, minLength: 1, maxLength: 64 }
         areaId: { type: ['string', 'null'] }
         temperatureSensor: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/EntityId' }] }
-        presenceSensor: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/EntityId' }] }
+        presenceSignals:
+          description: >
+            Activity signals of the room. The room is occupied while one of them is active; otherwise it is vacant
+            since the most recent activity of any of them. An empty list means the room never becomes vacant.
+          type: array
+          maxItems: 20
+          items: { $ref: '#/components/schemas/PresenceSignal' }
+          default: []
         openings:
           type: array
           items: { $ref: '#/components/schemas/EntityId' }
@@ -1125,7 +1154,7 @@ components:
 
     Discovery:
       type: object
-      required: [areas, persons, climates, temperatureSensors, presenceSensors, openingSensors, timeEntities, weather, notifyServices]
+      required: [areas, persons, climates, temperatureSensors, presenceSensors, activitySources, openingSensors, timeEntities, weather, notifyServices]
       properties:
         areas:
           type: array
@@ -1149,6 +1178,19 @@ components:
           description: binary_sensor occupancy/presence/motion and input_boolean.
           type: array
           items: { $ref: '#/components/schemas/DiscoveredEntity' }
+        activitySources:
+          description: >
+            Other entities usable as presence signals, with their default kind: light, switch, fan,
+            media_player (active); sensor with device_class power (above); sensor whose state is not numeric
+            (equals). presenceSensors (default kind active) are not repeated here.
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/DiscoveredEntity'
+              - type: object
+                required: [defaultKind]
+                properties:
+                  defaultKind: { $ref: '#/components/schemas/PresenceSignalKind' }
         openingSensors:
           description: binary_sensor window/door/opening/garage_door and input_boolean.
           type: array
