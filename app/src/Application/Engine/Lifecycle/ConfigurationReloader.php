@@ -7,6 +7,7 @@ namespace App\Application\Engine\Lifecycle;
 use App\Application\Engine\Audit\AuditLogger;
 use App\Application\Engine\Configuration\ConfigurationRepository;
 use App\Application\Engine\Evaluation\RoomEvaluator;
+use App\Application\Engine\Facts\PresenceActivityTracker;
 use App\Application\Engine\State\EntityRoomIndex;
 use App\Application\Engine\State\StateStore;
 use App\Application\Engine\State\StateSynchronizer;
@@ -29,6 +30,7 @@ final readonly class ConfigurationReloader
         private ConfigurationRepository $configuration,
         private EntityRoomIndex $index,
         private StateStore $states,
+        private PresenceActivityTracker $presence,
         private StateSynchronizer $synchronizer,
         private SubscriptionManager $subscriptions,
         private RoomEvaluator $evaluator,
@@ -46,6 +48,7 @@ final readonly class ConfigurationReloader
 
         $this->index->rebuild($configuration);
         $this->states->retain($this->index->entityIds());
+        $this->presence->retain($configuration);
         try {
             $this->synchronizer->loadMissing();
             $this->subscriptions->refresh();
