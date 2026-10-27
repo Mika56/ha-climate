@@ -74,8 +74,9 @@ Good to know:
   ignored, or when the room has none, the room is never considered vacant (it keeps following its schedule).
 - A **light left on keeps the room occupied**: only add lights and switches you really switch off when you
   leave.
-- For *Above* and *Equals* signals, the vacancy starts at the last change of the entity's state (a power sensor
-  changes all the time), so it can start a little later than the real departure.
+- A signal counts as inactive **from the moment it stopped being active** (the power dropped under the
+  threshold, the room sensor left the room), not from its last change: a standby power that keeps wobbling does
+  not keep the room occupied. After a restart of HA Climate, the last change of the entity is used instead.
 - Rooms configured before this feature keep their presence sensor as one *Active* signal.
 
 ## Pause

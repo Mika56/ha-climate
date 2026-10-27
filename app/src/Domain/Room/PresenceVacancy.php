@@ -10,14 +10,15 @@ namespace App\Domain\Room;
  * - a signal whose entity is missing, `unavailable` or `unknown` is ignored;
  * - without any usable signal (none configured, or all ignored) the room is not known to be vacant;
  * - one active usable signal means the room is occupied;
- * - otherwise the room is vacant since the most recent change of the usable signals.
- *
- * For `above` and `equals` signals the last change is the last change of the state, not of the "active" status
- * (a power sensor changes all the time): the vacancy then starts a bit late, which is the safe side for a
- * heating that waits for the room to be empty.
+ * - otherwise the room is vacant since the most recent `since` of the usable signals, that is the instant at
+ *   which the last of them became inactive. The caller supplies it: the last change of the entity is not
+ *   it (a power sensor in standby changes all the time), see the activity tracker of the engine.
  */
 final class PresenceVacancy
 {
+    /** States that say nothing about the room. */
+    public const array UNUSABLE_STATES = ['unavailable', 'unknown'];
+
     private function __construct()
     {
     }
@@ -31,14 +32,14 @@ final class PresenceVacancy
         $since = null;
         foreach ($signals as $signal) {
             $reading = $readings[(string) $signal->entityId] ?? null;
-            if (null === $reading || \in_array($reading->state, ['unavailable', 'unknown'], true)) {
+            if (null === $reading || \in_array($reading->state, self::UNUSABLE_STATES, true)) {
                 continue;
             }
             if ($signal->isActive($reading->state)) {
                 return null;
             }
-            if (null === $since || $reading->lastChanged > $since) {
-                $since = $reading->lastChanged;
+            if (null === $since || $reading->since > $since) {
+                $since = $reading->since;
             }
         }
 
