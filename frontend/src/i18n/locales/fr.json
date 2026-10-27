@@ -447,11 +447,11 @@
     "showAll": "Afficher aussi les entités des autres zones ({count})",
     "results": "{count} résultat | {count} résultats",
     "empty": "Aucune entité ne correspond.",
-    "searchEverywhere": "Chercher dans toutes les zones ({count} entités de plus)",
     "category": {
       "presence": "Capteurs de présence",
       "light": "Lumières",
       "switch": "Prises et interrupteurs",
+      "fan": "Ventilateurs",
       "media": "Lecteurs multimédias",
       "power": "Capteurs de puissance",
       "roomSensor": "Capteurs de pièce",
@@ -469,7 +469,8 @@
       "paused": "En pause",
       "idle": "Inactif",
       "standby": "En veille"
-    }
+    },
+    "otherAreas": "Autres zones"
   },
   "signals": {
     "title": "Signaux de présence",

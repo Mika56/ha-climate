@@ -39,7 +39,7 @@ const tone = computed(() => {
     </span>
     <span class="text">
       <span class="name">{{ name || entityId }}</span>
-      <span class="sub">
+      <span class="sub" :title="entityId">
         <code>{{ entityId }}</code>
         <template v-if="areaName"> · {{ areaName }}</template>
       </span>
@@ -85,7 +85,10 @@ const tone = computed(() => {
 .sub {
   font-size: 12px;
   color: var(--text2);
-  overflow-wrap: anywhere;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sub code {
   font: inherit;

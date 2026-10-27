@@ -21,7 +21,7 @@ describe('entity helpers', () => {
       [e('input_boolean.a'), 'presence'],
       [e('light.a'), 'light'],
       [e('switch.a'), 'switch'],
-      [e('fan.a'), 'switch'],
+      [e('fan.a'), 'fan'],
       [e('media_player.a'), 'media'],
       [e('sensor.a', 'power'), 'power'],
       [e('sensor.a', 'temperature'), 'temperature'],

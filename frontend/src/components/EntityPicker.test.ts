@@ -111,14 +111,21 @@ describe('EntityPicker', () => {
     expect(ids(wrapper)).toHaveLength(5)
   })
 
-  it('offers to search everywhere when the area has no match', async () => {
+  it('shows matches of other areas under their own header when the area has none', async () => {
     const wrapper = mountPicker({ areaId: 'salon' })
     await open(wrapper)
     await type(wrapper, 'bermuda')
-    expect(wrapper.find('[data-test="picker-empty"]').text()).toContain('No entity matches.')
-    await wrapper.find('[data-test="picker-empty"] button').trigger('click')
-    expect(ids(wrapper)).toEqual(['sensor.bermuda_alex'])
     expect(wrapper.find('[data-test="picker-empty"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="picker-others"]').text()).toBe('Other areas')
+    expect(ids(wrapper)).toEqual(['sensor.bermuda_alex'])
+    expect(wrapper.text()).toContain('Also show entities from other areas (1)')
+    // The count follows the search; the empty state is at the top when nothing matches anywhere.
+    await type(wrapper, 'zzz')
+    expect(wrapper.find('[data-test="picker-empty"]').text()).toContain('No entity matches.')
+    expect(wrapper.find('[data-test="picker-others"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="picker-show-all"]').exists()).toBe(false)
+    await type(wrapper, 'plafonnier')
+    expect(wrapper.find('[data-test="picker-others"]').exists()).toBe(false)
   })
 
   it('lists everything when the area holds nothing', async () => {
