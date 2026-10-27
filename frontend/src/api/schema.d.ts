@@ -652,6 +652,19 @@ export interface components {
             minOffSeconds: number;
             hysteresis: number;
         };
+        /**
+         * @description active: occupied while the entity is in an active state (`on`; `playing`/`paused`/`on` for media_player; domains binary_sensor, light, switch, input_boolean, fan, media_player). above: occupied while the numeric state is strictly above `threshold` (power sensor in W...). equals: occupied while the state equals `value` (room-presence sensor such as Bermuda/ESPresense).
+         * @enum {string}
+         */
+        PresenceSignalKind: "active" | "above" | "equals";
+        PresenceSignal: {
+            entityId: components["schemas"]["EntityId"];
+            kind: components["schemas"]["PresenceSignalKind"];
+            /** @description Required for `above`, must be null otherwise. */
+            threshold?: number | null;
+            /** @description Required (non-blank, max 255) for `equals`, must be null otherwise. */
+            value?: string | null;
+        };
         PresetTemperature: {
             preset: components["schemas"]["PresetKey"];
             heat: number | null;
@@ -661,7 +674,11 @@ export interface components {
             name: string;
             areaId?: string | null;
             temperatureSensor: null | components["schemas"]["EntityId"];
-            presenceSensor?: null | components["schemas"]["EntityId"];
+            /**
+             * @description Activity signals of the room. The room is occupied while one of them is active; otherwise it is vacant since the most recent activity of any of them. An empty list means the room never becomes vacant.
+             * @default []
+             */
+            presenceSignals: components["schemas"]["PresenceSignal"][];
             /** @default [] */
             openings: components["schemas"]["EntityId"][];
             /** @default 1200 */
@@ -805,6 +822,10 @@ export interface components {
             temperatureSensors: components["schemas"]["DiscoveredEntity"][];
             /** @description binary_sensor occupancy/presence/motion and input_boolean. */
             presenceSensors: components["schemas"]["DiscoveredEntity"][];
+            /** @description Other entities usable as presence signals, with their default kind: light, switch, fan, media_player (active); sensor with device_class power (above); sensor whose state is not numeric (equals). presenceSensors (default kind active) are not repeated here. */
+            activitySources: (components["schemas"]["DiscoveredEntity"] & {
+                defaultKind: components["schemas"]["PresenceSignalKind"];
+            })[];
             /** @description binary_sensor window/door/opening/garage_door and input_boolean. */
             openingSensors: components["schemas"]["DiscoveredEntity"][];
             /** @description input_datetime entities that have a time. */

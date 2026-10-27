@@ -38,17 +38,21 @@ describe('RoomsPage', () => {
     expect(area.value).toBe('salon')
   })
 
-  it('filters sensors by area unless "show all" is checked', async () => {
+  it('lists the sensors of the room area first and every area on demand', async () => {
     const { wrapper } = await mountApp(`/rooms/${ID.salon}`)
-    const options = () =>
-      wrapper
-        .findAll('select')
-        .flatMap((s) => s.findAll('option').map((o) => o.text()))
-        .filter((t) => t.startsWith('sensor.'))
-        .map(norm)
-    expect(options()).toEqual(['sensor.salon_temperature (20.4 °C)'])
-    await wrapper.find('[data-test="show-all"]').setValue(true)
-    expect(options().length).toBeGreaterThan(3)
+    const ids = () =>
+      wrapper.findAll('[data-test="picker-option"]').map((o) => o.attributes('data-entity-id'))
+    await wrapper
+      .find('[data-test="temperature-picker"] [data-test="picker-trigger"]')
+      .trigger('click')
+    expect(ids()).toEqual(['sensor.salon_temperature'])
+    await wrapper.find('[data-test="picker-show-all"]').setValue(true)
+    expect(ids().length).toBeGreaterThan(3)
+    await wrapper
+      .find('[data-test="picker-option"][data-entity-id="sensor.bureau_temperature"]')
+      .trigger('click')
+    expect(wrapper.find('[data-test="picker-dialog"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="temperature-picker"]').text()).toContain('Température bureau')
   })
 
   it('saves an edited room (seconds in the API) and marks the form clean', async () => {
@@ -91,8 +95,10 @@ describe('RoomsPage', () => {
     expect(wrapper.find('[data-test="room-title"]').text()).toBe('Nouvelle pièce')
     await setInput(wrapper, '[data-test="room-name"]', 'Garage')
     await setInput(wrapper, '[data-test="room-area"]', '')
-    await wrapper.find('[data-test="add-device"]').trigger('click')
-    await setInput(wrapper, '[data-test="device-select"]', 'climate.bureau_radiateur')
+    await wrapper.find('[data-test="add-device"] [data-test="picker-trigger"]').trigger('click')
+    await wrapper
+      .find('[data-test="picker-option"][data-entity-id="climate.bureau_radiateur"]')
+      .trigger('click')
     await wrapper.find('[data-test="heating-schedule"]').setValue(ID.semaine)
     await wrapper.find('form').trigger('submit')
     await settle()
@@ -125,9 +131,11 @@ describe('RoomsPage', () => {
 
   it('adds and removes openings, devices and role', async () => {
     const { wrapper } = await mountApp(`/rooms/${ID.cuisine}`)
-    await wrapper.find('[data-test="show-all"]').setValue(true)
-    await wrapper.find('[data-test="add-opening"]').trigger('click')
-    await setInput(wrapper, '[data-test="opening-select"]', 'binary_sensor.porte_garage')
+    await wrapper.find('[data-test="add-opening"] [data-test="picker-trigger"]').trigger('click')
+    await wrapper.find('[data-test="picker-show-all"]').setValue(true)
+    await wrapper
+      .find('[data-test="picker-option"][data-entity-id="binary_sensor.porte_garage"]')
+      .trigger('click')
     expect(wrapper.text()).toContain('binary_sensor.porte_garage')
     await wrapper.find('button[aria-label="Retirer binary_sensor.porte_garage"]').trigger('click')
     expect(wrapper.text()).not.toContain('binary_sensor.porte_garage')

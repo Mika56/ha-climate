@@ -227,9 +227,7 @@
     "area": "Home Assistant area",
     "sensors": "Sensors",
     "sensorsHint": "Entities discovered in Home Assistant, filtered on the room's area.",
-    "showAll": "Show entities from every area",
     "temperature": "Temperature",
-    "presence": "Room presence (optional)",
     "openings": "Windows and doors",
     "openingsHelp": "Listed sensors: binary_sensor with the Window, Door, Opening or Garage door class, and input_boolean. A sensor without a class (a group, for instance) is not listed: set its class with “Show as” in Home Assistant.",
     "addOpening": "Add an opening",
@@ -441,5 +439,57 @@
     "off": "Off",
     "unavailable": "Unavailable",
     "unknown": "Unknown"
+  },
+  "picker": {
+    "close": "Close",
+    "clear": "Clear the selection",
+    "search": "Search by name, entity or area",
+    "showAll": "Also show entities from other areas ({count})",
+    "results": "{count} result | {count} results",
+    "empty": "No entity matches.",
+    "searchEverywhere": "Search in every area ({count} more entities)",
+    "category": {
+      "presence": "Presence sensors",
+      "light": "Lights",
+      "switch": "Plugs and switches",
+      "media": "Media players",
+      "power": "Power sensors",
+      "roomSensor": "Room sensors",
+      "temperature": "Temperature sensors",
+      "opening": "Windows and doors",
+      "climate": "Climate devices",
+      "other": "Other"
+    },
+    "state": {
+      "on": "On",
+      "off": "Off",
+      "unavailable": "Unavailable",
+      "unknown": "Unknown",
+      "playing": "Playing",
+      "paused": "Paused",
+      "idle": "Idle",
+      "standby": "Standby"
+    }
+  },
+  "signals": {
+    "title": "Presence signals",
+    "hint": "What tells HA Climate that the room is in use: a motion sensor, a light, a TV, a computer, a phone located by Bermuda…",
+    "help": "The room is occupied as long as one signal is active. Otherwise it is vacant since the most recent activity, and the vacancy delay then applies. A light left on keeps the room occupied. An unavailable signal is ignored. Without any signal, the room is never set back for vacancy.",
+    "none": "No signal: the room is never set back for vacancy.",
+    "add": "Add a signal",
+    "kind": {
+      "active": "Active",
+      "above": "Above",
+      "equals": "Equals"
+    },
+    "kindOf": "Condition of {entity}",
+    "thresholdOf": "Threshold of {entity}",
+    "valueOf": "Value of {entity}",
+    "valuePlaceholder": "Value, for example an area name",
+    "hints": {
+      "active": "Occupied while the entity is on (or playing).",
+      "above": "Occupied while the value is above {threshold} {unit}.",
+      "equals": "Occupied while the state is “{value}”."
+    }
   }
 }
