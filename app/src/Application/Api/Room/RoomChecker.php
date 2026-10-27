@@ -19,7 +19,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Checks a room request against the data it points at: the schedules and presets must exist, schedules must
- * fit the mode they are used for, and a device cannot be driven by two rooms.
+ * fit the mode they are used for, the presence signals must be consistent, and a device cannot be driven by two rooms.
  */
 final readonly class RoomChecker
 {
@@ -27,6 +27,7 @@ final readonly class RoomChecker
         private PresetRepository $presets,
         private ScheduleRepository $schedules,
         private DeviceRepository $devices,
+        private PresenceSignalsChecker $presenceSignals,
         private TranslatorInterface $translator,
     ) {
     }
@@ -59,6 +60,8 @@ final readonly class RoomChecker
             }
             $seen[$entry->preset] = true;
         }
+
+        $this->presenceSignals->check($request->signals(), 'presenceSignals', $violations);
 
         $given = [];
         foreach ($request->devices as $index => $device) {

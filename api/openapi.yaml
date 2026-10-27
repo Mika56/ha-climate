@@ -1231,8 +1231,8 @@ components:
         format: { const: ha-climate-backup }
         version:
           type: integer
-          enum: [1, 2]
-          description: Exports are version 2. Version 1 (season `off`, no `paused`) is still accepted by the restore.
+          enum: [1, 2, 3]
+          description: Exports are version 3. Version 1 (season `off`, no `paused`) and 2 (`presenceSensor` instead of `presenceSignals` in rooms) are still accepted by the restore.
         exportedAt: { type: string, format: date-time }
         settings: { $ref: '#/components/schemas/BackupSettings' }
         presets: { type: array, items: { $ref: '#/components/schemas/Preset' } }

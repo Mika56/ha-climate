@@ -40,6 +40,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\App\Domain\Preset\PresetKey::class)]
 #[UsesClass(PresetTemperatures::class)]
 #[UsesClass(\App\Domain\Room\RoomId::class)]
+#[UsesClass(\App\Domain\Room\PresenceSignal::class)]
 #[UsesClass(AnchoredSlotStart::class)]
 #[UsesClass(\App\Domain\Schedule\FixedSlotStart::class)]
 #[UsesClass(\App\Domain\Schedule\MinuteOfDay::class)]

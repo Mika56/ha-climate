@@ -6,6 +6,9 @@ namespace App\Infrastructure\Persistence\Entity;
 
 use App\Domain\Climate\HvacMode;
 use App\Domain\Device\DeviceRole;
+use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Infrastructure\Persistence\Repository\RoomRepository;
 use App\Infrastructure\Persistence\Support\Guard;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -18,6 +21,8 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'room')]
 final class Room
 {
+    public const int MAX_PRESENCE_SIGNALS = 20;
+
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME)]
     private Uuid $id;
@@ -31,8 +36,11 @@ final class Room
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $temperatureSensor = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $presenceSensor = null;
+    /**
+     * @var list<array{entityId: string, kind: string, threshold: float|null, value: string|null}>
+     */
+    #[ORM\Column(type: 'json')]
+    private array $presenceSignals = [];
 
     /**
      * @var list<string>
@@ -117,9 +125,15 @@ final class Room
         return $this->temperatureSensor;
     }
 
-    public function getPresenceSensor(): ?string
+    /**
+     * @return list<PresenceSignal>
+     */
+    public function getPresenceSignals(): array
     {
-        return $this->presenceSensor;
+        return array_map(
+            static fn (array $signal): PresenceSignal => new PresenceSignal(new EntityId($signal['entityId']), PresenceSignalKind::from($signal['kind']), $signal['threshold'], $signal['value']),
+            $this->presenceSignals,
+        );
     }
 
     /**
@@ -131,12 +145,26 @@ final class Room
     }
 
     /**
-     * @param list<string> $openings
+     * @param list<PresenceSignal> $presenceSignals
+     * @param list<string>         $openings
      */
-    public function configureSensors(?string $temperatureSensor, ?string $presenceSensor, array $openings): void
+    public function configureSensors(?string $temperatureSensor, array $presenceSignals, array $openings): void
     {
+        if (\count($presenceSignals) > self::MAX_PRESENCE_SIGNALS) {
+            throw new \InvalidArgumentException(sprintf('A room has at most %d presence signals.', self::MAX_PRESENCE_SIGNALS));
+        }
+
+        $stored = [];
+        foreach ($presenceSignals as $signal) {
+            $entityId = (string) $signal->entityId;
+            if (isset($stored[$entityId])) {
+                throw new \InvalidArgumentException(sprintf('"%s" is already a presence signal of the room.', $entityId));
+            }
+            $stored[$entityId] = ['entityId' => $entityId, 'kind' => $signal->kind->value, 'threshold' => $signal->threshold, 'value' => $signal->value];
+        }
+
         $this->temperatureSensor = Guard::nullableNotBlank($temperatureSensor, 'temperatureSensor');
-        $this->presenceSensor = Guard::nullableNotBlank($presenceSensor, 'presenceSensor');
+        $this->presenceSignals = array_values($stored);
         $this->openings = Guard::stringList($openings, 'opening');
     }
 

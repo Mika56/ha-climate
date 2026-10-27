@@ -164,7 +164,7 @@ abstract class ApiTestCase extends WebTestCase
             'name' => $name,
             'areaId' => 'living_room',
             'temperatureSensor' => 'sensor.living_temperature',
-            'presenceSensor' => 'binary_sensor.living_presence',
+            'presenceSignals' => [['entityId' => 'binary_sensor.living_presence', 'kind' => 'active', 'threshold' => null, 'value' => null]],
             'openings' => ['binary_sensor.living_window'],
             'vacancyDelaySeconds' => 900,
             'windowCutDelaySeconds' => 60,

@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\App\Domain\Preset\PresetKey::class)]
 #[UsesClass(PresetTemperatures::class)]
 #[UsesClass(RoomId::class)]
+#[UsesClass(\App\Domain\Room\PresenceSignal::class)]
 #[UsesClass(ScheduleId::class)]
 final class RoomConfigurationTest extends TestCase
 {
@@ -117,7 +118,7 @@ final class RoomConfigurationTest extends TestCase
     {
         $this->expectException(InvalidValueException::class);
 
-        new RoomConfiguration(new RoomId('room'), 'Room', [], PresetTemperatures::empty(), null, null, null, null, [], 0, 0, 0, true, -1);
+        new RoomConfiguration(new RoomId('room'), 'Room', [], PresetTemperatures::empty(), null, null, null, [], [], 0, 0, 0, true, -1);
     }
 
     private function build(string $name, int $vacancy, int $cut, int $notify): RoomConfiguration
@@ -130,7 +131,7 @@ final class RoomConfigurationTest extends TestCase
             null,
             new ScheduleId('cool'),
             null,
-            null,
+            [],
             [],
             $vacancy,
             $cut,

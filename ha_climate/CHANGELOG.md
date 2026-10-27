@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Rooms now have a list of **presence signals** instead of a single presence sensor: a signal is an entity that
+  is *active* (motion sensor, light, switch, fan, media player that is on), a numeric sensor *above* a threshold
+  (a power sensor) or a sensor *equal* to a value (Bermuda / ESPresense). A room is occupied while one of its
+  signals is active and vacant since the latest change otherwise.
+- Unavailable or unknown signals are ignored, and no longer raise an unavailability alert nor take the room out
+  of control. A room whose signals are all ignored is not considered vacant.
+- **Migration**: the presence sensor of an existing room becomes one *active* signal (same behaviour as before).
+- Backups are version 3 (`presenceSignals`); version 1 and 2 backups, with a `presenceSensor`, are still restored.
+- Discovery lists `activitySources` (lights, switches, fans, media players, power and room sensors) with the
+  kind to use by default.
+
 ## 0.2.1
 
 - Overview: the top row (HA Climate switch, season, presence, weather, vacation) fits on one line on a computer,

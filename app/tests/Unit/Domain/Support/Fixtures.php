@@ -16,6 +16,8 @@ use App\Domain\Device\Device;
 use App\Domain\Device\DeviceRole;
 use App\Domain\HomeAssistant\EntityId;
 use App\Domain\Preset\PresetKey;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Domain\Room\PresetTemperatures;
 use App\Domain\Room\RoomId;
 use App\Domain\Schedule\FixedSlotStart;
@@ -84,7 +86,7 @@ final class Fixtures
             new ScheduleId('heat-week'),
             new ScheduleId('cool-week'),
             self::entity('sensor.living_temperature'),
-            self::entity('binary_sensor.living_presence'),
+            [new PresenceSignal(self::entity('binary_sensor.living_presence'), PresenceSignalKind::Active)],
             [self::entity('binary_sensor.living_window')],
             600,
             120,

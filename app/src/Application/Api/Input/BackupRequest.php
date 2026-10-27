@@ -12,10 +12,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class BackupRequest
 {
     public const string FORMAT = 'ha-climate-backup';
-    public const int VERSION = 2;
+    public const int VERSION = 3;
 
-    /** Version 1 had `off` among the seasons and no `paused`; it is still read. */
-    public const array READABLE_VERSIONS = [1, 2];
+    /**
+     * Version 1 had `off` among the seasons and no `paused`; version 2 had one `presenceSensor` per room instead
+     * of the `presenceSignals`. Both are still read.
+     */
+    public const array READABLE_VERSIONS = [1, 2, 3];
 
     /**
      * @param list<PresetRequest>   $presets
