@@ -10,6 +10,9 @@ declare(strict_types=1);
 use App\Domain\Climate\HvacMode;
 use App\Domain\Climate\Season;
 use App\Domain\Device\DeviceRole;
+use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Infrastructure\Persistence\Entity\GlobalSettings;
 use App\Infrastructure\Persistence\Entity\Preset;
 use App\Infrastructure\Persistence\Entity\Room;
@@ -43,7 +46,7 @@ $night = $presets->findOneByKey('night');
 $away = $presets->findOneByKey('away');
 
 $room = new Room('Living room');
-$room->configureSensors('sensor.living_room_temperature_sensor', 'input_boolean.living_presence', ['binary_sensor.living_room_window']);
+$room->configureSensors('sensor.living_room_temperature_sensor', [new PresenceSignal(new EntityId('input_boolean.living_presence'), PresenceSignalKind::Active)], ['binary_sensor.living_room_window']);
 $room->addDevice('climate.living_room_heater', DeviceRole::Heating);
 foreach ([[$comfort, 21.0], [$eco, 18.0], [$night, 17.0], [$away, 15.0]] as [$preset, $temperature]) {
     $room->setPresetTemperature($preset, HvacMode::Heat, $temperature);

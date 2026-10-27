@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Api\Room;
 
 use App\Domain\Climate\HvacMode;
+use App\Domain\Room\PresenceSignal;
 use App\Infrastructure\Persistence\Entity\Device;
 use App\Infrastructure\Persistence\Entity\HeatingRate;
 use App\Infrastructure\Persistence\Entity\Preset;
@@ -47,7 +48,7 @@ final readonly class RoomNormalizer
             'name' => $room->getName(),
             'areaId' => $room->getHaAreaId(),
             'temperatureSensor' => $room->getTemperatureSensor(),
-            'presenceSensor' => $room->getPresenceSensor(),
+            'presenceSignals' => $this->presenceSignals($room),
             'openings' => $room->getOpenings(),
             'vacancyDelaySeconds' => $room->getVacancyDelaySeconds(),
             'windowCutDelaySeconds' => $room->getWindowCutDelaySeconds(),
@@ -59,6 +60,19 @@ final readonly class RoomNormalizer
             'devices' => $this->devices($room),
             'presetTemperatures' => $this->presetTemperatures($room),
         ];
+    }
+
+    /**
+     * @return list<array{entityId: string, kind: string, threshold: float|null, value: string|null}>
+     */
+    private function presenceSignals(Room $room): array
+    {
+        return array_map(static fn (PresenceSignal $signal): array => [
+            'entityId' => (string) $signal->entityId,
+            'kind' => $signal->kind->value,
+            'threshold' => $signal->threshold,
+            'value' => $signal->value,
+        ], $room->getPresenceSignals());
     }
 
     /**

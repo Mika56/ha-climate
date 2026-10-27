@@ -10,6 +10,9 @@ use App\Application\Port\HomeAssistant\StateContext;
 use App\Domain\Climate\HvacMode;
 use App\Domain\Climate\Season;
 use App\Domain\Device\DeviceRole;
+use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Infrastructure\Persistence\Entity\AuditEntry;
 use App\Infrastructure\Persistence\Entity\GlobalSettings;
 use App\Infrastructure\Persistence\Entity\Room;
@@ -130,7 +133,7 @@ abstract class EngineTestCase extends KernelTestCase
         $away = $presets->findOneByKey('away') ?? throw new \LogicException('Seed missing.');
 
         $room = new Room($name);
-        $room->configureSensors($sensor, 'binary_sensor.'.strtolower(str_replace(' ', '_', $name)).'_presence', ['binary_sensor.'.strtolower(str_replace(' ', '_', $name)).'_window']);
+        $room->configureSensors($sensor, [new PresenceSignal(new EntityId('binary_sensor.'.strtolower(str_replace(' ', '_', $name)).'_presence'), PresenceSignalKind::Active)], ['binary_sensor.'.strtolower(str_replace(' ', '_', $name)).'_window']);
         $room->addDevice($device, $role);
         foreach ([[$comfort, 21.0, 24.0], [$eco, 18.0, 27.0], [$night, 17.0, 26.0], [$away, 15.0, 30.0]] as [$preset, $heat, $cool]) {
             $room->setPresetTemperature($preset, HvacMode::Heat, $heat);

@@ -1,7 +1,7 @@
 # HA Climate
 
 HA Climate drives the heating and air-conditioning devices of your Home Assistant installation **room by
-room**. You describe each room (temperature sensor, presence sensor, windows, climate devices), give it a weekly
+room**. You describe each room (temperature sensor, presence signals, windows, climate devices), give it a weekly
 schedule, and the add-on continuously decides, for every room, whether to heat, cool or stay off, and at which
 target temperature. It talks to Home Assistant only (through the Supervisor); it makes **no external call**.
 
@@ -30,7 +30,7 @@ Everything else is configured in the add-on's own interface. Restart the add-on 
    **active** (see [Pause](#pause)), review the presets (comfort, eco, night, away...) and the notification options.
 2. **Schedules**: create a weekly schedule. A slot starts at a fixed time or relative to a Home Assistant entity
    (for example "bedtime"), and applies a preset.
-3. **Rooms**: add a room, pick its temperature sensor, optional presence sensor, window/door contacts and its
+3. **Rooms**: add a room, pick its temperature sensor, optional presence signals (see [Presence signals](#presence-signals)), window/door contacts and its
    climate devices (heating, cooling or reversible), set the temperature of each preset, then assign the schedule.
 4. **Overview**: each room shows its current temperature, what the engine decided and *why* (the reason is always
    displayed). You can apply a temporary boost or manual override from there.
@@ -44,7 +44,7 @@ wins**, and its reason is shown in the interface:
 | -------: | ----------------------- | ---------------------------------------------------------------------- |
 |      900 | No device for the mode  | The room has no device able to heat (or cool) in the current mode.     |
 |      800 | Vacation                | A vacation period is active: the away preset applies.                  |
-|      700 | House empty             | Nobody is home (all presence sensors empty long enough).               |
+|      700 | House empty             | Nobody is home (all tracked persons away long enough).               |
 |      600 | Opening                 | A window or door has been open longer than the cut delay: devices off. |
 |      500 | Override                | A manual change or boost is in force.                                  |
 |      400 | Room vacancy            | The room has been empty longer than its vacancy delay.                 |
@@ -52,8 +52,31 @@ wins**, and its reason is shown in the interface:
 |    -1000 | Schedule                | The slot currently in force in the room's weekly schedule.             |
 
 Devices are protected against short cycling (minimum on/off times) and use a hysteresis around the target. If a
-sensor or device becomes unavailable, the room is removed from control and an alert is raised (including a
-Home Assistant persistent notification).
+temperature sensor or device becomes unavailable, the room is removed from control and an alert is raised
+(including a Home Assistant persistent notification). Presence signals are not part of this: an unavailable
+signal is simply ignored.
+
+## Presence signals
+
+A room can have up to 20 **presence signals**: entities that tell that somebody is in the room. The room is
+**occupied** while one of its signals is active, and **vacant** once none is, from the most recent change of
+its signals; the *room vacancy* rule then applies after the vacancy delay. Three kinds exist:
+
+| Kind    | Active while...                                            | Typical entity                                         |
+| ------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| Active  | the entity is `on` (`playing` or `paused` for a player)    | motion sensor, light, switch, fan, media player        |
+| Above   | the numeric state is strictly above a threshold            | a power sensor (W): TV, computer, console              |
+| Equals  | the state is exactly a given value                         | a Bermuda / ESPresense room sensor (value = the room)  |
+
+Good to know:
+
+- A signal whose entity is missing, `unavailable` or `unknown` is **ignored**. When every signal of a room is
+  ignored, or when the room has none, the room is never considered vacant (it keeps following its schedule).
+- A **light left on keeps the room occupied**: only add lights and switches you really switch off when you
+  leave.
+- For *Above* and *Equals* signals, the vacancy starts at the last change of the entity's state (a power sensor
+  changes all the time), so it can start a little later than the real departure.
+- Rooms configured before this feature keep their presence sensor as one *Active* signal.
 
 ## Pause
 

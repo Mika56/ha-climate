@@ -6,6 +6,9 @@ namespace App\Tests\Unit\Infrastructure\Persistence\Entity;
 
 use App\Domain\Climate\HvacMode;
 use App\Domain\Device\DeviceRole;
+use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Infrastructure\Persistence\Entity\Device;
 use App\Infrastructure\Persistence\Entity\Preset;
 use App\Infrastructure\Persistence\Entity\Room;
@@ -15,6 +18,7 @@ use App\Infrastructure\Persistence\Support\Guard;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\Attributes\UsesNamespace;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Room::class)]
@@ -23,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Preset::class)]
 #[UsesClass(Schedule::class)]
 #[UsesClass(Guard::class)]
+#[UsesNamespace('App\Domain')]
 final class RoomTest extends TestCase
 {
     public function testDefaults(): void
@@ -33,7 +38,7 @@ final class RoomTest extends TestCase
         self::assertSame(2, $room->getPosition());
         self::assertNull($room->getHaAreaId());
         self::assertNull($room->getTemperatureSensor());
-        self::assertNull($room->getPresenceSensor());
+        self::assertSame([], $room->getPresenceSignals());
         self::assertSame([], $room->getOpenings());
         self::assertFalse($room->isPreheatEnabled());
         self::assertCount(0, $room->getDevices());
@@ -67,10 +72,47 @@ final class RoomTest extends TestCase
         (new Room('A'))->configureDelays(-1, 0, 0);
     }
 
+    public function testPresenceSignalsAreStoredAsGiven(): void
+    {
+        $room = new Room('Bedroom');
+        $signals = [
+            new PresenceSignal(new EntityId('light.lamp'), PresenceSignalKind::Active),
+            new PresenceSignal(new EntityId('sensor.tv_power'), PresenceSignalKind::Above, 7.5),
+            new PresenceSignal(new EntityId('sensor.phone_area'), PresenceSignalKind::Equals, null, 'Bedroom'),
+        ];
+
+        $room->configureSensors(null, $signals, []);
+
+        self::assertEquals($signals, $room->getPresenceSignals());
+
+        $room->configureSensors(null, [], []);
+        self::assertSame([], $room->getPresenceSignals());
+    }
+
+    public function testRejectsTheSamePresenceEntityTwice(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new Room('Bedroom'))->configureSensors(null, [
+            new PresenceSignal(new EntityId('light.lamp'), PresenceSignalKind::Active),
+            new PresenceSignal(new EntityId('light.lamp'), PresenceSignalKind::Active),
+        ], []);
+    }
+
+    public function testRejectsTooManyPresenceSignals(): void
+    {
+        $signals = array_map(static fn (int $i): PresenceSignal => new PresenceSignal(new EntityId('light.lamp_'.$i), PresenceSignalKind::Active), range(1, Room::MAX_PRESENCE_SIGNALS + 1));
+
+        (new Room('Bedroom'))->configureSensors(null, \array_slice($signals, 0, Room::MAX_PRESENCE_SIGNALS), []);
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new Room('Bedroom'))->configureSensors(null, $signals, []);
+    }
+
     public function testRejectsBlankOpening(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        (new Room('A'))->configureSensors(null, null, ['']);
+        (new Room('A'))->configureSensors(null, [], ['']);
     }
 
     public function testScheduleModeMustMatch(): void

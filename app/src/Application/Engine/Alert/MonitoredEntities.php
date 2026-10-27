@@ -9,9 +9,10 @@ use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Schedule\AnchoredSlotStart;
 
 /**
- * The entities whose unavailability matters, with the rooms that rely on them: temperature sensors, presence
- * entities, openings, devices and the anchors of the schedules the rooms follow. The global entities (tracked
- * persons, weather) are not part of it.
+ * The entities whose unavailability matters, with the rooms that rely on them: temperature sensors, openings,
+ * devices and the anchors of the schedules the rooms follow. The presence signals are not part of it: they are
+ * optional hints that the vacancy logic already ignores when unavailable, and a flaky lamp must not take a room
+ * out of control. The global entities (tracked persons, weather) are not part of it either.
  */
 final readonly class MonitoredEntities
 {
@@ -44,10 +45,8 @@ final readonly class MonitoredEntities
     private function entitiesOf(RoomConfiguration $room, EngineConfiguration $configuration): array
     {
         $entities = [...$room->openings];
-        foreach ([$room->temperatureSensor, $room->presence] as $optional) {
-            if (null !== $optional) {
-                $entities[] = $optional;
-            }
+        if (null !== $room->temperatureSensor) {
+            $entities[] = $room->temperatureSensor;
         }
         foreach ($room->devices as $device) {
             $entities[] = $device->entityId;

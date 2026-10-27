@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\App\Domain\Preset\PresetKey::class)]
 #[UsesClass(\App\Domain\Room\PresetTemperatures::class)]
 #[UsesClass(\App\Domain\Room\RoomId::class)]
+#[UsesClass(\App\Domain\Room\PresenceSignal::class)]
 #[UsesClass(\App\Domain\Schedule\ScheduleId::class)]
 final class GlobalPolicyAndFactsTest extends TestCase
 {

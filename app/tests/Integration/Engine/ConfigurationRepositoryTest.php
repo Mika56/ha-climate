@@ -10,6 +10,7 @@ use App\Domain\Climate\HvacMode;
 use App\Domain\Climate\Season;
 use App\Domain\Device\DeviceRole;
 use App\Domain\Preset\PresetKey;
+use App\Domain\Room\PresenceSignal;
 use App\Domain\Room\RoomId;
 use App\Domain\Schedule\AnchoredSlotStart;
 use App\Domain\Schedule\FixedSlotStart;
@@ -49,7 +50,7 @@ final class ConfigurationRepositoryTest extends EngineTestCase
         self::assertSame(21.0, $living->presetTemperatures->for(new PresetKey('comfort'), HvacMode::Heat)->toFloat());
         self::assertSame(26.0, $living->presetTemperatures->for(new PresetKey('night'), HvacMode::Cool)->toFloat());
         self::assertSame(self::SENSOR, (string) $living->temperatureSensor);
-        self::assertSame('binary_sensor.living_room_presence', (string) $living->presence);
+        self::assertSame(['binary_sensor.living_room_presence'], array_map(static fn (PresenceSignal $signal): string => (string) $signal->entityId, $living->presenceSignals));
         self::assertSame(['binary_sensor.living_room_window'], array_map(strval(...), $living->openings));
         self::assertSame([600, 90, 1200], [$living->vacancyDelay, $living->windowCutDelay, $living->windowNotifyDelay]);
         self::assertTrue($living->preheatEnabled);
@@ -128,7 +129,7 @@ final class ConfigurationRepositoryTest extends EngineTestCase
         $broken = $this->createRoom('Broken', 'climate.broken', sensor: 'sensor.broken_temperature');
         $broken->setPresetTemperature($this->em()->getRepository(\App\Infrastructure\Persistence\Entity\Preset::class)->findOneBy(['key' => 'eco']) ?? throw new \LogicException(), HvacMode::Heat, 99.0);
         $typo = $this->createRoom('Typo', 'climate.typo', sensor: 'sensor.typo_temperature');
-        $typo->configureSensors('Not An Entity', null, []);
+        $typo->configureSensors('Not An Entity', [], []);
         $this->settings()->configurePresence(600, ['person.alice', 'bogus']);
         $this->settings()->changeWeatherEntity('also bogus');
         $this->em()->flush();

@@ -18,6 +18,8 @@ use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Decision\RoomFacts;
 use App\Domain\Decision\VacationPeriod;
 use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Domain\Room\RoomId;
 use App\Tests\Unit\Domain\Support\Fixtures;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -115,9 +117,42 @@ final class PresenceContributorsTest extends TestCase
         yield 'entity missing' => [null, null];
     }
 
+    public function testSeveralSignalsAreCombined(): void
+    {
+        $template = Fixtures::room();
+        $room = new RoomConfiguration(
+            $template->id,
+            $template->name,
+            $template->devices,
+            $template->presetTemperatures,
+            null,
+            null,
+            null,
+            [
+                new PresenceSignal(new EntityId('binary_sensor.living_presence'), PresenceSignalKind::Active),
+                new PresenceSignal(new EntityId('sensor.tv_power'), PresenceSignalKind::Above, 10.0),
+            ],
+            [],
+            600,
+            120,
+            1800,
+        );
+        $vacant = [self::state('binary_sensor.living_presence', 'off', '2026-10-26 06:45:00'), self::state('sensor.tv_power', '1.5', '2026-10-26 07:15:00')];
+        $watching = [self::state('binary_sensor.living_presence', 'off', '2026-10-26 06:45:00'), self::state('sensor.tv_power', '120', '2026-10-26 07:15:00')];
+        $broken = [self::state('binary_sensor.living_presence', 'unavailable', '2026-10-26 06:45:00'), self::state('sensor.tv_power', 'unknown', '2026-10-26 07:15:00')];
+        $seed = RoomFacts::none()->withRoomVacantSince(Fixtures::at('2020-01-01 00:00:00'));
+
+        $contributor = new RoomVacancyContributor();
+
+        self::assertEquals(Fixtures::at('2026-10-26 07:15:00'), $contributor->contribute($room, $seed, self::snapshot($vacant))->roomVacantSince);
+        self::assertNull($contributor->contribute($room, $seed, self::snapshot($watching))->roomVacantSince);
+        self::assertNull($contributor->contribute($room, $seed, self::snapshot($broken))->roomVacantSince);
+        self::assertNull($contributor->contribute($room, $seed, self::snapshot([]))->roomVacantSince);
+    }
+
     public function testARoomWithoutPresenceEntityKeepsTheFacts(): void
     {
-        $room = new RoomConfiguration(new RoomId('living'), 'Living', [Fixtures::device()], Fixtures::temperatures(), null, null, null, null, [], 600, 120, 1800);
+        $room = new RoomConfiguration(new RoomId('living'), 'Living', [Fixtures::device()], Fixtures::temperatures(), null, null, null, [], [], 600, 120, 1800);
         $facts = RoomFacts::none();
 
         self::assertSame($facts, (new RoomVacancyContributor())->contribute($room, $facts, self::snapshot([])));

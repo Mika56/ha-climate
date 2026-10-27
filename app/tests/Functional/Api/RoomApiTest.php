@@ -13,10 +13,12 @@ use App\Application\Api\Exception\Violations;
 use App\Application\Api\HaTimeZone;
 use App\Application\Api\Input\BoostRequest;
 use App\Application\Api\Input\DeviceRequest;
+use App\Application\Api\Input\PresenceSignalRequest;
 use App\Application\Api\Input\PresetTemperatureRequest;
 use App\Application\Api\Input\ReorderRoomsRequest;
 use App\Application\Api\Input\RoomRequest;
 use App\Application\Api\RequestLocale;
+use App\Application\Api\Room\PresenceSignalsChecker;
 use App\Application\Api\Room\RoomApplier;
 use App\Application\Api\Room\RoomChecker;
 use App\Application\Api\Room\RoomNormalizer;
@@ -36,6 +38,8 @@ use PHPUnit\Framework\Attributes\UsesNamespace;
 #[CoversClass(RoomService::class)]
 #[CoversClass(RoomNormalizer::class)]
 #[CoversClass(RoomChecker::class)]
+#[CoversClass(PresenceSignalsChecker::class)]
+#[CoversClass(PresenceSignalRequest::class)]
 #[CoversClass(RoomApplier::class)]
 #[CoversClass(RoomRequest::class)]
 #[CoversClass(DeviceRequest::class)]
@@ -87,7 +91,10 @@ final class RoomApiTest extends ApiTestCase
         $update = self::roomBody('Lounge', 'climate.lounge', [
             'presetTemperatures' => [['preset' => 'comfort', 'heat' => 20.5, 'cool' => null], ['preset' => 'night', 'heat' => 17.0, 'cool' => 26.0]],
             'openings' => [],
-            'presenceSensor' => null,
+            'presenceSignals' => [
+                ['entityId' => 'sensor.tv_power', 'kind' => 'above', 'threshold' => 12.5, 'value' => null],
+                ['entityId' => 'sensor.bermuda_phone_area', 'kind' => 'equals', 'threshold' => null, 'value' => 'Living room'],
+            ],
         ]);
         $updated = $this->call('updateRoom', 'PUT', '/api/rooms/'.$id, $update, self::asUser())->assertStatus(200)->json();
         self::assertSame($id, $updated['id']);
@@ -97,7 +104,10 @@ final class RoomApiTest extends ApiTestCase
             [['preset' => 'comfort', 'heat' => 20.5, 'cool' => null], ['preset' => 'night', 'heat' => 17.0, 'cool' => 26.0]],
             $updated['presetTemperatures'],
         );
-        self::assertNull($updated['presenceSensor']);
+        self::assertSame([
+            ['entityId' => 'sensor.tv_power', 'kind' => 'above', 'threshold' => 12.5, 'value' => null],
+            ['entityId' => 'sensor.bermuda_phone_area', 'kind' => 'equals', 'threshold' => null, 'value' => 'Living room'],
+        ], $updated['presenceSignals']);
 
         $this->call('deleteRoom', 'DELETE', '/api/rooms/'.$id, null, self::asUser())->assertStatus(204);
         $this->call('getRoom', 'GET', '/api/rooms/'.$id)->assertError(404, 'not_found');
@@ -211,6 +221,45 @@ final class RoomApiTest extends ApiTestCase
 
         $wrongTypes = $this->call('createRoom', 'POST', '/api/rooms', self::roomBody('A', 'climate.a', ['devices' => [['entityId' => 'climate.a', 'role' => 'toaster']], 'vacancyDelaySeconds' => 'soon']));
         $wrongTypes->assertViolation('devices[0].role')->assertViolation('vacancyDelaySeconds');
+    }
+
+    public function testPresenceSignalsAreCheckedKindByKind(): void
+    {
+        $signal = static fn (string $entity, string $kind, ?float $threshold = null, ?string $value = null): array => ['entityId' => $entity, 'kind' => $kind, 'threshold' => $threshold, 'value' => $value];
+        $body = self::roomBody('Living', 'climate.living', ['presenceSignals' => [
+            $signal('sensor.a', 'active'),
+            $signal('light.b', 'active', 1.0, 'x'),
+            $signal('sensor.c', 'above'),
+            $signal('sensor.d', 'above', 3.0, 'x'),
+            $signal('sensor.e', 'equals'),
+            $signal('sensor.f', 'equals', 2.0, ' '),
+            $signal('light.b', 'active'),
+        ]]);
+
+        $this->call('createRoom', 'POST', '/api/rooms', $body)
+            ->assertViolation('presenceSignals[0].entityId')
+            ->assertViolation('presenceSignals[1].threshold')->assertViolation('presenceSignals[1].value')
+            ->assertViolation('presenceSignals[2].threshold')
+            ->assertViolation('presenceSignals[3].value')
+            ->assertViolation('presenceSignals[4].value')
+            ->assertViolation('presenceSignals[5].value')->assertViolation('presenceSignals[5].threshold')
+            ->assertViolation('presenceSignals[6].entityId');
+        self::assertSame([], $this->em()->getRepository(Room::class)->findAll());
+    }
+
+    public function testAPresenceSignalNeedsAValidEntityId(): void
+    {
+        $body = self::roomBody('Living', 'climate.living', ['presenceSignals' => [['entityId' => 'not an entity', 'kind' => 'active', 'threshold' => null, 'value' => null]]]);
+
+        $this->call('createRoom', 'POST', '/api/rooms', $body)->assertViolation('presenceSignals[0].entityId');
+    }
+
+    public function testAtMostTwentyPresenceSignals(): void
+    {
+        $signals = array_map(static fn (int $i): array => ['entityId' => 'light.lamp_'.$i, 'kind' => 'active', 'threshold' => null, 'value' => null], range(1, 21));
+
+        $this->call('createRoom', 'POST', '/api/rooms', self::roomBody('Living', 'climate.living', ['presenceSignals' => $signals]))->assertViolation('presenceSignals');
+        $this->call('createRoom', 'POST', '/api/rooms', self::roomBody('Living', 'climate.living', ['presenceSignals' => \array_slice($signals, 0, 20)]))->assertStatus(201);
     }
 
     public function testViolationMessagesAreInTheLanguageOfTheRequest(): void

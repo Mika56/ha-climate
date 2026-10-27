@@ -109,6 +109,13 @@ final class WebApiRoutesTest extends NotificationTestCase
         $ha->seedState('sensor.disabled_probe', 'unavailable', ['device_class' => 'temperature']);
         $ha->seedState('weather.home', 'sunny', ['friendly_name' => 'Home']);
         $ha->seedState('light.kitchen', 'on');
+        $ha->seedState('switch.heater', 'off');
+        $ha->seedState('fan.bedroom', 'off');
+        $ha->seedState('media_player.tv', 'playing');
+        $ha->seedState('sensor.tv_power', '120', ['device_class' => 'power', 'unit_of_measurement' => 'W']);
+        $ha->seedState('sensor.phone_area', 'Living room');
+        $ha->seedState('sensor.phone_area_broken', 'unavailable');
+        $ha->seedState('sensor.counter', '42');
         $ha->withRegistries(
             [new Area('living', 'Living room'), new Area('attic', 'Attic')],
             [new DeviceEntry('dev-1', 'Probe', null, 'attic')],
@@ -137,6 +144,15 @@ final class WebApiRoutesTest extends NotificationTestCase
         self::assertSame('attic', $this->itemOf($discovery['temperatureSensors'], 'sensor.garage_probe')['areaId'], 'An entity inherits the area of its device.');
         self::assertSame(['binary_sensor.motion', 'input_boolean.guest'], $this->entityIds($discovery['presenceSensors']));
         self::assertSame(['input_boolean.guest', 'binary_sensor.window'], $this->entityIds($discovery['openingSensors']));
+        self::assertSame(
+            ['fan.bedroom', 'light.kitchen', 'media_player.tv', 'sensor.phone_area', 'sensor.tv_power', 'switch.heater'],
+            $this->entityIds($discovery['activitySources']),
+            'Lights, switches, fans, players, power sensors and textual sensors; not numbers, failures or the presence sensors.',
+        );
+        self::assertSame(
+            ['active', 'active', 'active', 'equals', 'above', 'active'],
+            array_map(fn (mixed $item): mixed => \is_array($item) ? $item['defaultKind'] : null, \is_array($discovery['activitySources']) ? $discovery['activitySources'] : []),
+        );
         self::assertSame(['input_datetime.bedtime'], $this->entityIds($discovery['timeEntities']));
         self::assertSame(['weather.home'], $this->entityIds($discovery['weather']));
         self::assertSame([['service' => 'notify.living_tv', 'name' => 'living_tv'], ['service' => 'notify.mobile_app_pixel', 'name' => 'Pixel 8']], $discovery['notifyServices']);

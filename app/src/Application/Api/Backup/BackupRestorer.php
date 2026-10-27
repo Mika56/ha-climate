@@ -12,6 +12,7 @@ use App\Application\Api\Input\BackupRequest;
 use App\Application\Api\Input\RoomRequest;
 use App\Application\Api\Input\ScheduleRequest;
 use App\Application\Api\Preset\PresetService;
+use App\Application\Api\Room\PresenceSignalsChecker;
 use App\Application\Api\Room\RoomApplier;
 use App\Application\Api\Schedule\ScheduleBuilder;
 use App\Application\Api\Settings\NotificationSettingsApplier;
@@ -40,6 +41,7 @@ final readonly class BackupRestorer
         private NotificationSettingsApplier $notificationsApplier,
         private ScheduleBuilder $scheduleBuilder,
         private RoomApplier $roomApplier,
+        private PresenceSignalsChecker $presenceSignals,
         private ConfigurationAudit $audit,
         private EngineNotifier $engine,
         private TranslatorInterface $translator,
@@ -186,6 +188,8 @@ final readonly class BackupRestorer
                 $violations->add($path, 'api.schedule_mode', ['mode' => $mode->value]);
             }
         }
+
+        $this->presenceSignals->check($room->signals(), \sprintf('rooms[%d].presenceSignals', $index), $violations);
 
         $given = [];
         foreach ($room->presetTemperatures as $temperatureIndex => $temperature) {
