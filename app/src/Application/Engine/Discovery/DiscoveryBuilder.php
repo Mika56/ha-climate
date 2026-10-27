@@ -7,6 +7,7 @@ namespace App\Application\Engine\Discovery;
 use App\Application\Port\HomeAssistant\EntityState;
 use App\Application\Port\HomeAssistant\HomeAssistantException;
 use App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface;
+use App\Domain\Room\PresenceSignalKind;
 
 /**
  * Reads Home Assistant (states, registries, services) and sorts out the entities and services the add-on can be
@@ -15,6 +16,10 @@ use App\Application\Port\HomeAssistant\HomeAssistantGatewayInterface;
  * - climates: `climate` entities that expose `hvac_modes`;
  * - temperature sensors: `sensor` with the temperature device class or a °C/°F unit;
  * - presence sensors: `binary_sensor` occupancy/presence/motion, and `input_boolean`;
+ * - activity sources (other presence signals, with their default kind): `light`, `switch`, `fan` and `media_player`
+ *   (active), `sensor` with the power device class (above), `sensor` whose state is neither numeric nor
+ *   unavailable/unknown and that has no unit (equals: a room-presence sensor such as Bermuda or ESPresense);
+ *   the presence sensors are not repeated;
  * - opening sensors: `binary_sensor` window/door/opening/garage_door, and `input_boolean`;
  * - time entities: `input_datetime` that have a time;
  * - weather and persons: the `weather` and `person` entities;
@@ -64,7 +69,7 @@ final readonly class DiscoveryBuilder
             }
         }
 
-        $climates = $persons = $temperatures = $presences = $openings = $times = $weather = [];
+        $climates = $persons = $temperatures = $presences = $activities = $openings = $times = $weather = [];
         foreach ($this->gateway->getStates() as $state) {
             if (isset($disabled[$state->entityId])) {
                 continue;
@@ -87,7 +92,18 @@ final readonly class DiscoveryBuilder
                         $climates[] = [...$item, 'hvacModes' => $modes];
                     }
                     break;
+                case 'light':
+                case 'switch':
+                case 'fan':
+                case 'media_player':
+                    $activities[] = [...$item, 'defaultKind' => PresenceSignalKind::Active->value];
+                    break;
                 case 'sensor':
+                    if ('power' === $deviceClass) {
+                        $activities[] = [...$item, 'defaultKind' => PresenceSignalKind::Above->value];
+                    } elseif (self::isTextual($state)) {
+                        $activities[] = [...$item, 'defaultKind' => PresenceSignalKind::Equals->value];
+                    }
                     if ('temperature' === $deviceClass || \in_array(self::string($state->attributes['unit_of_measurement'] ?? null), self::TEMPERATURE_UNITS, true)) {
                         $temperatures[] = $item;
                     }
@@ -123,6 +139,7 @@ final readonly class DiscoveryBuilder
             'climates' => self::sorted($climates),
             'temperatureSensors' => self::sorted($temperatures),
             'presenceSensors' => self::sorted($presences),
+            'activitySources' => self::sorted($activities),
             'openingSensors' => self::sorted($openings),
             'timeEntities' => self::sorted($times),
             'weather' => self::sorted($weather),
@@ -161,6 +178,16 @@ final readonly class DiscoveryBuilder
             'unit' => self::string($state->attributes['unit_of_measurement'] ?? null),
             'deviceClass' => $deviceClass,
         ];
+    }
+
+    /**
+     * A state that names something (a room) rather than measures it: not numeric, not a failure, no unit.
+     */
+    private static function isTextual(EntityState $state): bool
+    {
+        return !is_numeric($state->state)
+            && !\in_array($state->state, ['unavailable', 'unknown'], true)
+            && null === self::string($state->attributes['unit_of_measurement'] ?? null);
     }
 
     /**

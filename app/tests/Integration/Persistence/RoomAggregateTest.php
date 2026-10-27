@@ -6,6 +6,9 @@ namespace App\Tests\Integration\Persistence;
 
 use App\Domain\Climate\HvacMode;
 use App\Domain\Device\DeviceRole;
+use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Infrastructure\Persistence\Entity\Device;
 use App\Infrastructure\Persistence\Entity\Preset;
 use App\Infrastructure\Persistence\Entity\Room;
@@ -21,6 +24,7 @@ use App\Infrastructure\Persistence\Support\Guard;
 use App\Infrastructure\Persistence\Type\UtcDateTimeImmutableType;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(RoomRepository::class)]
 #[CoversClass(DeviceRepository::class)]
@@ -35,6 +39,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SqlitePragmaMiddleware::class)]
 #[CoversClass(SqlitePragmaDriver::class)]
 #[CoversClass(UtcDateTimeImmutableType::class)]
+#[UsesClass(PresenceSignal::class)]
+#[UsesClass(EntityId::class)]
 final class RoomAggregateTest extends PersistenceTestCase
 {
     protected function setUp(): void
@@ -60,7 +66,7 @@ final class RoomAggregateTest extends PersistenceTestCase
     {
         $room = new Room('Living room', 3);
         $room->linkToArea('living_room');
-        $room->configureSensors('sensor.living_temp', 'binary_sensor.living_presence', ['binary_sensor.window', 'binary_sensor.door', 'binary_sensor.window']);
+        $room->configureSensors('sensor.living_temp', [new PresenceSignal(new EntityId('binary_sensor.living_presence'), PresenceSignalKind::Active), new PresenceSignal(new EntityId('sensor.tv_power'), PresenceSignalKind::Above, 10.0)], ['binary_sensor.window', 'binary_sensor.door', 'binary_sensor.window']);
         $room->configureDelays(600, 90, 1200);
         $room->configurePreheat(true, 45);
         $this->persistAndClear($room);
@@ -70,7 +76,7 @@ final class RoomAggregateTest extends PersistenceTestCase
         self::assertInstanceOf(Room::class, $loaded);
         self::assertSame('living_room', $loaded->getHaAreaId());
         self::assertSame('sensor.living_temp', $loaded->getTemperatureSensor());
-        self::assertSame('binary_sensor.living_presence', $loaded->getPresenceSensor());
+        self::assertEquals([new PresenceSignal(new EntityId('binary_sensor.living_presence'), PresenceSignalKind::Active), new PresenceSignal(new EntityId('sensor.tv_power'), PresenceSignalKind::Above, 10.0)], $loaded->getPresenceSignals());
         self::assertSame(['binary_sensor.window', 'binary_sensor.door'], $loaded->getOpenings());
         self::assertSame(600, $loaded->getVacancyDelaySeconds());
         self::assertSame(90, $loaded->getWindowCutDelaySeconds());

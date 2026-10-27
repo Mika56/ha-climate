@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\Api\Room;
 
+use App\Application\Api\Input\PresenceSignalRequest;
 use App\Application\Api\Input\RoomRequest;
 use App\Domain\Climate\HvacMode;
+use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
 use App\Infrastructure\Persistence\Entity\Preset;
 use App\Infrastructure\Persistence\Entity\Room;
 use App\Infrastructure\Persistence\Entity\Schedule;
@@ -23,7 +26,7 @@ final readonly class RoomApplier
     {
         $room->rename(trim($request->name));
         $room->linkToArea($request->areaId);
-        $room->configureSensors($request->temperatureSensor, $request->presenceSensor, $request->openings);
+        $room->configureSensors($request->temperatureSensor, array_map(static fn (PresenceSignalRequest $signal): PresenceSignal => new PresenceSignal(new EntityId($signal->entityId), $signal->kind, $signal->threshold, $signal->value), $request->signals()), $request->openings);
         $room->configureDelays($request->vacancyDelaySeconds, $request->windowCutDelaySeconds, $request->windowNotifyDelaySeconds);
         $room->configurePreheat($request->preheatEnabled, $request->preheatMaxMinutes);
         $room->assignSchedule(HvacMode::Heat, $heatingSchedule);

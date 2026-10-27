@@ -13,7 +13,7 @@ use App\Domain\Schedule\AnchoredSlotStart;
 /**
  * Routes an entity id to the rooms its changes can affect, and lists the entities worth subscribing to.
  *
- * A room is affected by its temperature sensor, presence entity, openings, devices and the anchors of the
+ * A room is affected by its temperature sensor, presence signals, openings, devices and the anchors of the
  * schedules it follows; global entities (tracked persons, weather) affect every room.
  */
 final class EntityRoomIndex
@@ -70,10 +70,11 @@ final class EntityRoomIndex
     private function roomEntities(RoomConfiguration $room, EngineConfiguration $configuration): array
     {
         $entities = [...$room->openings];
-        foreach ([$room->temperatureSensor, $room->presence] as $optional) {
-            if (null !== $optional) {
-                $entities[] = $optional;
-            }
+        if (null !== $room->temperatureSensor) {
+            $entities[] = $room->temperatureSensor;
+        }
+        foreach ($room->presenceSignals as $signal) {
+            $entities[] = $signal->entityId;
         }
         foreach ($room->devices as $device) {
             $entities[] = $device->entityId;

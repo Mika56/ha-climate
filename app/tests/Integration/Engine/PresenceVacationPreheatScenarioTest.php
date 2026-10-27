@@ -16,6 +16,9 @@ use App\Domain\Decision\Rule\HouseEmptyRule;
 use App\Domain\Decision\Rule\PreheatRule;
 use App\Domain\Decision\Rule\RoomVacancyRule;
 use App\Domain\Decision\Rule\VacationRule;
+use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Infrastructure\Persistence\Entity\HeatingRate;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesNamespace;
@@ -97,6 +100,35 @@ final class PresenceVacationPreheatScenarioTest extends EngineTestCase
         $calls = $this->homeAssistant()->serviceCalls();
         self::assertCount(1, $calls);
         self::assertSame(['temperature' => 21.0, 'hvac_mode' => 'heat'], $calls[0]->serviceData);
+        self::assertSame('reason.schedule', $this->service(LiveStatusPublisher::class)->snapshot()[0]->decision->reason->code);
+    }
+
+    public function testAStandbyPowerSensorThatKeepsChangingDoesNotKeepTheRoomOccupied(): void
+    {
+        $this->setSeason(Season::Winter);
+        $room = $this->createRoom();
+        $room->configureDelays(600, 120, 1800);
+        $room->configureSensors(self::SENSOR, [new PresenceSignal(new EntityId('sensor.tv_power'), PresenceSignalKind::Above, 10.0)], []);
+        $this->em()->flush();
+        $this->seedDevice(mode: 'heat', target: 21.0);
+        $this->seedSensor();
+        $this->homeAssistant()->seedState('sensor.tv_power', '85');
+        $this->startEngine();
+
+        $this->homeAssistant()->pushStateChange('sensor.tv_power', '2.1');
+        $this->timers()->advance(300);
+        $this->homeAssistant()->pushStateChange('sensor.tv_power', '2.3');
+        $this->timers()->advance(299);
+        self::assertSame([], $this->homeAssistant()->serviceCalls());
+
+        $this->timers()->advance(1);
+
+        $calls = $this->homeAssistant()->serviceCalls();
+        self::assertCount(1, $calls);
+        self::assertSame(['temperature' => 18.0, 'hvac_mode' => 'heat'], $calls[0]->serviceData);
+
+        $this->homeAssistant()->pushStateChange('sensor.tv_power', '60');
+
         self::assertSame('reason.schedule', $this->service(LiveStatusPublisher::class)->snapshot()[0]->decision->reason->code);
     }
 

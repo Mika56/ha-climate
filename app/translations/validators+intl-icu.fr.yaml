@@ -9,3 +9,7 @@ api:
     device_taken: 'Cet appareil est déjà utilisé par la pièce {room}.'
     required_preset: 'Le préréglage « {preset} » est obligatoire : le moteur l’utilise pour les politiques d’inoccupation et d’absence.'
     unsupported_format: 'Ce fichier n’est pas une sauvegarde HA Climate d’une version prise en charge.'
+    presence_domain: 'Un signal « actif » doit appartenir à l’un de ces domaines : {domains}.'
+    threshold_required: 'Un signal « au-dessus de » nécessite un seuil.'
+    value_required: 'Un signal « égal à » nécessite une valeur.'
+    not_for_this_kind: 'Ce champ ne s’applique pas à ce type de signal.'

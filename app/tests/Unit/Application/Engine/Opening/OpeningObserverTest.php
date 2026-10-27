@@ -96,7 +96,7 @@ final class OpeningObserverTest extends TestCase
             null,
             null,
             null,
-            null,
+            [],
             [new EntityId('binary_sensor.window'), new EntityId('binary_sensor.door')],
             600,
             120,

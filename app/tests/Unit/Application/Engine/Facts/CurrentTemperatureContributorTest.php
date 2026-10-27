@@ -63,7 +63,7 @@ final class CurrentTemperatureContributorTest extends TestCase
 
     public function testARoomWithoutSensorKeepsTheFactsAsTheyAre(): void
     {
-        $room = new RoomConfiguration(new RoomId('living'), 'Living', [Fixtures::device()], Fixtures::temperatures(), null, null, null, null, [], 600, 120, 1800);
+        $room = new RoomConfiguration(new RoomId('living'), 'Living', [Fixtures::device()], Fixtures::temperatures(), null, null, null, [], [], 600, 120, 1800);
         $facts = RoomFacts::none();
 
         self::assertSame($facts, (new CurrentTemperatureContributor())->contribute($room, $facts, self::snapshot(new StateStore())));

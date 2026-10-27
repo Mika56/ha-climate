@@ -12,6 +12,8 @@ use App\Domain\Decision\GlobalPolicy;
 use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Device\DeviceRole;
 use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Domain\Room\RoomId;
 use App\Domain\Schedule\AnchoredSlotStart;
 use App\Domain\Schedule\ScheduleId;
@@ -68,6 +70,35 @@ final class EntityRoomIndexTest extends TestCase
         self::assertSame(['living'], array_map(strval(...), $index->roomsFor('input_datetime.bedtime')));
     }
 
+    public function testEveryPresenceSignalIsIndexed(): void
+    {
+        $template = self::room('living', 'climate.living');
+        $room = new RoomConfiguration(
+            $template->id,
+            $template->name,
+            $template->devices,
+            $template->presetTemperatures,
+            null,
+            null,
+            null,
+            [
+                new PresenceSignal(new EntityId('light.living'), PresenceSignalKind::Active),
+                new PresenceSignal(new EntityId('sensor.tv_power'), PresenceSignalKind::Above, 10.0),
+                new PresenceSignal(new EntityId('sensor.phone_area'), PresenceSignalKind::Equals, null, 'Living room'),
+            ],
+            [],
+            600,
+            120,
+            1800,
+        );
+        $index = new EntityRoomIndex();
+        $index->rebuild(self::configuration([$room]));
+
+        self::assertSame(['living'], array_map(strval(...), $index->roomsFor('light.living')));
+        self::assertSame(['living'], array_map(strval(...), $index->roomsFor('sensor.tv_power')));
+        self::assertSame(['living'], array_map(strval(...), $index->roomsFor('sensor.phone_area')));
+    }
+
     public function testListsTheEntitiesToSubscribeToAndNothingWithoutRooms(): void
     {
         $index = new EntityRoomIndex();
@@ -110,7 +141,7 @@ final class EntityRoomIndexTest extends TestCase
             new ScheduleId('heat-week'),
             null,
             new EntityId('sensor.'.$id.'_temperature'),
-            new EntityId('binary_sensor.'.$id.'_presence'),
+            [new PresenceSignal(new EntityId('binary_sensor.'.$id.'_presence'), PresenceSignalKind::Active)],
             [new EntityId('binary_sensor.'.$id.'_window')],
             600,
             120,

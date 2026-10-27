@@ -9,3 +9,7 @@ api:
     device_taken: 'This device is already used by the room {room}.'
     required_preset: 'The preset "{preset}" is required: the engine uses it for the vacancy and absence policies.'
     unsupported_format: 'This file is not a HA Climate backup of a supported version.'
+    presence_domain: 'An "active" signal must be one of these domains: {domains}.'
+    threshold_required: 'An "above" signal needs a threshold.'
+    value_required: 'An "equals" signal needs a value.'
+    not_for_this_kind: 'This field does not apply to this kind of signal.'

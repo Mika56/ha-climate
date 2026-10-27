@@ -12,6 +12,8 @@ use App\Domain\Decision\GlobalPolicy;
 use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Device\DeviceRole;
 use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Domain\Room\RoomId;
 use App\Domain\Schedule\AnchoredSlotStart;
 use App\Domain\Schedule\ScheduleId;
@@ -52,9 +54,7 @@ final class MonitoredEntitiesTest extends TestCase
         $entities = array_keys($all);
         sort($entities);
         self::assertSame([
-            'binary_sensor.bedroom_presence',
             'binary_sensor.bedroom_window',
-            'binary_sensor.living_presence',
             'binary_sensor.living_window',
             'climate.bedroom',
             'climate.living',
@@ -62,6 +62,7 @@ final class MonitoredEntitiesTest extends TestCase
             'sensor.bedroom_temperature',
             'sensor.living_temperature',
         ], $entities);
+        self::assertArrayNotHasKey('binary_sensor.living_presence', $all, 'A presence signal must not take a room out of control.');
         self::assertSame(['living'], array_map(static fn (RoomConfiguration $room): string => (string) $room->id, $all['input_datetime.bedtime']));
         self::assertSame(['living'], array_map(static fn (RoomConfiguration $room): string => (string) $room->id, $monitored->roomsUsing($configuration, 'climate.living')));
         self::assertSame([], $monitored->roomsUsing($configuration, 'person.alice'));
@@ -80,7 +81,7 @@ final class MonitoredEntitiesTest extends TestCase
             'living' === $id ? new ScheduleId('heat-week') : null,
             null,
             new EntityId('sensor.'.$id.'_temperature'),
-            new EntityId('binary_sensor.'.$id.'_presence'),
+            [new PresenceSignal(new EntityId('binary_sensor.'.$id.'_presence'), PresenceSignalKind::Active)],
             [new EntityId('binary_sensor.'.$id.'_window')],
             600,
             120,

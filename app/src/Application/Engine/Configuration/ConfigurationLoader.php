@@ -122,7 +122,6 @@ final readonly class ConfigurationLoader
         }
 
         $temperatureSensor = $room->getTemperatureSensor();
-        $presence = $room->getPresenceSensor();
 
         return new RoomConfiguration(
             new RoomId($room->getId()->toRfc4122()),
@@ -132,7 +131,7 @@ final readonly class ConfigurationLoader
             $this->scheduleId($room->getHeatingSchedule()),
             $this->scheduleId($room->getCoolingSchedule()),
             null === $temperatureSensor ? null : new EntityId($temperatureSensor),
-            null === $presence ? null : new EntityId($presence),
+            $room->getPresenceSignals(),
             $this->entityIds($room->getOpenings()),
             $room->getVacancyDelaySeconds(),
             $room->getWindowCutDelaySeconds(),

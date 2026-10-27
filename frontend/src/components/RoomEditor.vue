@@ -3,21 +3,31 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { api, unwrap } from '@/api/client'
-import type { DeviceRole, DiscoveredEntity, Discovery, Room, Schedule } from '@/api/types'
+import type { DeviceRole, Discovery, Room, Schedule } from '@/api/types'
 import { useDirtyGuard } from '@/composables/useDirtyGuard'
 import { useEditableForm } from '@/composables/useEditableForm'
 import { useErrorReporter } from '@/composables/useErrorReporter'
 import { useFormatter } from '@/composables/useFormatter'
-import { emptyDevice, emptyRoomForm, fromRoomForm, toRoomForm, type RoomForm } from '@/lib/rooms'
-import { mdiClose, mdiDelete, mdiPlus } from '@/lib/icons'
+import type { PickerEntity } from '@/lib/entities'
+import {
+  emptyDevice,
+  emptyRoomForm,
+  fromRoomForm,
+  newSignal,
+  toRoomForm,
+  type RoomForm,
+} from '@/lib/rooms'
+import { mdiClose, mdiDelete } from '@/lib/icons'
 import { useDialogStore } from '@/stores/dialogs'
 import { usePresetStore } from '@/stores/presets'
 import { useToastStore } from '@/stores/toasts'
-import EntitySelect from './EntitySelect.vue'
+import EntityLabel from './EntityLabel.vue'
+import EntityPicker from './EntityPicker.vue'
 import InfoTip from './InfoTip.vue'
 import ErrorSummary from './ErrorSummary.vue'
 import FormField from './FormField.vue'
 import HaIcon from './HaIcon.vue'
+import SignalRow from './SignalRow.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
 import UnitInput from './UnitInput.vue'
 
@@ -38,9 +48,6 @@ useDirtyGuard(dirty)
 const room = ref<Room | null>(null)
 const discovery = ref<Discovery | null>(null)
 const schedules = ref<Schedule[]>([])
-const showAll = ref(false)
-const addingOpening = ref(false)
-const addingDevice = ref(false)
 let initial: RoomForm | null = null
 
 const isNew = computed(() => props.roomId === null)
@@ -68,41 +75,45 @@ onMounted(async () => {
   }
 })
 
-/** Entities of the room's area, unless "show all" is checked (or the entity has no area). */
-function inScope(list: DiscoveredEntity[] | undefined): DiscoveredEntity[] {
-  const area = form.value?.areaId
-  if (!list) return []
-  return showAll.value || !area ? list : list.filter((e) => e.areaId === area)
-}
-
-const temperatureSensors = computed(() => inScope(discovery.value?.temperatureSensors))
-const presenceSensors = computed(() => inScope(discovery.value?.presenceSensors))
-const openingSensors = computed(() =>
-  inScope(discovery.value?.openingSensors).filter(
-    (e) => !form.value?.openings.includes(e.entityId),
-  ),
-)
-const freeClimates = computed(() =>
-  inScope(discovery.value?.climates).filter(
-    (e) => !form.value?.devices.some((d) => d.entityId === e.entityId),
-  ),
-)
+const areas = computed(() => discovery.value?.areas ?? [])
+const areaNames = computed(() => areas.value.map((a) => a.name))
+const temperatureSensors = computed(() => discovery.value?.temperatureSensors ?? [])
+/** Everything that can tell a room is in use: presence sensors first, then lights, plugs, media... */
+const signalSources = computed<PickerEntity[]>(() => [
+  ...(discovery.value?.presenceSensors ?? []).map((e) => ({ ...e, defaultKind: 'active' })),
+  ...(discovery.value?.activitySources ?? []),
+])
+const openingSensors = computed(() => discovery.value?.openingSensors ?? [])
+const climates = computed(() => discovery.value?.climates ?? [])
+const signalIds = computed(() => form.value?.presenceSignals.map((s) => s.entityId) ?? [])
 const heatingSchedules = computed(() => schedules.value.filter((s) => s.mode === 'heat'))
 const coolingSchedules = computed(() => schedules.value.filter((s) => s.mode === 'cool'))
 const roles: DeviceRole[] = ['heating', 'cooling', 'reversible']
 
-function entityName(entityId: string): string {
-  const entity = discovery.value?.climates.find((c) => c.entityId === entityId)
-  return entity ? `${entity.name}${entity.state ? ` · ${entity.state}` : ''}` : ''
-}
+const known = (list: PickerEntity[], entityId: string): PickerEntity | undefined =>
+  list.find((e) => e.entityId === entityId)
 
-function addOpening(entityId: string | null): void {
-  if (entityId) form.value?.openings.push(entityId)
-  addingOpening.value = false
+function addSignal(entity: PickerEntity): void {
+  const kind =
+    entity.defaultKind === 'above' || entity.defaultKind === 'equals'
+      ? entity.defaultKind
+      : 'active'
+  form.value?.presenceSignals.push(newSignal(entity, kind))
 }
-function addDevice(entityId: string | null): void {
-  if (entityId) form.value?.devices.push(emptyDevice(entityId))
-  addingDevice.value = false
+function addOpening(entity: PickerEntity): void {
+  form.value?.openings.push(entity.entityId)
+}
+function addDevice(entity: PickerEntity): void {
+  form.value?.devices.push(emptyDevice(entity.entityId))
+}
+function signalErrors(i: number): Record<string, string | undefined> {
+  const key = (field: string): string | undefined => errors.value[`presenceSignals[${i}].${field}`]
+  return {
+    entityId: key('entityId'),
+    kind: key('kind'),
+    threshold: key('threshold'),
+    value: key('value'),
+  }
 }
 
 function rate(rate: { degreesPerHour: number; samples: number } | null | undefined): string {
@@ -202,61 +213,93 @@ async function remove(): Promise<void> {
         <h3>{{ t('rooms.sensors') }}</h3>
         <p class="hint">{{ t('rooms.sensorsHint') }}</p>
       </div>
-      <label class="check">
-        <input v-model="showAll" type="checkbox" data-test="show-all" />{{ t('rooms.showAll') }}
-      </label>
-      <div class="grid-fit">
-        <FormField :label="t('rooms.temperature')" :error="errors['temperatureSensor']">
-          <EntitySelect
-            v-model="form.temperatureSensor"
-            :entities="temperatureSensors"
-            :invalid="!!errors['temperatureSensor']"
-          />
-        </FormField>
-        <FormField :label="t('rooms.presence')" :error="errors['presenceSensor']">
-          <EntitySelect
-            v-model="form.presenceSensor"
-            :entities="presenceSensors"
-            :empty-label="t('common.none')"
-          />
-        </FormField>
+      <div class="field">
+        <span>{{ t('rooms.temperature') }}</span>
+        <EntityPicker
+          v-model="form.temperatureSensor"
+          :entities="temperatureSensors"
+          :areas="areas"
+          :area-id="form.areaId"
+          :label="t('rooms.temperature')"
+          :invalid="!!errors['temperatureSensor']"
+          data-test="temperature-picker"
+        />
+        <span v-if="errors['temperatureSensor']" class="err" role="alert">{{
+          errors['temperatureSensor']
+        }}</span>
       </div>
       <div class="field">
         <span>{{ t('rooms.openings') }} <InfoTip :text="t('rooms.openingsHelp')" /></span>
-        <div class="chips">
-          <span
-            v-for="(entityId, index) in form.openings"
-            :key="entityId"
-            class="chip tone-neutral opening-chip"
-          >
-            {{ entityId }}
+        <ul v-if="form.openings.length" class="entity-list">
+          <li v-for="(entityId, index) in form.openings" :key="entityId" class="entity-row">
+            <EntityLabel
+              :entity-id="entityId"
+              :name="known(openingSensors, entityId)?.name"
+              :state="known(openingSensors, entityId)?.state"
+              :device-class="known(openingSensors, entityId)?.deviceClass"
+              :area-name="known(openingSensors, entityId) ? null : t('common.notFound')"
+              show-state
+            />
             <button
               type="button"
-              class="icon-btn small"
+              class="icon-btn"
               :aria-label="t('rooms.removeEntity', { entity: entityId })"
               @click="form.openings.splice(index, 1)"
             >
-              <HaIcon :path="mdiClose" :size="14" />
+              <HaIcon :path="mdiClose" :size="18" />
             </button>
-          </span>
-          <EntitySelect
-            v-if="addingOpening"
-            :model-value="null"
+          </li>
+        </ul>
+        <div>
+          <EntityPicker
+            variant="add"
             :entities="openingSensors"
+            :areas="areas"
+            :area-id="form.areaId"
+            :exclude="form.openings"
             :label="t('rooms.addOpening')"
-            data-test="opening-select"
-            @update:model-value="addOpening"
-          />
-          <button
-            v-else
-            type="button"
-            class="btn text"
             data-test="add-opening"
-            @click="addingOpening = true"
-          >
-            <HaIcon :path="mdiPlus" :size="18" />{{ t('rooms.addOpening') }}
-          </button>
+            @select="addOpening"
+          />
         </div>
+      </div>
+    </section>
+
+    <section class="card panel" data-test="signals-section">
+      <div>
+        <h3>
+          {{ t('signals.title') }}
+          <InfoTip :text="t('signals.help')" />
+        </h3>
+        <p class="hint">{{ t('signals.hint') }}</p>
+      </div>
+      <p v-if="errors['presenceSignals']" class="err" role="alert">
+        {{ errors['presenceSignals'] }}
+      </p>
+      <ul v-if="form.presenceSignals.length" class="signal-list">
+        <SignalRow
+          v-for="(signal, i) in form.presenceSignals"
+          :key="signal.entityId"
+          :model-value="signal"
+          :entity="known(signalSources, signal.entityId)"
+          :suggestions="areaNames"
+          :errors="signalErrors(i)"
+          @update:model-value="form.presenceSignals[i] = $event"
+          @remove="form.presenceSignals.splice(i, 1)"
+        />
+      </ul>
+      <p v-else class="muted" data-test="no-signals">{{ t('signals.none') }}</p>
+      <div>
+        <EntityPicker
+          variant="add"
+          :entities="signalSources"
+          :areas="areas"
+          :area-id="form.areaId"
+          :exclude="signalIds"
+          :label="t('signals.add')"
+          data-test="add-signal"
+          @select="addSignal"
+        />
       </div>
     </section>
 
@@ -266,27 +309,20 @@ async function remove(): Promise<void> {
           <h3>{{ t('rooms.devices') }}</h3>
           <p class="hint">{{ t('rooms.devicesHint') }}</p>
         </div>
-        <EntitySelect
-          v-if="addingDevice"
-          :model-value="null"
-          :entities="freeClimates"
+        <EntityPicker
+          variant="add"
+          :entities="climates"
+          :areas="areas"
+          :area-id="form.areaId"
+          :exclude="form.devices.map((d) => d.entityId)"
           :label="t('rooms.addDevice')"
-          data-test="device-select"
-          @update:model-value="addDevice"
-        />
-        <button
-          v-else
-          type="button"
-          class="btn"
           data-test="add-device"
-          @click="addingDevice = true"
-        >
-          <HaIcon :path="mdiPlus" :size="18" />{{ t('rooms.addDevice') }}
-        </button>
+          @select="addDevice"
+        />
       </div>
       <p v-if="errors['devices']" class="err" role="alert">{{ errors['devices'] }}</p>
       <div class="scroll-x">
-        <table v-if="form.devices.length" class="tbl">
+        <table v-if="form.devices.length" class="tbl stack-table">
           <thead>
             <tr>
               <th scope="col">{{ t('rooms.deviceEntity') }}</th>
@@ -301,11 +337,17 @@ async function remove(): Promise<void> {
           </thead>
           <tbody>
             <tr v-for="(device, i) in form.devices" :key="device.entityId">
-              <td>
-                <div class="strong">{{ device.entityId }}</div>
-                <div class="muted tiny">{{ entityName(device.entityId) }}</div>
+              <td class="entity-cell">
+                <EntityLabel
+                  :entity-id="device.entityId"
+                  :name="known(climates, device.entityId)?.name"
+                  :state="known(climates, device.entityId)?.state"
+                  :device-class="known(climates, device.entityId)?.deviceClass"
+                  :area-name="known(climates, device.entityId) ? null : t('common.notFound')"
+                  show-state
+                />
               </td>
-              <td>
+              <td :data-label="t('rooms.role')">
                 <select
                   v-model="device.role"
                   class="input"
@@ -316,7 +358,7 @@ async function remove(): Promise<void> {
                   </option>
                 </select>
               </td>
-              <td>
+              <td :data-label="t('rooms.minOn')">
                 <UnitInput
                   v-model="device.minOnMinutes"
                   :unit="t('units.min')"
@@ -329,7 +371,7 @@ async function remove(): Promise<void> {
                   errors[`devices[${i}].minOnSeconds`]
                 }}</span>
               </td>
-              <td>
+              <td :data-label="t('rooms.minOff')">
                 <UnitInput
                   v-model="device.minOffMinutes"
                   :unit="t('units.min')"
@@ -342,7 +384,7 @@ async function remove(): Promise<void> {
                   errors[`devices[${i}].minOffSeconds`]
                 }}</span>
               </td>
-              <td>
+              <td :data-label="t('rooms.hysteresis')">
                 <UnitInput
                   v-model="device.hysteresis"
                   unit="°C"
@@ -356,7 +398,7 @@ async function remove(): Promise<void> {
                   errors[`devices[${i}].hysteresis`]
                 }}</span>
               </td>
-              <td>
+              <td class="actions-cell">
                 <button
                   type="button"
                   class="icon-btn"
@@ -549,24 +591,70 @@ async function remove(): Promise<void> {
   flex: 1;
   min-width: 220px;
 }
-.chips {
+.entity-list,
+.signal-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entity-row {
+  display: flex;
   align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 8px;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
 }
-.opening-chip {
-  padding: 4px 4px 4px 12px;
+.entity-cell {
+  min-width: 240px;
 }
-.icon-btn.small {
-  width: 32px;
-  height: 32px;
-}
-.strong {
-  font-weight: 500;
-}
-.tiny {
-  font-size: 12px;
+@media (max-width: 640px) {
+  /* The devices table becomes one card per device. */
+  .stack-table,
+  .stack-table tbody,
+  .stack-table tr,
+  .stack-table td {
+    display: block;
+  }
+  .stack-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .stack-table tr {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--divider);
+  }
+  .stack-table td {
+    border-bottom: none;
+    padding: 4px 0;
+  }
+  .stack-table td[data-label] {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 8px;
+  }
+  .stack-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .stack-table td[data-label] .err {
+    grid-column: 2;
+  }
+  .stack-table :deep(.input) {
+    width: 100%;
+    min-width: 0;
+  }
+  .stack-table .actions-cell {
+    text-align: right;
+  }
 }
 .preset-name {
   display: inline-flex;

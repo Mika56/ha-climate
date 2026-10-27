@@ -7,21 +7,37 @@ namespace App\Application\Engine\Facts;
 use App\Application\Engine\EngineSnapshot;
 use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Decision\RoomFacts;
+use App\Domain\Room\PresenceReading;
+use App\Domain\Room\PresenceVacancy;
 
 /**
- * Since when nobody is in the room: the last change of its presence entity when it reads `off`. A present
- * (`on`), missing, unavailable or unknown presence entity means the room is not known to be vacant.
+ * Since when nobody is in the room, from its presence signals (see {@see PresenceVacancy}). Each signal counts
+ * from the instant it became inactive, as remembered by the {@see PresenceActivityTracker}, not from the last
+ * change of its entity. A room without signal keeps the facts untouched; a room whose signals are all missing,
+ * unavailable or unknown is not known to be vacant.
  */
 final readonly class RoomVacancyContributor implements RoomFactContributorInterface
 {
+    public function __construct(private PresenceActivityTracker $tracker)
+    {
+    }
+
     public function contribute(RoomConfiguration $room, RoomFacts $facts, EngineSnapshot $snapshot): RoomFacts
     {
-        if (null === $room->presence) {
+        if ([] === $room->presenceSignals) {
             return $facts;
         }
 
-        $state = $snapshot->states->get($room->presence);
+        $readings = [];
+        foreach ($room->presenceSignals as $signal) {
+            $state = $snapshot->states->get($signal->entityId);
+            if (null === $state || \in_array($state->state, PresenceVacancy::UNUSABLE_STATES, true)) {
+                continue;
+            }
+            $since = $this->tracker->observe($room->id, $signal, $state->state, $state->lastChanged);
+            $readings[(string) $signal->entityId] = new PresenceReading($state->state, $since ?? $state->lastChanged);
+        }
 
-        return $facts->withRoomVacantSince('off' === $state?->state ? $state->lastChanged : null);
+        return $facts->withRoomVacantSince(PresenceVacancy::since($room->presenceSignals, $readings));
     }
 }

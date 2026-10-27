@@ -268,7 +268,7 @@ final class HeatingRateLearnerTest extends EngineTestCase
             null,
             null,
             $real->temperatureSensor,
-            null,
+            [],
             [],
             600,
             120,

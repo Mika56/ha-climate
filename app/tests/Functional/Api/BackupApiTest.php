@@ -103,7 +103,7 @@ final class BackupApiTest extends ApiTestCase
 
         self::assertStringContainsString('attachment', (string) $response->header('Content-Disposition'));
         self::assertSame('ha-climate-backup', $backup->at('format')->value());
-        self::assertSame(2, $backup->at('version')->value());
+        self::assertSame(3, $backup->at('version')->value());
         self::assertFalse($backup->at('settings.paused')->value());
         self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+0[12]:00$/', $backup->at('exportedAt')->text());
         self::assertArrayNotHasKey('auditEntryCount', $backup->at('settings')->map());
@@ -202,7 +202,7 @@ final class BackupApiTest extends ApiTestCase
         $backup = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
 
         $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'format' => 'something-else'])->assertViolation('format');
-        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 3])->assertViolation('version');
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 4])->assertViolation('version');
         $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 0])->assertViolation('version');
         $this->call('restoreConfiguration', 'POST', '/api/backup/restore', ['format' => 'ha-climate-backup', 'version' => 1])->assertStatus(422);
     }
@@ -220,7 +220,43 @@ final class BackupApiTest extends ApiTestCase
         self::assertSame('winter', $restored['season']);
         self::assertTrue($restored['paused']);
         self::assertSame('Alice', $this->auditEntries('audit.engine.paused')[0]->getActorName());
-        self::assertSame(2, $this->call('exportConfiguration', 'GET', '/api/backup')->json()['version'], 'Exports are always the current version.');
+        self::assertSame(3, $this->call('exportConfiguration', 'GET', '/api/backup')->json()['version'], 'Exports are always the current version.');
+    }
+
+    public function testAVersionTwoBackupWithAPresenceSensorRestoresAsOneActiveSignal(): void
+    {
+        $this->createRoom('Living room', 'climate.living', ['presenceSignals' => []]);
+        $backup = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
+        $rooms = array_map(static function (array $room): array {
+            unset($room['presenceSignals']);
+
+            return [...$room, 'presenceSensor' => 'binary_sensor.living_presence'];
+        }, (new Json($backup))->at('rooms')->rows());
+        self::assertNotSame([], $rooms);
+
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'version' => 2, 'rooms' => $rooms], self::asUser())->assertStatus(200);
+
+        $restored = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
+        $signals = array_column((new Json($restored))->at('rooms')->rows(), 'presenceSignals');
+        self::assertSame([[['entityId' => 'binary_sensor.living_presence', 'kind' => 'active', 'threshold' => null, 'value' => null]]], array_slice($signals, 0, 1));
+        self::assertArrayNotHasKey('presenceSensor', (new Json($restored))->at('rooms')->rows()[0]);
+    }
+
+    public function testThePresenceSignalsOfABackupAreChecked(): void
+    {
+        $this->createRoom();
+        $backup = $this->call('exportConfiguration', 'GET', '/api/backup')->json();
+        $rooms = (new Json($backup))->at('rooms')->rows();
+        $rooms[0]['presenceSignals'] = [
+            ['entityId' => 'sensor.x', 'kind' => 'active', 'threshold' => null, 'value' => null],
+            ['entityId' => 'sensor.y', 'kind' => 'above', 'threshold' => null, 'value' => null],
+            ['entityId' => 'sensor.y', 'kind' => 'equals', 'threshold' => null, 'value' => 'a'],
+        ];
+
+        $this->call('restoreConfiguration', 'POST', '/api/backup/restore', [...$backup, 'rooms' => $rooms])
+            ->assertViolation('rooms[0].presenceSignals[0].entityId')
+            ->assertViolation('rooms[0].presenceSignals[1].threshold')
+            ->assertViolation('rooms[0].presenceSignals[2].entityId');
     }
 
     public function testAVersionOneBackupWithoutPausedIsNotPaused(): void

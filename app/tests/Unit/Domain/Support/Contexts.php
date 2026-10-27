@@ -11,6 +11,8 @@ use App\Domain\Decision\RoomConfiguration;
 use App\Domain\Decision\RoomEvaluationContext;
 use App\Domain\Decision\RoomFacts;
 use App\Domain\Device\DeviceRole;
+use App\Domain\Room\PresenceSignal;
+use App\Domain\Room\PresenceSignalKind;
 use App\Domain\Room\PresetTemperatures;
 use App\Domain\Room\RoomId;
 use App\Domain\Schedule\ScheduleId;
@@ -47,7 +49,7 @@ final class Contexts
             new ScheduleId('heat-week'),
             new ScheduleId('cool-week'),
             Fixtures::entity('sensor.living_temperature'),
-            Fixtures::entity('binary_sensor.living_presence'),
+            [new PresenceSignal(Fixtures::entity('binary_sensor.living_presence'), PresenceSignalKind::Active)],
             [],
             $vacancyDelay,
             120,

@@ -1,9 +1,11 @@
 import type {
+  ActivitySource,
   Alert,
   AuditEntry,
   Context,
   Discovery,
   NotificationSettings,
+  PresenceSignal,
   Preset,
   Room,
   Schedule,
@@ -52,7 +54,7 @@ interface RoomSeed {
   cooling: string | null
   devices: Room['devices']
   openings: string[]
-  presence: string | null
+  signals: PresenceSignal[]
 }
 
 const seeds: RoomSeed[] = [
@@ -64,7 +66,10 @@ const seeds: RoomSeed[] = [
     heating: ID.semaine,
     cooling: ID.eteVie,
     openings: ['binary_sensor.salon_fenetre', 'binary_sensor.salon_baie_vitree'],
-    presence: 'binary_sensor.salon_occupancy',
+    signals: [
+      { entityId: 'binary_sensor.salon_occupancy', kind: 'active', threshold: null, value: null },
+      { entityId: 'media_player.tv_salon', kind: 'active', threshold: null, value: null },
+    ],
     devices: [
       {
         entityId: 'climate.salon_radiateur',
@@ -90,7 +95,9 @@ const seeds: RoomSeed[] = [
     heating: ID.semaine,
     cooling: ID.eteVie,
     openings: [],
-    presence: 'binary_sensor.cuisine_occupancy',
+    signals: [
+      { entityId: 'binary_sensor.cuisine_occupancy', kind: 'active', threshold: null, value: null },
+    ],
     devices: [
       {
         entityId: 'climate.cuisine_radiateur',
@@ -109,7 +116,7 @@ const seeds: RoomSeed[] = [
     heating: ID.semaine,
     cooling: ID.eteChambres,
     openings: ['binary_sensor.chambre_parentale_fenetre'],
-    presence: null,
+    signals: [],
     devices: [
       {
         entityId: 'climate.chambre_parentale',
@@ -128,7 +135,7 @@ const seeds: RoomSeed[] = [
     heating: ID.semaine,
     cooling: ID.eteChambres,
     openings: [],
-    presence: null,
+    signals: [],
     devices: [
       {
         entityId: 'climate.chambre_enfant',
@@ -147,7 +154,15 @@ const seeds: RoomSeed[] = [
     heating: ID.teletravail,
     cooling: ID.eteVie,
     openings: [],
-    presence: null,
+    signals: [
+      { entityId: 'sensor.bureau_pc_power', kind: 'above', threshold: 20, value: null },
+      {
+        entityId: 'sensor.bermuda_alex_area',
+        kind: 'equals',
+        threshold: null,
+        value: 'Bureau',
+      },
+    ],
     devices: [
       {
         entityId: 'climate.bureau_radiateur',
@@ -166,7 +181,7 @@ const seeds: RoomSeed[] = [
     heating: ID.semaine,
     cooling: null,
     openings: ['binary_sensor.sdb_fenetre'],
-    presence: null,
+    signals: [],
     devices: [
       {
         entityId: 'climate.sdb_seche_serviette',
@@ -186,7 +201,7 @@ export function buildRooms(): Room[] {
     name: s.name,
     areaId: s.area,
     temperatureSensor: `sensor.${s.slug}_temperature`,
-    presenceSensor: s.presence,
+    presenceSignals: s.signals.map((signal) => ({ ...signal })),
     openings: s.openings,
     vacancyDelaySeconds: 1200,
     windowCutDelaySeconds: 120,
@@ -357,6 +372,14 @@ const entity = (
   deviceClass: null,
 })
 
+const source = (
+  entityId: string,
+  name: string,
+  areaId: string | null,
+  state: string,
+  defaultKind: ActivitySource['defaultKind'],
+): ActivitySource => ({ ...entity(entityId, name, areaId, state), defaultKind })
+
 export function buildDiscovery(): Discovery {
   return {
     areas: [
@@ -423,8 +446,35 @@ export function buildDiscovery(): Discovery {
       entity('sensor.garage_temperature', 'Température garage', null, '12.0', '°C'),
     ],
     presenceSensors: [
-      entity('binary_sensor.salon_occupancy', 'Présence salon', 'salon', 'on'),
-      entity('binary_sensor.cuisine_occupancy', 'Présence cuisine', 'cuisine', 'off'),
+      {
+        ...entity('binary_sensor.salon_occupancy', 'Présence salon', 'salon', 'on'),
+        deviceClass: 'motion',
+      },
+      {
+        ...entity('binary_sensor.cuisine_occupancy', 'Présence cuisine', 'cuisine', 'off'),
+        deviceClass: 'occupancy',
+      },
+    ],
+    activitySources: [
+      source('light.salon_plafonnier', 'Plafonnier salon', 'salon', 'on', 'active'),
+      source('light.cuisine_spots', 'Spots cuisine', 'cuisine', 'off', 'active'),
+      source('light.bureau_lampe', 'Lampe bureau', 'bureau', 'off', 'active'),
+      source('switch.prise_cafetiere', 'Prise cafetière', 'cuisine', 'off', 'active'),
+      source('fan.ventilateur_bureau', 'Ventilateur bureau', 'bureau', 'off', 'active'),
+      source('media_player.tv_salon', 'TV salon', 'salon', 'playing', 'active'),
+      source('media_player.enceinte_cuisine', 'Enceinte cuisine', 'cuisine', 'idle', 'active'),
+      {
+        ...source('sensor.bureau_pc_power', 'Puissance PC bureau', 'bureau', '148.2', 'above'),
+        unit: 'W',
+        deviceClass: 'power',
+      },
+      {
+        ...source('sensor.salon_tv_power', 'Puissance TV salon', 'salon', '85.0', 'above'),
+        unit: 'W',
+        deviceClass: 'power',
+      },
+      source('sensor.bermuda_alex_area', 'Bermuda Alex (zone)', null, 'Bureau', 'equals'),
+      source('sensor.bermuda_sam_area', 'Bermuda Sam (zone)', null, 'Salon', 'equals'),
     ],
     openingSensors: [
       entity('binary_sensor.salon_fenetre', 'Fenêtre salon', 'salon', 'off'),

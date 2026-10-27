@@ -276,7 +276,7 @@ final class AlertScenarioTest extends NotificationTestCase
 
         $entity = $this->em()->find(Room::class, $room->getId());
         self::assertInstanceOf(Room::class, $entity);
-        $entity->configureSensors('sensor.other_temperature', null, []);
+        $entity->configureSensors('sensor.other_temperature', [], []);
         $this->em()->flush();
         $this->homeAssistant()->seedState('sensor.other_temperature', '20');
         $this->service(ConfigurationReloader::class)->reload();

@@ -282,6 +282,7 @@ final class SettingsApiTest extends ApiTestCase
             'climates' => [['entityId' => 'climate.living', 'name' => 'Living', 'areaId' => 'living', 'state' => 'heat', 'unit' => null, 'deviceClass' => null, 'hvacModes' => ['off', 'heat']]],
             'temperatureSensors' => [],
             'presenceSensors' => [],
+            'activitySources' => [],
             'openingSensors' => [],
             'timeEntities' => [],
             'weather' => [],

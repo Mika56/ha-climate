@@ -8,6 +8,7 @@ use App\Domain\Climate\HvacMode;
 use App\Domain\Device\Device;
 use App\Domain\Exception\InvalidValueException;
 use App\Domain\HomeAssistant\EntityId;
+use App\Domain\Room\PresenceSignal;
 use App\Domain\Room\PresetTemperatures;
 use App\Domain\Room\RoomId;
 use App\Domain\Schedule\ScheduleId;
@@ -18,8 +19,9 @@ use App\Domain\Schedule\ScheduleId;
 final readonly class RoomConfiguration
 {
     /**
-     * @param list<Device>   $devices
-     * @param list<EntityId> $openings
+     * @param list<Device>         $devices
+     * @param list<EntityId>       $openings
+     * @param list<PresenceSignal> $presenceSignals
      */
     public function __construct(
         public RoomId $id,
@@ -29,7 +31,7 @@ final readonly class RoomConfiguration
         public ?ScheduleId $heatingSchedule,
         public ?ScheduleId $coolingSchedule,
         public ?EntityId $temperatureSensor,
-        public ?EntityId $presence,
+        public array $presenceSignals,
         public array $openings,
         public int $vacancyDelay,
         public int $windowCutDelay,

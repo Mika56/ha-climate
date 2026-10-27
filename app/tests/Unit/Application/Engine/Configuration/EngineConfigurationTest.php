@@ -45,7 +45,7 @@ final class EngineConfigurationTest extends TestCase
             $heating->id,
             new ScheduleId('missing'),
             null,
-            null,
+            [],
             [],
             600,
             120,
@@ -63,7 +63,7 @@ final class EngineConfigurationTest extends TestCase
     public function testAScheduleOfTheWrongModeIsNotUsed(): void
     {
         $cooling = Fixtures::weeklySchedule(HvacMode::Cool);
-        $room = new RoomConfiguration(new RoomId('living'), 'Living', [Fixtures::device()], Fixtures::temperatures(), $cooling->id, null, null, null, [], 600, 120, 1800);
+        $room = new RoomConfiguration(new RoomId('living'), 'Living', [Fixtures::device()], Fixtures::temperatures(), $cooling->id, null, null, [], [], 600, 120, 1800);
 
         self::assertNull(self::configuration([$room], [(string) $cooling->id => $cooling])->scheduleFor($room, HvacMode::Heat));
     }

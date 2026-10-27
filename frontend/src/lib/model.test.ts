@@ -61,16 +61,16 @@ describe('room form', () => {
   it('maps missing optional fields to null', () => {
     const room = { ...buildRooms()[0] }
     delete room.areaId
-    delete room.presenceSensor
+    room.presenceSignals = []
     delete room.heatingScheduleId
     delete room.coolingScheduleId
     const form = toRoomForm(room, keys)
     expect([
       form.areaId,
-      form.presenceSensor,
+      form.presenceSignals,
       form.heatingScheduleId,
       form.coolingScheduleId,
-    ]).toEqual([null, null, null, null])
+    ]).toEqual([null, [], null, null])
   })
 })
 
