@@ -857,10 +857,10 @@ export interface components {
             /** @constant */
             format: "ha-climate-backup";
             /**
-             * @description Exports are version 2. Version 1 (season `off`, no `paused`) is still accepted by the restore.
+             * @description Exports are version 3. Version 1 (season `off`, no `paused`) and 2 (`presenceSensor` instead of `presenceSignals` in rooms) are still accepted by the restore.
              * @enum {integer}
              */
-            version: 1 | 2;
+            version: 1 | 2 | 3;
             /** Format: date-time */
             exportedAt: string;
             settings: components["schemas"]["BackupSettings"];
