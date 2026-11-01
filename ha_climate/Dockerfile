@@ -11,7 +11,7 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.24-2026.10.1
 
 # --- (a) front end, built natively on the builder's platform (output is architecture independent) ---------
-FROM --platform=$BUILDPLATFORM node:24.22.1-alpine AS frontend
+FROM --platform=$BUILDPLATFORM node:24.22.2-alpine AS frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
